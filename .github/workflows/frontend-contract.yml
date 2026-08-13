@@ -1,0 +1,48 @@
+name: Frontend contract
+
+on:
+  pull_request:
+    paths:
+      - "docs/openapi.yaml"
+      - "backend/**"
+      - "econexao-app/**"
+      - ".github/workflows/frontend-contract.yml"
+  push:
+    branches: [main, master]
+    paths:
+      - "docs/openapi.yaml"
+      - "backend/**"
+      - "econexao-app/**"
+      - ".github/workflows/frontend-contract.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: econexao-app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: econexao-app/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Verify generated OpenAPI types
+        run: npm run openapi:check
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test -- --watch=false --forceExit

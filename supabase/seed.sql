@@ -1,0 +1,3 @@
+-- Minimal local/test fixture hook.
+-- Pindobal is imported by the reproducible Python command from backend/app/ingestion;
+-- production APIs never read the source CSV/JSON files at runtime.

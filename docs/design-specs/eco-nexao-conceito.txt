@@ -1,0 +1,90 @@
+ECOnexão
+
+A ECOnexão é uma plataforma digital multirregional que conecta visitantes à oferta real de destinos turísticos por meio de rotas confiáveis, mapas interativos, catálogo contextual e uma operação editorial transparente.
+
+
+Telas/abas (icones na parte inferior):
+Inicial
+Rotas (todas as rotas da região)
+- Rota selecionada (resumo da rota)
+-- Mapa interativo
+-- Catálogo de atores
+Perfil
+
+>> Inicial / Home (casa)
+
+Tela com impacto visual de uma imagem (de fundo da tela) das belezas naturais ao por do sol na praia. Design ousado e com direção de fotografia para ser algo conceitual.
+a tela terá logo, e aceso rapido a informações relevantes. rotas salvas.
+Função: Definir região
+
+>> Rotas (bussola)
+
+tela com informações das rotas. 
+Menu superior com região escolhida (pode alterar, se tiver mais de uma região)
+mostrar as rotas em cards dinamicos da região escolhida. opção de favoritar rota
+imagens nos cards, nome, cidade e estado. distancia da rota
+
+>> Rota escolhida
+
+Na ECOnexão, a rota selecionada é a unidade principal da experiência do usuário. Sua função é estruturar a visualização da jornada do visitante, reunindo em um só lugar todas as informações de preparação, alertas territoriais atualizados, mapas interativos com pins sinalizando o que existe no caminho da rota(com alternativas acessíveis em texto) e o catálogo contextual dos empreendimentos e atores locais da região, próximas da rota.
+
+informações da rota: nome da rota, localização, distancia total, número de atores da rota, resumo, mapa, avisos e catalogo.
+mapa mostra os pins dos estabelecimentos / categorias.
+
+Definir ponto de origem da rota: aeroporto, porto fluvial e rodoviária.
+
+Conceitualmente, uma rota na ECOnexão deve exibir:
+
+- Visão geral e preparação: título, resumo editorial, dados práticos e data da última verificação.
+- Mapa e lista alternativa: visualização geográfica dos pontos com equivalente em texto acessível.
+- Alertas territoriais: avisos importantes ou urgentes sobre o percurso.
+- Catálogo contextual: atores, comércios e serviços locais confiáveis vinculados à rota.
+
+Na tela da rota selecionada, a parte do mapa pode ser expandida pra uma tela cheia.
+Na tela da rota selecionada, a parte do catalogo pode ser expandida para uma tela cheia, com grids separados por segmentação e função.
+
+Tela cheia:
+Mapa: mapa com rota traçada, com os pins marcados
+Catalogo: cards com imagens do espabelecimento separados por segmento de atuação
+
+
+As cores oficiais da marca ECOnexão são baseadas em tons de verde e amarelo sol:
+
+| Token da Marca | Hex | Aplicação Principal |
+| :--- | :--- | :--- |
+| `brand-forest` | `#33601E` | Verde floresta (botões primários, links e foco) |
+| `brand-deep` | `#1C3B0F` | Verde escuro (textos de destaque e elementos no tema escuro) |
+| `brand-leaf` | `#5D8D3E` | Verde folha (indicadores positivos e elementos gráficos) |
+| `brand-sage` | `#759B71` | Verde sálvia (bordas suaves, superfícies secundárias e ícones) |
+| `brand-sun` | `#F8C900` | Amarelo sol (pontos de destaque, alertas e chamadas pontuais) |
+ 
+> **Nota visual:** A interface é predominantemente neutra (branca ou cinza muito claro `#F7F8F5`), utilizando as cores da paleta nos detalhes, ações principais e pontos de destaque para garantir alta legibilidade e contraste.
+
+Direção de UI/UX
+Evite formulários em branco (Smart Defaults): Não force o usuário a tomar decisões desnecessárias. Use valores padrão pré-preenchidos para tornar a tarefa mais fácil e persuasiva.
+
+Pilares fundamentais do design de interface (UI) e experiência do usuário (UX):
+
+Affordances e Significadores: Como o design sinaliza visualmente o que o usuário pode fazer (ex: estados de botões, itens ativos).
+Hierarquia Visual: Uso de tamanho, posição e cor para guiar o olhar do usuário e organizar a importância das informações.
+Grids, Layouts e Espaçamento: O uso de sistemas de grade e, mais importante, o espaço em branco para deixar o design "respirar" e garantir consistência.
+Tipografia e Tamanho de Fonte: Dicas sobre escolha de fontes, espaçamento entre letras (letter spacing) e altura de linha (line height) para um aspecto profissional.
+Teoria das Cores: Uso de uma cor primária como base e a aplicação de cores semânticas (cores com significado, como vermelho para erro).
+Modo Escuro: Ajustes de contraste e profundidade necessários para manter a hierarquia em fundos escuros.
+Sombras: Ferramenta para criar profundidade; devem ser sutis para não distrair.
+Ícones e Botões: Padronização de ícones com a altura da linha e o uso de "ghost buttons" para ações secundárias.
+Feedback e Estados: A importância de uma resposta visual para cada ação do usuário (clique, erro, carregamento).
+Microinterações: Animações pequenas que confirmam ações e adicionam polimento à experiência.
+Sobreposições (Overlays): Técnicas como gradientes lineares ou desfoque para garantir a legibilidade do texto sobre imagens.
+
+
+Nossa primeira rota: Pindobal
+
+Hospedagem: Hotéis, pousadas e casas de temporada
+Alimentação & Bares: Estabelecimentos em Santarém, Alter do Chão, Ponta de Pedras, Praia do Maracanã, Carapanari e Pajuçara
+Transporte: Locadoras de veículos, vans e micro-ônibus, táxi aéreo, transporte fluvial, lanchas, catraias e transporte intermunicipal
+Serviços de Turismo e Lazer: Agências de viagens, equipamentos para eventos, clubes de lazer e balneários/chácaras
+Atrativos Naturais & Praias: Praias fluviais, serras, ilhas, áreas de proteção ambiental (APA) e unidades de conservação
+Patrimônio, Cultura e Religioso: Igrejas e templos, edificações históricas, obras de arte, bibliotecas, artesanato e feiras
+Comércio & Serviços Públicos: Mercados, shopping/lojas de departamento, cartórios, segurança e cidadania
+

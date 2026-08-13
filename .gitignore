@@ -1,0 +1,37 @@
+# Local credentials. Only *.example files are versionable.
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local tool runtimes and temporary files
+.uv-cache/
+.uv-python/
+.tmp/
+.test-tmp/
+*.log
+.git-history-backup/
+supabase/.temp/
+econexao-app/.tmp-*/
+
+# JavaScript / Expo
+node_modules/
+.expo/
+dist/
+web-build/
+*.tsbuildinfo
+
+# IDE / OS
+.DS_Store
+Thumbs.db

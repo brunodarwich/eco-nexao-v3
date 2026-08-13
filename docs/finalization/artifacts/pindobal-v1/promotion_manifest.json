@@ -1,0 +1,227 @@
+{
+  "approved_actions": [
+    "offline verification",
+    "dry-run against an isolated environment",
+    "review of candidates and licensing metadata"
+  ],
+  "geometry_contract": {
+    "aeroporto": {
+      "distance_m": 41452,
+      "points": 777
+    },
+    "porto": {
+      "distance_m": 45229,
+      "points": 884
+    },
+    "rodoviaria": {
+      "distance_m": 42319,
+      "points": 866
+    },
+    "srid": 4326
+  },
+  "implementation": [
+    {
+      "bytes": 3935,
+      "path": "backend/app/ingestion/manifest.py",
+      "sha256": "076ec2a0cbe6d3c016ea099a0e551cd942316fb702bbd811ad9b21fc18b02524"
+    },
+    {
+      "bytes": 9795,
+      "path": "backend/app/ingestion/seed_pindobal.py",
+      "sha256": "b38ecad1cfa4dac5742008a52b78c46473b9d3006e8e1ddb0098b8e801e7db26"
+    },
+    {
+      "bytes": 21353,
+      "path": "backend/app/ingestion/pindobal_repository.py",
+      "sha256": "50413e4e8d31f547eba9296bc195187bc37be236337c2a2e82c946fcf701b554"
+    },
+    {
+      "bytes": 7063,
+      "path": "backend/app/ingestion/osrm_importer.py",
+      "sha256": "a9666a9ba5a0a2955c17a03e75892085d9811d71dfd5e7b036b8d83479c95c36"
+    },
+    {
+      "bytes": 5819,
+      "path": "backend/scripts/apply_pindobal_spatial.py",
+      "sha256": "213cf69897fad85410ed8a72b921cc9c5751779499f85a7f14e16dd62d8fb019"
+    },
+    {
+      "bytes": 4192,
+      "path": "backend/scripts/verify_pindobal_gate.py",
+      "sha256": "91cf01254fd168207b5df51660e56da81112831e7742ba8e7f6fdfb1c27de614"
+    },
+    {
+      "bytes": 9040,
+      "path": "docs/data/pindobal_data_contract.md",
+      "sha256": "24c1c513e52b8f3971119f270c065ca550df4e9e94069bd1a88de5aeb3c2ef9e"
+    }
+  ],
+  "migrations": [
+    {
+      "bytes": 3985,
+      "path": "supabase/migrations/20260811000000_init_postgis_and_base_schemas.sql",
+      "sha256": "fbba85335f9cb1ab558af65913fd50521f9d1a964a02b2529340a9f256de4848"
+    },
+    {
+      "bytes": 22256,
+      "path": "supabase/migrations/20260811010000_domain_tables.sql",
+      "sha256": "74cc88b0520f4e9908f661cba4aded6ef03c3643f62357db43dd0bfed08da604"
+    },
+    {
+      "bytes": 2830,
+      "path": "supabase/migrations/20260811020000_rls_and_permissions.sql",
+      "sha256": "6ff03ffb1b51f5ed806a51a68b95adbcd4041302e158b3d0a37f02fa13ebd3a8"
+    },
+    {
+      "bytes": 178,
+      "path": "supabase/migrations/20260812095417_fix_updated_at_function_search_path.sql",
+      "sha256": "d1236e7e3e7334481182113c84f1faff778cdd5891a61863e06cdb29360b8151"
+    },
+    {
+      "bytes": 185,
+      "path": "supabase/migrations/20260812095647_reset_database_search_path.sql",
+      "sha256": "c882c5970663c7d3c188f4511c735234f905d56b0e92d807a3d4e1440782edc7"
+    },
+    {
+      "bytes": 3390,
+      "path": "supabase/migrations/20260812120000_storage_buckets_and_policies.sql",
+      "sha256": "e291395d6b45146b471ae80760f75641a141be09290f615b16410ccb1a1f2873"
+    },
+    {
+      "bytes": 3127,
+      "path": "supabase/migrations/20260813084440_harden_storage_buckets_and_policies.sql",
+      "sha256": "2c4ce9ea5abf9d208e7276c236fe823de5ea37be3be8efd799c063abb1e4eee9"
+    },
+    {
+      "bytes": 7270,
+      "path": "supabase/migrations/20260813091542_editorial_rbac_and_audit_trail.sql",
+      "sha256": "ed8cbbbfd1deb28f070597a0b08cbfa813941229eb3fff9be2400423be71a90b"
+    },
+    {
+      "bytes": 1720,
+      "path": "supabase/migrations/20260813102503_pindobal_spatial_integrity.sql",
+      "sha256": "9a16e480e969d60a7992ab40cc8c82cbc6409c1fb987ab5f83b8ba8cec68c778"
+    }
+  ],
+  "package": {
+    "id": "econexao-pindobal-v1",
+    "importer_version": "eco-1502-v1",
+    "promotion_status": "blocked_pending_editorial_acceptance",
+    "rules_version": "pindobal-contract-1.0",
+    "schema_version": 1,
+    "snapshot_version": "pindobal-v1"
+  },
+  "prohibited_actions": [
+    "automatic fuzzy merge",
+    "inventing Google Place IDs",
+    "copying Google photo binaries to Supabase Storage",
+    "promotion to staging or production without explicit approval"
+  ],
+  "promotion_blockers": [
+    "owner/editorial review of the 53 fuzzy candidates is pending",
+    "legacy Google records have no trusted Place ID and cannot be auto-merged",
+    "SEMTUR retention terms do not constitute a reviewed public-content license",
+    "route cover and editorial media with alt text, credit and license are pending",
+    "Publish Guard and administrative publication workflow are not yet complete",
+    "staging and production promotion require separate explicit authorization"
+  ],
+  "publication_classification": {
+    "actors": "draft_candidates_only",
+    "fuzzy_candidates": "pending_human_review",
+    "google_legacy": "raw_evidence_only",
+    "media": "excluded_pending_license_credit_alt_and_processing",
+    "route": "draft_candidate_only"
+  },
+  "rollback": {
+    "data_deletion": "not_part_of_automatic_rollback",
+    "procedure": "Stop promotion, keep content non-public, preserve audit/provenance, and supersede this package with a newly reviewed immutable version.",
+    "required_state": "draft_or_unpublished",
+    "strategy": "logical_unpublish"
+  },
+  "source_revision": {
+    "integrity_fallback": "individual_file_sha256",
+    "kind": "unavailable",
+    "reason": "no_git_metadata"
+  },
+  "source_snapshot": [
+    {
+      "bytes": 310926,
+      "name": "inventario_semtur.csv",
+      "sha256": "9b4bdf682a83facbbfdb76176810f0ebcc3efba7efbe848fcfafa4d156e7eabb"
+    },
+    {
+      "bytes": 358434,
+      "name": "data_semtur.json",
+      "sha256": "0a384b8bcda64744cf3db9bd07a62826d2617bc66b80b9ae6671d051c7ff18d1"
+    },
+    {
+      "bytes": 221156,
+      "name": "santarem-pindobal.csv.csv",
+      "sha256": "75e0552320409447771134566e93657487bcd7d74fe192a2a496a9a42a2a6999"
+    },
+    {
+      "bytes": 172947,
+      "name": "data.json",
+      "sha256": "b597eb1ed56caf4f7e655976d878d5baaf4c90fab4cd62ee365f5b3d5343e018"
+    },
+    {
+      "bytes": 311479,
+      "name": "empresas_infraestrutura_rotas.csv",
+      "sha256": "23c7a8c0998e0d6b2036640959c92e0ebf36f7822e4623c5fc906c7c51ad874b"
+    },
+    {
+      "bytes": 490219,
+      "name": "pois_data.json",
+      "sha256": "8875a1eaa2e6bc8bdd0d2a8cce9a10ae4ba742042c41effebbd0725c9a5fecea"
+    },
+    {
+      "bytes": 133946,
+      "name": "rota_porto_OSRM_01.csv",
+      "sha256": "15c557a406bc6ebd87d4f8706d15c80127fc98b416d535ae57b4454fc991b6cb"
+    },
+    {
+      "bytes": 117739,
+      "name": "rota_aeroporto_OSRM_01.csv",
+      "sha256": "8cae67ad9d00d6056733787ed41c940d1ba68490dc5bd5e60c6cb1c1f1d15776"
+    },
+    {
+      "bytes": 131265,
+      "name": "rota_rodoviaria_OSRM_01.csv",
+      "sha256": "fd21e0df95368553aa81aaff22d630e9cffd00c1ef3d0feef6fb5573fc08c70b"
+    }
+  ],
+  "support_files": [
+    {
+      "bytes": 1461,
+      "path": "docs/finalization/artifacts/pindobal-v1/README.md",
+      "sha256": "ebd9037f1629b44a1134db06639a0ab44974b969db4dfcbc8377df963fc52175"
+    },
+    {
+      "bytes": 652,
+      "path": "docs/finalization/artifacts/pindobal-v1/APPROVAL.md",
+      "sha256": "4e1afac2f5f1ae1f4a275ac6f0ff64bf93af3a7f5ce536b244dc19a1fee568ae"
+    },
+    {
+      "bytes": 1040,
+      "path": "docs/finalization/artifacts/pindobal-v1/smoke.sql",
+      "sha256": "fb6f1baddcb9db417e9bbc861e986579926ca363cbce8496a181ba8533d58b4c"
+    }
+  ],
+  "verified_test_state": {
+    "actors": 674,
+    "completed_ingestion_runs": 3,
+    "field_provenance": 8088,
+    "fuzzy_candidates_pending": 53,
+    "geometries": 3,
+    "google_records_without_place_id_per_run": 737,
+    "origins": 3,
+    "raw_records_from_authorized_double_load": 3428,
+    "regions": 1,
+    "route_actors": 313,
+    "routes": 1,
+    "second_load_candidates": 53,
+    "second_load_created": 0,
+    "second_load_unchanged": 1661,
+    "second_load_updated": 0
+  }
+}

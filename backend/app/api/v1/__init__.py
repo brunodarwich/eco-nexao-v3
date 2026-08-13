@@ -1,0 +1,23 @@
+"""API v1 router composition."""
+
+from fastapi import APIRouter
+
+from app.api.v1.actors import router as actors_router
+from app.api.v1.auth import router as auth_router
+from app.api.v1.content import router as content_router
+from app.api.v1.health import router as health_router
+from app.api.v1.me import router as me_router
+from app.api.v1.regions import router as regions_router
+from app.api.v1.routes import router as routes_router
+
+api_v1_router = APIRouter()
+api_v1_router.include_router(health_router)
+api_v1_router.include_router(auth_router)
+api_v1_router.include_router(regions_router)
+api_v1_router.include_router(routes_router)
+api_v1_router.include_router(actors_router)
+api_v1_router.include_router(me_router)
+api_v1_router.include_router(content_router)
+
+
+

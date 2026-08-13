@@ -1,0 +1,265 @@
+===============================================================================
+               ECONEXÃO - CATALOGAÇÃO COMPLETA DE ELEMENTOS INTERATIVOS
+                  STATUS, CONTEÚDOS E FUNCIONALIDADES DAS TELAS
+===============================================================================
+Projeto: ECOnexão - Plataforma Digital de Turismo Sustentável e Acessibilidade Amazônica
+Data da Catalogação: 11/08/2026
+
+-------------------------------------------------------------------------------
+1. ESTRUTURA GERAL DA APLICAÇÃO & NAVEGAÇÃO GLOBAL
+-------------------------------------------------------------------------------
+
+[1.1] CABEÇALHO GLOBAL DA APLICAÇÃO (AppHeader)
+   * Localização: Presente no topo de todas as telas principais.
+   * Elementos Interativos:
+     - Botão "Voltar" (Ícone de Seta para a esquerda):
+       • Ação: Retorna para a tela/menu anterior na pilha de navegação.
+       • Acessibilidade: Rótulo "Voltar", dica "Retorna à tela anterior".
+     - Chip de Seleção de Região ("Região Santarém & Belterra / Alter do Chão"):
+       • Ação: Alterna entre regiões turísticas monitoradas (demonstração dinâmica).
+       • Acessibilidade: Rótulo "Região atual", dica "Toque para alterar a região de exploração".
+   * Indicadores de Status & Badges:
+     - Badge do Logo: Ícone de Folha (verde) indicando plataforma verde/ecológica.
+     - Texto de Status da Região: Exibe o nome da região ativa no momento (ex: "Santarém & Belterra").
+   * Conteúdos Exibidos:
+     - Logotipo e Título da Marca ("ECOnexão").
+     - Nome da região turística selecionada.
+
+[1.2] BARRA DE NAVEGAÇÃO INFERIOR (Bottom Tab Bar)
+   * Localização: Rodapé fixo das telas principais ((tabs)/_layout.tsx).
+   * Elementos Interativos (Abas):
+     - Aba "Inicial" (Ícone de Casa / Home):
+       • Ação: Navega para a Tela de Início / Hero.
+     - Aba "Rotas" (Ícone de Bússola / Compass):
+       • Ação: Navega para a Listagem de Rotas da Região.
+     - Aba "Perfil" (Ícone de Usuário / Person):
+       • Ação: Navega para o Perfil do Usuário e Painel de Acessibilidade.
+   * Indicadores de Status:
+     - Realce de Aba Ativa: Cor verde floresta (#1C4807 / #33601E) e preenchimento de ícone quando a aba está selecionada.
+     - Inativa: Cor de contorno suave (#72796C).
+
+-------------------------------------------------------------------------------
+2. TELA 1: INÍCIO / HOMEPAGE ((tabs)/index.tsx)
+-------------------------------------------------------------------------------
+
+[2.1] SEÇÃO HERO (Destaque Principal)
+   * Elementos Interativos:
+     - Badge Interativo de Região ("Santarém / Alter do Chão"):
+       • Ação: Abre a seleção de regiões ou define a região ativa para "Santarém / Alter do Chão".
+       • Acessibilidade: Rótulo "Região Santarém e Alter do Chão", dica "Toque para escolher região".
+     - Botão Principal CTA "Descobrir Rotas" (Com ícone de seta para a direita):
+       • Ação: Direciona o usuário imediatamente para a tela de Catálogo de Rotas ((tabs)/routes).
+       • Acessibilidade: Rótulo "Descobrir Rotas", dica "Navega para o catálogo completo de rotas da região".
+   * Indicadores de Status:
+     - Badge com ícone de pin de localização e seta dropdown.
+   * Conteúdos Exibidos:
+     - Imagem de fundo responsiva do pôr do sol no Rio Tapajós (hero_tapajos_sunset.jpg).
+     - Título de Impacto: "Conecte-se à oferta real da Amazônia."
+     - Descrição Curta: "Descubra roteiros autênticos e sustentáveis, guiados por quem vive e preserva a floresta."
+
+[2.2] SEÇÃO DE ROTAS SALVAS (FAVORITAS)
+   * Elementos Interativos:
+     - Botão / Link "Ver todas →":
+       • Ação: Redireciona para a aba de Rotas ((tabs)/routes).
+     - Cards de Rota no Carrossel Horizontal:
+       • Ação no Card: Abre os detalhes completos da rota (/route/[routeId]).
+       • Botão de Coração (Favorito) no Card: Adiciona ou remove a rota dos favoritos do usuário.
+   * Indicadores de Status:
+     - Ícone de Coração Preenchido (Vermelho): Rota favoritada.
+     - Badge "Verificada": Indicador verde com ícone de escudo para rotas auditadas territorialmente.
+     - Estado Vazio (Empty State): Exibido quando não há rotas salvas, com mensagem educativa e ícone de bookmark.
+   * Conteúdos Exibidos:
+     - Título da Seção: "Rotas Salvas".
+     - Lista horizontal de cards contendo: Imagem de capa, Título da Rota, Cidade/Estado, Distância Total (km), Número de Atores Locais vinculados.
+
+-------------------------------------------------------------------------------
+3. TELA 2: ROTAS DA REGIÃO ((tabs)/routes.tsx)
+-------------------------------------------------------------------------------
+
+[3.1] CABEÇALHO DA PÁGINA & BUSCA
+   * Elementos Interativos:
+     - Campo de Busca Input (SearchInput):
+       • Ação: Filtra a lista de rotas em tempo real por nome, cidade ou palavras-chave contidas no resumo.
+       • Botão de Limpar (Ícone "X"): Apaga o texto digitado na busca.
+     - Chips de Filtro em Abas (FilterChip):
+       • Chip "Todas as Rotas" (Ícone de Bússola): Exibe o catálogo completo.
+       • Chip "Salvas" (Ícone de Marcador): Filtra apenas rotas favoritadas pelo usuário.
+       • Chip "Verificadas" (Ícone de Escudo): Filtra apenas rotas com verificação de sustentabilidade e segurança.
+   * Indicadores de Status:
+     - Chip Selecionado: Fundo verde folha com texto em contraste elevado.
+     - Indicador de Resultados: Atualização dinâmica do número de cards exibidos ou exibição do estado de busca vazia.
+   * Conteúdos Exibidos:
+     - Título: "Rotas da Região".
+     - Subtítulo: "Caminhos mapeados para você planejar sua jornada sustentável na Amazônia."
+
+[3.2] LISTAGEM DE ROTAS (GRID/LISTA VERTICAL)
+   * Elementos Interativos:
+     - Card de Rota (RouteCard):
+       • Toque no Card: Direciona para a tela de detalhes da rota correspondente.
+       • Botão de Favorito (Ícone de Coração): Alterna o status de favorito da rota no estado global.
+     - Botão "Resetar Filtros" no Estado Vazio:
+       • Ação: Redefine a busca e seleciona a aba "Todas as Rotas" caso nenhum resultado seja encontrado.
+   * Indicadores de Status & Badges:
+     - Badge "Verificada": Garantia de auditoria territorial.
+     - Ícone de Coração: Vermelho (Salva) / Transparente com contorno (Não Salva).
+   * Conteúdos Exibidos:
+     - Cards detalhados com imagem de capa, cidade/estado, título da rota, extensão em km, contagem de atores comunitários.
+
+-------------------------------------------------------------------------------
+4. TELA 3: PERFIL DO USUÁRIO & ACESSIBILIDADE ((tabs)/profile.tsx)
+-------------------------------------------------------------------------------
+
+[4.1] CARTÃO DE IDENTIFICAÇÃO DO USUÁRIO
+   * Elementos Interativos:
+     - Foto de Perfil / Avatar (Clicável / Editável).
+   * Indicadores de Status:
+     - Ícone de Checkmark Verde ao lado do nome: Indica conta validada / participante do programa de turismo sustentável.
+   * Conteúdos Exibidos:
+     - Nome do Usuário (ex: "Maria Silva").
+     - Localização (ex: "Santarém, PA • Brasil").
+     - Foto de Perfil com borda verde temática.
+
+[4.2] PAINEL DE IMPACTO & CONQUISTAS (Bento Box)
+   * Elementos Interativos:
+     - Cards Informativos Interativos de Estatísticas:
+       • Métrica 1: Número de Rotas Concluídas.
+       • Métrica 2: Número de Atores Locais Visitados.
+   * Indicadores de Status & Selos:
+     - Banner "Selo Viajante Consciente":
+       • Badge com ícone de folha destacada em fundo amarelo dourado (brandSun).
+       • Status ativo reconhecendo a participação em compras comunitárias e turismo de baixo impacto.
+   * Conteúdos Exibidos:
+     - Valores numéricos das estatísticas do usuário.
+     - Texto educativo sobre o impacto socioambiental positivo gerado.
+
+[4.3] MENU DE PREFERÊNCIAS & ACESSIBILIDADE
+   * Elementos Interativos:
+     - Itens de Menu Clicáveis:
+       • "Rotas Salvas" -> Navega/exibe a contagem de rotas favoritadas.
+       • "Atores & Empreendimentos Favoritos" -> Exibe a contagem de atores favoritados.
+       • "Histórico de Viagens Sustentáveis" -> Exibe o total de viagens registradas.
+       • "Modo Leitor de Tela & Alto Contraste" -> Permite configurar preferências de acessibilidade.
+       • "Configurações Regionais" -> Exibe a região atual e permite alteração.
+       • "Suporte & Operação Editorial" -> Acessa a central de ajuda e termo de uso.
+   * Indicadores de Status:
+     - Badges com Contadores Numéricos (ex: número de rotas e atores salvos).
+     - Textos de Status ("Ativo", "Santarém & Belterra", "Ajuda").
+     - Ícones Chevron (setas para a direita) indicando navegação.
+
+-------------------------------------------------------------------------------
+5. TELA 4: DETALHES DA ROTA (/route/[routeId]/index.tsx)
+-------------------------------------------------------------------------------
+
+[5.1] HERO DA ROTA & CABEÇALHO
+   * Elementos Interativos:
+     - Botão "Voltar" no Header: Retorna à lista de rotas.
+   * Indicadores de Status:
+     - Tag de Localização (Ícone de Pin + Texto de Cidade/Estado).
+     - Badge "km Total" e Badge de Origem Selecionada.
+   * Conteúdos Exibidos:
+     - Imagem de Capa em alta resolução da Rota.
+     - Título da Rota (ex: "Rota Pindobal - Alter do Chão").
+
+[5.2] SEÇÃO VISÃO GERAL & SIMULADOR DE ORIGEM
+   * Elementos Interativos:
+     - Seletor de Origem Ponto a Ponto (OriginSelector):
+       • Botão Pill "Porto de Alter do Chão" (Ícone de Barco).
+       • Botão Pill "Rodoviária de Santarém" (Ícone de Ônibus).
+       • Botão Pill "Aeroporto de Santarém" (Ícone de Avião).
+       • Ação: Atualiza dinamicamente as distâncias, percursos e o card de detalhes da origem escolhida.
+   * Indicadores de Status:
+     - Badge "Verificado em [Data]": Escudo de validação editorial recente.
+     - Pill Selecionada: Fundo verde escuro com texto em destaque branco.
+   * Conteúdos Exibidos:
+     - Resumo narrativo da rota.
+     - Descrição detalhada do ponto de origem selecionado no simulador.
+
+[5.3] PREVIEW DO MAPA INTERATIVO & ALERTAS TERRITORIAIS
+   * Elementos Interativos:
+     - Botão / Link "Expandir Tela Cheia →": Navega para o Mapa Interativo (/route/[routeId]/map).
+     - Botão Flutuante de Overlay "Abrir Mapa Interativo em Tela Cheia":
+       • Ação: Abre a experiência de mapa em modo imersivo.
+     - Pins do Mapa de Preview: Clique para visualizar o ponto no mapa.
+     - Botão "Ver Todos os Atores ([Quantidade]) →": Direciona para o Catálogo Contextual completo (/route/[routeId]/catalog).
+     - Botão CTA "Explorar Catálogo Completo em Tela Cheia".
+   * Indicadores de Status:
+     - Card de Alerta Territorial (Borda Amarela / Warning): Exibe avisos de segurança ou condições climáticas com data/hora de atualização.
+   * Conteúdos Exibidos:
+     - Pré-visualização do mapa da rota com trajetos e pins.
+     - Alertas em tempo real (ex: "Trecho com maré alta ou sinal fraco").
+     - Cards resumidos dos primeiros atores comunitários da rota.
+
+-------------------------------------------------------------------------------
+6. TELA 5: MAPA INTERATIVO DA ROTA em Tela Cheia (/route/[routeId]/map.tsx)
+-------------------------------------------------------------------------------
+
+[6.1] ÁREA DO MAPA & CONTROLES FLUTUANTES
+   * Elementos Interativos:
+     - Botão de Zoom [+] (Aumentar Zoom):
+       • Ação: Simula a ampliação da escala do mapa.
+     - Botão de Zoom [-] (Diminuir Zoom):
+       • Ação: Simula a redução da escala do mapa.
+     - Pins Interativos de Atores Locais (MapPin):
+       • Ação: Toque no pin destaca a localização e abre o Modal Bottom-Sheet com os detalhes do estabelecimento.
+     - Chips Flutuantes de Categoria na Parte Inferior:
+       • Chip "Tudo": Exibe todos os pontos do mapa.
+       • Chip "Hospedagem" (Ícone Cama).
+       • Chip "Alimentação" (Ícone Talheres/Restaurante).
+       • Chip "Emergência" (Ícone Médico/Cruz).
+       • Ação: Filtra em tempo real quais pins são exibidos no mapa.
+   * Indicadores de Status & Legenda:
+     - Legenda do Mapa (MapLegend): Exibe códigos de cores e símbolos de acessibilidade/serviços presentes no mapa.
+     - Pin Selecionado: Destaque visual e indicação de foco.
+   * Conteúdos Exibidos:
+     - Imagem vetorial/raster de alta qualidade do mapa geográfico da rota (pindobal_interactive_map.jpg).
+
+[6.2] MODAL BOTTOM-SHEET DE DETALHES DO PONTO SELECIONADO
+   * Elementos Interativos:
+     - Botão Fechar ("X" ou toque no fundo escuro):
+       • Ação: Oculta o modal e desmarca o ponto.
+     - Botão "Ver no Catálogo Contextual" (Com ícone de seta):
+       • Ação: Redireciona para o catálogo com o foco no ator selecionado.
+   * Indicadores de Status:
+     - Badge "Selo Verde": Indicador de sustentabilidade socioambiental do ponto.
+   * Conteúdos Exibidos:
+     - Miniatura da Foto do Ponto.
+     - Nome do Ator/Empreendimento (ex: "Restaurante Oca do Tapajós").
+     - Subcategoria (ex: "Gastronomia Regional").
+     - Endereço / Localização aproximada na rota.
+
+-------------------------------------------------------------------------------
+7. TELA 6: CATÁLOGO CONTEXTUAL DE ATORES (/route/[routeId]/catalog.tsx)
+-------------------------------------------------------------------------------
+
+[7.1] BARRA DE FILTROS & BUSCA
+   * Elementos Interativos:
+     - Campo de Busca (SearchInput):
+       • Ação: Filtra atores pelo nome, subcategoria ou descrição em tempo real.
+     - Carrossel de Categorias (CategoryFilters):
+       • Chips selecionáveis: "Todos", "Hospedagem", "Alimentação", "Artesanato", "Guias Locais", "Emergência".
+       • Ação: Filtra a lista de atores pela categoria selecionada.
+   * Indicadores de Status:
+     - Count Chip de Atores Locais ("X Atores Locais"): Badge branca/verde mostrando o número total de estabelecimentos cadastrados na rota.
+   * Conteúdos Exibidos:
+     - Banner de Inventário Contextual com o nome da rota ativa.
+
+[7.2] CARDS DE ATORES COMUNITÁRIOS (ActorCard)
+   * Elementos Interativos:
+     - Toque no Card do Ator:
+       • Ação: Exibe informações detalhadas e opções de contato do ator local.
+     - Botão de Coração (Favorito):
+       • Ação: Salva ou remove o ator da lista de favoritos do usuário.
+     - Botão "Resetar Filtros" no Estado Vazio:
+       • Ação: Restaura a busca e limpa as categorias selecionadas quando não há correspondências.
+   * Indicadores de Status & Acessibilidade:
+     - Badge "Selo Verde": Garantia de práticas comunitárias e de baixo impacto ambiental.
+     - Avaliação com Estrelas (ex: "4.9 (28 avaliações)").
+     - Tag de Acessibilidade Territorial: Ícone de acessibilidade + lista de recursos disponíveis (ex: "Rampa de Acesso • Cardápio em Áudio • Banheiro Adaptado").
+   * Conteúdos Exibidos:
+     - Foto do estabelecimento/serviço.
+     - Tag da Subcategoria em maiúsculas (ex: "POUSADA ECOLÓGICA").
+     - Nome do Ator, Endereço e Descrição Narrativa da experiência oferecida.
+
+===============================================================================
+                       FIM DA DOCUMENTAÇÃO DE TELAS
+===============================================================================

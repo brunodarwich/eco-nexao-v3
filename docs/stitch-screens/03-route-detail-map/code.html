@@ -1,0 +1,191 @@
+<html lang="pt-br"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: 'class', theme: { extend: { colors: { 'surface-container-lowest': '#ffffff', 'tertiary-container': '#cea700', 'on-tertiary': '#ffffff', 'background': '#f9faf7', 'surface': '#f9faf7', 'surface-tint': '#3c6926', 'surface-bright': '#f9faf7', 'on-background': '#191c1b', 'primary-fixed-dim': '#a1d584', 'sage-green': '#759B71', 'on-surface': '#191c1b', 'primary-container': '#33601e', 'surface-container-high': '#e7e8e6', 'surface-container-low': '#f3f4f1', 'on-tertiary-fixed': '#231b00', 'surface-container': '#edeeeb', 'error': '#B91C1C', 'secondary': '#466736', 'on-secondary-container': '#4b6d3b', 'secondary-fixed-dim': '#abd196', 'tertiary': '#735c00', 'on-primary-container': '#a5d988', 'on-secondary-fixed': '#062100', 'surface-dim': '#d9dad8', 'primary-fixed': '#bcf19e', 'inverse-on-surface': '#f0f1ee', 'warning': '#F8C900', 'outline-variant': '#c2c9b9', 'tertiary-fixed-dim': '#efc100', 'on-error-container': '#93000a', 'primary': '#1c4807', 'error-container': '#ffdad6', 'on-primary-fixed-variant': '#245110', 'on-secondary': '#ffffff', 'inverse-primary': '#a1d584', 'tertiary-fixed': '#ffe085', 'on-secondary-fixed-variant': '#2f4f20', 'on-primary': '#ffffff', 'outline': '#72796c', 'on-tertiary-container': '#4e3e00', 'secondary-container': '#c6eeb0', 'inverse-surface': '#2e312f', 'text-main': '#1C3B0F', 'on-error': '#ffffff', 'surface-variant': '#e2e3e0', 'success': '#5D8D3E', 'on-tertiary-fixed-variant': '#574500', 'surface-container-highest': '#e2e3e0', 'on-primary-fixed': '#072100', 'surface-white': '#FFFFFF', 'on-surface-variant': '#42493d', 'secondary-fixed': '#c6eeb0', 'leaf-green': '#5D8D3E' }, borderRadius: { 'DEFAULT': '0.25rem', 'lg': '0.5rem', 'xl': '0.75rem', 'full': '9999px' }, spacing: { 'stack-sm': '8px', 'unit': '4px', 'gutter': '24px', 'margin-desktop': '64px', 'stack-md': '16px', 'margin-mobile': '16px', 'stack-lg': '32px' }, fontFamily: { 'display-lg': ['Hanken Grotesk'], 'label-sm': ['Hanken Grotesk'], 'headline-md': ['Hanken Grotesk'], 'headline-lg': ['Hanken Grotesk'], 'body-lg': ['Hanken Grotesk'], 'body-md': ['Hanken Grotesk'], 'label-md': ['Hanken Grotesk'] }, fontSize: { 'display-lg': ['48px', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '800' }], 'label-sm': ['12px', { lineHeight: '1.2', fontWeight: '500' }], 'headline-md': ['24px', { lineHeight: '1.3', fontWeight: '600' }], 'headline-lg': ['32px', { lineHeight: '1.2', fontWeight: '700' }], 'body-lg': ['18px', { lineHeight: '1.6', fontWeight: '400' }], 'body-md': ['16px', { lineHeight: '1.6', fontWeight: '400' }], 'label-md': ['14px', { lineHeight: '1.2', letterSpacing: '0.05em', fontWeight: '600' }] } } } }</script><style>@layer base { body { -webkit-tap-highlight-color: transparent; } .pt-safe { padding-top: env(safe-area-inset-top); } }</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface font-body-md"><header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-margin-mobile flex items-center gap-4"><button class="w-10 h-10 flex items-center justify-center text-sage-green hover:bg-sage-green/10 rounded-full transition-colors" onclick="history.back()"><span class="material-symbols-outlined">arrow_back</span></button><div class="flex items-center gap-2"><img alt="Logo" class="h-6 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AP1WRLsQXU2AavT9r5sMmtjUT9r9g4F9zraA7tIzb7Ppo9dVT8JQpz3DdeedDH4DQE4WDBHGIyZ-jtJvFppUL48Og8OhcQMLeS-SNpAKybxrLoSq1PUew0TGl9SnxsiN6wa20nnIWWdXkZXP1wBUuBnCLtiMNCYjCiCDeK7b5CS8ikWR0I-ru0cwexFAb7327RFW6UFNzQaKrcSzSpGnHk3uevPQfuYPV_RV1Jc8cyBd9Fw3Zeue1QdYVGS0WJr8FtAVQF_WLh58g0YX6Co"/><h1 class="font-headline-md text-headline-md text-primary">Detalhes Da Rota</h1></div></div></header><main class="pt-16 min-h-screen bg-surface"><div class="flex flex-col w-full relative overflow-hidden" style="height: calc(100vh - 64px);">
+<!-- Map Area Container -->
+<div class="relative w-full h-full flex-grow">
+<!-- Using data-location for map generation pipeline. Adding placeholder background and data-alt so it visually renders something while map loads if pipeline doesn't catch it immediately, though pipeline prefers data-location on div. -->
+<div class="absolute inset-0 w-full h-full bg-cover bg-center" data-alt="A stylized, high-contrast digital map showing a winding route through a coastal and forested area, representing Rota Pindobal. The map uses a minimalist aesthetic with a light background and a thick, solid #33601E forest green line tracing the route. Several distinct colorful pin markers are scattered along the path." data-location="Rota Pindobal, Santarém, Pará, Brazil" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA2UuTZItsdPsbwZ9kzEDEvPuYR3YN8wt3LwNOXMh_IMroaiqYdjZyYiUY1l-vap32WiDiKz-RY3dAnkTrhOiozVDP2PB-bKSkcj1EZlRY00Fv8r7oEFd-dpag5LD1UYXdI9KMmtzSJClMrxvUyTp__p0CFyESFlboWtLBTZdHXSNJI1eci9FWsFNxS-UvmwEvgn0bq3pb7-F4Ugss2InUASstsAmbInKSOF1TSHbXAjEQxwKUspfxIkA')">
+<!-- Decorative UI overlay to simulate map controls -->
+<div class="absolute right-margin-mobile top-margin-mobile flex flex-col gap-unit">
+<button aria-label="Zoom in" class="w-10 h-10 bg-surface-container-lowest shadow-md rounded-full flex items-center justify-center text-on-surface hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined">add</span>
+</button>
+<button aria-label="Zoom out" class="w-10 h-10 bg-surface-container-lowest shadow-md rounded-full flex items-center justify-center text-on-surface hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined">remove</span>
+</button>
+</div>
+<!-- Simulated Pins for Interactive Feel (Positioned absolutely over map placeholder) -->
+<div class="absolute top-[30%] left-[20%] group">
+<button class="relative flex flex-col items-center z-10 hover:z-20 transform transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-full p-1" onclick="openBottomSheet('pin-1')">
+<div class="w-8 h-8 bg-tertiary-container rounded-full flex items-center justify-center text-on-tertiary shadow-md">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+</div>
+<div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-tertiary-container -mt-1 drop-shadow-md"></div>
+</button>
+</div>
+<div class="absolute top-[50%] left-[60%] group">
+<button class="relative flex flex-col items-center z-10 hover:z-20 transform transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-full p-1" onclick="openBottomSheet('pin-2')">
+<div class="w-8 h-8 bg-primary-container rounded-full flex items-center justify-center text-on-primary shadow-md">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">bed</span>
+</div>
+<div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-primary-container -mt-1 drop-shadow-md"></div>
+</button>
+</div>
+<div class="absolute top-[70%] left-[40%] group">
+<button class="relative flex flex-col items-center z-10 hover:z-20 transform transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-full p-1" onclick="openBottomSheet('pin-3')">
+<div class="w-8 h-8 bg-leaf-green rounded-full flex items-center justify-center text-on-primary shadow-md">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">landscape</span>
+</div>
+<div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-leaf-green -mt-1 drop-shadow-md"></div>
+</button>
+</div>
+<!-- Filter Bar Floating over map -->
+<div class="absolute bottom-margin-mobile left-margin-mobile right-margin-mobile flex gap-stack-sm overflow-x-auto pb-stack-sm scrollbar-hide snap-x">
+<button class="snap-start flex-none px-4 py-2 bg-primary-container text-on-primary rounded-full font-label-md shadow-md whitespace-nowrap">Tudo</button>
+<button class="snap-start flex-none px-4 py-2 bg-surface-container-lowest text-on-surface rounded-full font-label-md shadow-md whitespace-nowrap flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-tertiary-container">restaurant</span> Alimentação
+                 </button>
+<button class="snap-start flex-none px-4 py-2 bg-surface-container-lowest text-on-surface rounded-full font-label-md shadow-md whitespace-nowrap flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-primary-container">bed</span> Hospedagem
+                 </button>
+<button class="snap-start flex-none px-4 py-2 bg-surface-container-lowest text-on-surface rounded-full font-label-md shadow-md whitespace-nowrap flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-leaf-green">landscape</span> Natureza
+                 </button>
+</div>
+</div>
+</div>
+<!-- Bottom Sheet (Hidden by default, slides up on pin click) -->
+<div class="fixed inset-x-0 bottom-0 z-50 transform translate-y-full transition-transform duration-300 ease-out bg-surface-container-lowest shadow-[0_-4px_24px_rgba(28,59,15,0.1)] rounded-t-xl overflow-hidden flex flex-col max-h-[707px]" id="bottom-sheet">
+<!-- Drag Handle / Drag Area -->
+<div class="w-full pt-3 pb-2 flex justify-center cursor-pointer touch-pan-y" onclick="closeBottomSheet()">
+<div class="w-12 h-1.5 bg-surface-variant rounded-full"></div>
+</div>
+<!-- Sheet Content Area -->
+<div class="px-margin-mobile pb-margin-mobile overflow-y-auto" id="sheet-content">
+<!-- Content will be injected here via JS based on selected pin -->
+</div>
+</div>
+<!-- Backdrop for Bottom Sheet -->
+<div class="fixed inset-0 bg-inverse-surface/40 z-40 hidden transition-opacity duration-300 opacity-0" id="sheet-backdrop" onclick="closeBottomSheet()"></div>
+<!-- Accessible Alternative List View (Hidden visually, available for screen readers or toggle) -->
+<div class="sr-only">
+<h2>Pontos na Rota Pindobal</h2>
+<ul>
+<li>Restaurante Sabor Local - Categoria: Alimentação. Clique para mais detalhes.</li>
+<li>Pousada Recanto - Categoria: Hospedagem. Clique para mais detalhes.</li>
+<li>Mirante da Praia - Categoria: Natureza. Clique para mais detalhes.</li>
+</ul>
+</div>
+</div>
+<style>
+    /* Utility to hide scrollbar for horizontal filter list but keep functionality */
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+</style>
+<script>
+    // Data store for pin details
+    const pinData = {
+        'pin-1': {
+            title: 'Restaurante Sabor Local',
+            category: 'Alimentação',
+            icon: 'restaurant',
+            colorClass: 'text-tertiary-container',
+            bgClass: 'bg-tertiary-container',
+            description: 'Especializado em peixes regionais assados na brasa, servidos de frente para a praia. Ambiente rústico e acolhedor.',
+            imageAlt: 'A cozy rustic restaurant patio overlooking a calm beach, wooden tables under a thatched roof, warm sunny afternoon lighting, cinematic wide shot, high contrast photography, natural earthy tones, green accents.',
+            rating: '4.8',
+            reviews: '124',
+            actionText: 'Ver Menu'
+        },
+        'pin-2': {
+            title: 'Pousada Recanto',
+            category: 'Hospedagem',
+            icon: 'bed',
+            colorClass: 'text-primary-container',
+            bgClass: 'bg-primary-container',
+            description: 'Chalés confortáveis integrados à natureza. Café da manhã com tapioca fresca e frutas locais incluso na diária.',
+            imageAlt: 'Cozy wooden chalets surrounded by lush tropical forest, a hammock hanging on the porch, dappled sunlight filtering through leaves, peaceful morning atmosphere, highly detailed architectural photography.',
+            rating: '4.9',
+            reviews: '89',
+            actionText: 'Reservar'
+        },
+        'pin-3': {
+            title: 'Mirante da Praia',
+            category: 'Natureza',
+            icon: 'landscape',
+            colorClass: 'text-leaf-green',
+            bgClass: 'bg-leaf-green',
+            description: 'Ponto de observação perfeito para o pôr do sol. Acesso por uma trilha leve de 15 minutos partindo da praia principal.',
+            imageAlt: 'A breathtaking panoramic view from a hilltop overlooking a wide river meeting the horizon. Golden hour sunset lighting casting warm hues over the water and surrounding green hills. Minimalist composition, deep shadows, crisp details.',
+            rating: '5.0',
+            reviews: '210',
+            actionText: 'Como Chegar'
+        }
+    };
+
+    const bottomSheet = document.getElementById('bottom-sheet');
+    const sheetBackdrop = document.getElementById('sheet-backdrop');
+    const sheetContent = document.getElementById('sheet-content');
+
+    function openBottomSheet(pinId) {
+        const data = pinData[pinId];
+        if (!data) return;
+
+        // Populate content
+        sheetContent.innerHTML = `
+            <div class="h-48 w-full rounded-lg mb-stack-md bg-cover bg-center shadow-sm relative overflow-hidden" 
+                 style="background-image: url('placeholder')" 
+                 data-alt="${data.imageAlt}">
+                 <div class="absolute top-2 right-2 bg-surface-container-lowest/90 backdrop-blur px-2 py-1 rounded font-label-sm text-on-surface flex items-center gap-1 shadow-sm">
+                     <span class="material-symbols-outlined text-[14px] text-warning" style="font-variation-settings: 'FILL' 1;">star</span>
+                     ${data.rating} (${data.reviews})
+                 </div>
+            </div>
+            
+            <div class="flex items-center gap-2 mb-stack-sm">
+                <span class="material-symbols-outlined text-[20px] ${data.colorClass}" style="font-variation-settings: 'FILL' 1;">${data.icon}</span>
+                <span class="font-label-md text-on-surface-variant uppercase tracking-wider">${data.category}</span>
+            </div>
+            
+            <h3 class="font-headline-md text-text-main mb-stack-sm">${data.title}</h3>
+            
+            <p class="font-body-md text-on-surface mb-stack-lg">${data.description}</p>
+            
+            <button class="w-full py-3 bg-primary-container text-on-primary rounded font-label-md text-center hover:bg-primary transition-colors flex justify-center items-center gap-2">
+                ${data.actionText}
+                <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+            </button>
+        `;
+
+        // Show sheet and backdrop
+        sheetBackdrop.classList.remove('hidden');
+        // trigger reflow
+        void sheetBackdrop.offsetWidth;
+        sheetBackdrop.classList.remove('opacity-0');
+        sheetBackdrop.classList.add('opacity-100');
+        
+        bottomSheet.classList.remove('translate-y-full');
+        bottomSheet.classList.add('translate-y-0');
+    }
+
+    function closeBottomSheet() {
+        bottomSheet.classList.remove('translate-y-0');
+        bottomSheet.classList.add('translate-y-full');
+        
+        sheetBackdrop.classList.remove('opacity-100');
+        sheetBackdrop.classList.add('opacity-0');
+        
+        setTimeout(() => {
+            sheetBackdrop.classList.add('hidden');
+        }, 300); // match transition duration
+    }
+</script></main></body></html>
