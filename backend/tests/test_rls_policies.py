@@ -45,6 +45,12 @@ def test_migration_files_and_seed_exist() -> None:
         "20260813084440_harden_storage_buckets_and_policies.sql",
         "20260813091542_editorial_rbac_and_audit_trail.sql",
         "20260813102503_pindobal_spatial_integrity.sql",
+        "20260813141416_add_editorial_media_lifecycle.sql",
+        "20260813142059_harden_editorial_media_lifecycle.sql",
+        "20260813142447_finalize_media_kind_invariants.sql",
+        "20260813142802_close_derivative_metadata_null_gap.sql",
+        "20260813152038_allow_media_processing_without_storage_key.sql",
+        "20260813175721_archive_duplicate_route_actor_links.sql",
     }
     assert (REPOSITORY_ROOT / "supabase" / "seed.sql").is_file()
 
@@ -145,6 +151,19 @@ def test_editorial_rbac_is_private_deny_by_default_and_audit_is_immutable() -> N
     assert "SECURITY DEFINER" not in sql
     assert "auth.role()" not in sql
     assert "user_metadata" not in sql
+
+
+def test_reconciliation_archives_duplicate_route_links_reversibly() -> None:
+    sql = (
+        MIGRATIONS_DIR / "20260813175721_archive_duplicate_route_actor_links.sql"
+    ).read_text(encoding="utf-8")
+    assert "ADD COLUMN archived_at TIMESTAMPTZ" in sql
+    assert "ADD COLUMN archived_by UUID REFERENCES auth.users(id) ON DELETE RESTRICT" in sql
+    assert "chk_route_actors_archive_metadata" in sql
+    assert "btrim(archive_reason) <> ''" in sql
+    assert "WHERE archived_at IS NULL" in sql
+    assert "DELETE FROM" not in sql.upper()
+    assert "SECURITY DEFINER" not in sql.upper()
 
 
 def test_editorial_rbac_contains_adr_roles_capabilities_and_state_machine() -> None:

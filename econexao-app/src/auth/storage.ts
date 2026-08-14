@@ -6,7 +6,7 @@ const memory = new Map<string, string>();
 
 export const authStorage: SupportedStorage = {
   getItem: async (key: string): Promise<string | null> => {
-    if (Platform.OS !== 'web') {
+    if (typeof Platform !== 'undefined' && Platform?.OS && Platform.OS !== 'web') {
       try {
         return await SecureStore.getItemAsync(key);
       } catch {
@@ -15,6 +15,7 @@ export const authStorage: SupportedStorage = {
     }
     return memory.get(key) ?? null;
   },
+
   setItem: async (key: string, value: string): Promise<void> => {
     if (Platform.OS !== 'web') {
       try {

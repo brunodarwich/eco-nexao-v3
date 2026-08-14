@@ -253,6 +253,10 @@ class RouteActor(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.clock_timestamp(), nullable=False
     )
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # The auth.users FK is migration-owned; the ORM does not model managed schemas.
+    archived_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    archive_reason: Mapped[str | None] = mapped_column(TEXT, nullable=True)
 
     route: Mapped["Route"] = relationship("Route", back_populates="route_actors")
     actor: Mapped["Actor"] = relationship("Actor", back_populates="route_actors")
@@ -353,10 +357,30 @@ class MediaAsset(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     owner_type: Mapped[str] = mapped_column(VARCHAR(50), nullable=False)
     owner_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
-    storage_key: Mapped[str] = mapped_column(TEXT, nullable=False)
+    storage_key: Mapped[str | None] = mapped_column(TEXT, nullable=True)
     mime_type: Mapped[str] = mapped_column(VARCHAR(100), nullable=False)
     alt_text: Mapped[str | None] = mapped_column(TEXT, nullable=True)
     credit: Mapped[str | None] = mapped_column(TEXT, nullable=True)
+    license_code: Mapped[str | None] = mapped_column(VARCHAR(40), nullable=True)
+    processing_status: Mapped[str] = mapped_column(
+        VARCHAR(20), default="pending", nullable=False
+    )
+    checksum_sha256: Mapped[str | None] = mapped_column(VARCHAR(64), nullable=True)
+    width_px: Mapped[int | None] = mapped_column(INTEGER, nullable=True)
+    height_px: Mapped[int | None] = mapped_column(INTEGER, nullable=True)
+    derivatives: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, nullable=False)
+    location: Mapped[Any | None] = mapped_column(
+        Geography(geometry_type="POINT", srid=4326), nullable=True
+    )
+    processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    rejected_reason: Mapped[str | None] = mapped_column(TEXT, nullable=True)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    media_kind: Mapped[str] = mapped_column(VARCHAR(20), default="stored", nullable=False)
+    external_photo_reference: Mapped[str | None] = mapped_column(TEXT, nullable=True)
+    external_attributions: Mapped[list[Any] | None] = mapped_column(JSONB, nullable=True)
+    external_cache_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     sort_order: Mapped[int] = mapped_column(INTEGER, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.clock_timestamp(), nullable=False

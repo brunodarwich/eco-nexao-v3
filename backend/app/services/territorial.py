@@ -31,11 +31,13 @@ from app.schemas.envelopes import (
     RouteOriginSchema,
     RouteSummarySchema,
 )
+from app.services.media_resolution import MediaResolutionService
 
 
 class TerritorialService:
     def __init__(self, db: AsyncSession) -> None:
         self.repo = TerritorialRepository(db)
+        self.media_resolver = MediaResolutionService(db)
 
     # -------------------------------------------------------------------------
     # ECO-0501: Regions & Bootstrap
@@ -126,6 +128,9 @@ class TerritorialService:
             offset=offset,
         )
 
+        route_ids = [r.id for r in routes]
+        covers = await self.media_resolver.batch_resolve_covers_for_owners("route", route_ids)
+
         summaries = [
             RouteSummarySchema(
                 id=r.id,
@@ -137,6 +142,8 @@ class TerritorialService:
                 status=r.status,
                 is_verified=r.is_verified,
                 best_season=r.best_season,
+                cover_image_url=covers[r.id].url if r.id in covers else None,
+                cover_media=covers.get(r.id),
             )
             for r in routes
         ]
@@ -165,6 +172,10 @@ class TerritorialService:
             for o in route.origins
         ]
 
+        cover_item, gallery_items = await self.media_resolver.resolve_media_for_owner(
+            "route", route.id
+        )
+
         detail = RouteDetailSchema(
             id=route.id,
             slug=route.slug,
@@ -179,6 +190,9 @@ class TerritorialService:
             connectivity=route.connectivity,
             road_access=route.road_access,
             payment_info=route.payment_info,
+            cover_image_url=cover_item.url if cover_item else None,
+            cover_media=cover_item,
+            gallery=gallery_items,
             origins=origins,
         )
         return RouteDetailEnvelope(data=detail)
@@ -360,6 +374,9 @@ class TerritorialService:
             offset=offset,
         )
 
+        actor_ids = [actor.id for actor, _, _, _ in actors_data]
+        covers = await self.media_resolver.batch_resolve_covers_for_owners("actor", actor_ids)
+
         summaries = [
             ActorSummarySchema(
                 id=actor.id,
@@ -375,6 +392,8 @@ class TerritorialService:
                 google_rating=float(actor.google_rating)
                 if actor.google_rating is not None
                 else None,
+                cover_image_url=covers[actor.id].url if actor.id in covers else None,
+                cover_media=covers.get(actor.id),
             )
             for actor, cat_slug, lat, lon in actors_data
         ]
@@ -396,6 +415,10 @@ class TerritorialService:
             icon=actor.category.icon,
             color=actor.category.color,
             sort_order=actor.category.sort_order,
+        )
+
+        cover_item, gallery_items = await self.media_resolver.resolve_media_for_owner(
+            "actor", actor.id
         )
 
         detail = ActorDetailSchema(
@@ -421,6 +444,9 @@ class TerritorialService:
             google_place_id=google_place_id,
             google_rating=float(actor.google_rating) if actor.google_rating is not None else None,
             google_review_count=actor.google_review_count,
+            cover_image_url=cover_item.url if cover_item else None,
+            cover_media=cover_item,
+            gallery=gallery_items,
             accessibility_features=features,
         )
         return ActorDetailEnvelope(data=detail)

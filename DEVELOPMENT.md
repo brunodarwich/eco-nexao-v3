@@ -178,6 +178,15 @@ cd backend
 .\.venv\Scripts\python.exe -m scripts.verify_editorial_rbac
 ```
 
+Para verificar o arquivamento reversível de vínculos usado pela reconciliação
+editorial, incluindo a constraint de metadados e a restauração da identidade do
+vínculo, execute no mesmo ambiente isolado (todas as escritas sofrem rollback):
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m scripts.verify_editorial_workflow
+```
+
 ## Variáveis de ambiente
 
 Copie `econexao-app/.env.example` para `econexao-app/.env.local` e

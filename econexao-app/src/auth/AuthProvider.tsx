@@ -16,6 +16,10 @@ export interface AuthContextValue {
   retry: () => void;
   signOut: () => Promise<void>;
   linkEmail: (email: string) => Promise<void>;
+  linkAccount: (email: string, password?: string) => Promise<void>;
+  signInWithPassword: (email: string, password: string) => Promise<Session>;
+  signUp: (email: string, password: string) => Promise<Session | null>;
+  resetPassword: (email: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -87,8 +91,13 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
       retry,
       signOut: () => manager.signOut(),
       linkEmail: (email) => manager.linkEmail(email),
+      linkAccount: (email, password) => manager.linkAccount(email, password),
+      signInWithPassword: (email, password) => manager.signInWithPassword(email, password),
+      signUp: (email, password) => manager.signUp(email, password),
+      resetPassword: (email) => manager.resetPassword(email),
     }),
     [error, retry, session, status]
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+

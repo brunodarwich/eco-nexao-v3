@@ -93,9 +93,44 @@ export class AuthSessionManager {
     if (error) throw error;
   }
 
+  async linkAccount(email: string, password?: string): Promise<void> {
+    const payload: { email: string; password?: string } = { email };
+    if (password) payload.password = password;
+    const { data, error } = await this.client.auth.updateUser(payload);
+    if (error) throw error;
+    if (this.session && data.user) {
+      this.setSession({ ...this.session, user: data.user });
+    }
+  }
+
+  async signInWithPassword(email: string, password: string): Promise<Session> {
+    const { data, error } = await this.client.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    if (!data.session) throw new Error('Não foi possível obter uma sessão após o login.');
+    this.explicitlySignedOut = false;
+    this.setSession(data.session);
+    return data.session;
+  }
+
+  async signUp(email: string, password: string): Promise<Session | null> {
+    const { data, error } = await this.client.auth.signUp({ email, password });
+    if (error) throw error;
+    if (data.session) {
+      this.explicitlySignedOut = false;
+      this.setSession(data.session);
+    }
+    return data.session;
+  }
+
+  async resetPassword(email: string): Promise<void> {
+    const { error } = await this.client.auth.resetPasswordForEmail(email);
+    if (error) throw error;
+  }
+
   async signOut(): Promise<void> {
     this.invalidateSession();
     const { error } = await this.client.auth.signOut({ scope: 'local' });
     if (error) throw error;
   }
 }
+

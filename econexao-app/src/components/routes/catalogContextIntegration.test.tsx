@@ -3,7 +3,7 @@ import renderer, { act } from 'react-test-renderer';
 
 import CatalogScreen from '../../../app/route/[routeId]/catalog';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useActorCategoriesQuery, useRouteActorsQuery } from '../../hooks/queries';
+import { useActorCategoriesQuery, useInfiniteRouteActorsQuery } from '../../hooks/queries';
 import { ActorCard } from '../catalog/ActorCard';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
@@ -26,7 +26,7 @@ jest.mock('../../hooks/useApp', () => ({
 jest.mock('../../hooks/queries', () => ({
   useRegionsQuery: jest.fn().mockReturnValue({ data: [] }),
   useActorCategoriesQuery: jest.fn(),
-  useRouteActorsQuery: jest.fn(),
+  useInfiniteRouteActorsQuery: jest.fn(),
 }));
 
 jest.mock('../../hooks/useOptimisticFavoriteActor', () => ({
@@ -48,31 +48,37 @@ describe('CatalogScreen route context', () => {
       actorId: 'actor-2',
     });
     (useActorCategoriesQuery as jest.Mock).mockReturnValue({ data: [] });
-    (useRouteActorsQuery as jest.Mock).mockReturnValue({
+    (useInfiniteRouteActorsQuery as jest.Mock).mockReturnValue({
       isPending: false,
       isError: false,
+      hasNextPage: false,
+      isFetchingNextPage: false,
       data: {
-        data: [
+        pages: [
           {
-            id: 'actor-1',
-            slug: 'ator-1',
-            name: 'Ator Um',
-            category_slug: 'hospedagem',
-            category_label: 'Hospedagem',
-            green_badge_status: 'none',
-            verification_status: 'verified',
-          },
-          {
-            id: 'actor-2',
-            slug: 'ator-2',
-            name: 'Ator Dois',
-            category_slug: 'alimentacao',
-            category_label: 'Alimentação',
-            green_badge_status: 'verified',
-            verification_status: 'verified',
+            data: [
+              {
+                id: 'actor-1',
+                slug: 'ator-1',
+                name: 'Ator Um',
+                category_slug: 'hospedagem',
+                category_label: 'Hospedagem',
+                green_badge_status: 'none',
+                verification_status: 'verified',
+              },
+              {
+                id: 'actor-2',
+                slug: 'ator-2',
+                name: 'Ator Dois',
+                category_slug: 'alimentacao',
+                category_label: 'Alimentação',
+                green_badge_status: 'verified',
+                verification_status: 'verified',
+              },
+            ],
+            meta: { total: 2, limit: 20 },
           },
         ],
-        meta: { total: 2, limit: 20 },
       },
       refetch: jest.fn(),
     });
@@ -84,7 +90,7 @@ describe('CatalogScreen route context', () => {
       tree = renderer.create(<CatalogScreen />);
     });
 
-    expect(useRouteActorsQuery).toHaveBeenCalledWith(
+    expect(useInfiniteRouteActorsQuery).toHaveBeenCalledWith(
       'route-pindobal',
       expect.objectContaining({ origin_id: 'origin-porto' })
     );
@@ -106,3 +112,4 @@ describe('CatalogScreen route context', () => {
     expect(push).toHaveBeenCalledWith('/actor/actor-2?originId=origin-porto');
   });
 });
+

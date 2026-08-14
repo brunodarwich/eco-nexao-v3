@@ -57,6 +57,14 @@ jest.mock('../../hooks/useOptimisticFavoriteActor', () => ({
   }),
 }));
 
+jest.mock('../../hooks/useOptimisticPreferences', () => ({
+  useOptimisticPreferences: () => ({
+    mutate: jest.fn(),
+    isPending: false,
+  }),
+}));
+
+
 describe('Marco 11 — Integration Tests', () => {
   const push = jest.fn();
   const back = jest.fn();

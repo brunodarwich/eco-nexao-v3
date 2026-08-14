@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { AppHeader } from '../../src/components/common/AppHeader';
@@ -9,9 +9,10 @@ import { SearchInput } from '../../src/components/common/SearchInput';
 import { RouteCard } from '../../src/components/routes/RouteCard';
 import { useApp } from '../../src/hooks/useApp';
 import { useAuth } from '../../src/hooks/useAuth';
-import { useRegionsQuery, useRoutesQuery } from '../../src/hooks/queries';
+import { useInfiniteRoutesQuery, useRegionsQuery, useRoutesQuery } from '../../src/hooks/queries';
 import { useOptimisticFavoriteRoute } from '../../src/hooks/useOptimisticFavoriteRoute';
 import { theme } from '../../src/theme/theme';
+import type { RouteSummary } from '../../src/api/types';
 
 type FilterType = 'all' | 'saved' | 'verified';
 
@@ -35,7 +36,7 @@ export default function RoutesScreen() {
   const activeRegionId = state.activeRegionId ?? regionsQuery.data?.[0]?.id;
   const hasNoRegions = regionsQuery.isSuccess && !activeRegionId;
 
-  const routesQuery = useRoutesQuery(
+  const routesQuery = useInfiniteRoutesQuery(
     activeRegionId,
     {
       q: debouncedSearch || undefined,
@@ -49,6 +50,7 @@ export default function RoutesScreen() {
   const { toggleFavorite } = useOptimisticFavoriteRoute();
 
   const savedRouteIds = new Set(savedRoutesQuery.data?.data.map((r) => r.id));
+  const allRoutes: RouteSummary[] = routesQuery.data?.pages.flatMap((page) => page.data) ?? [];
 
   const handleResetFilters = () => {
     setSearchQuery('');
@@ -106,19 +108,37 @@ export default function RoutesScreen() {
             message="Não foi possível carregar a lista de rotas."
             onRetry={() => void routesQuery.refetch()}
           />
-        ) : routesQuery.data?.data.length ? (
-          routesQuery.data.data.map((route) => {
-            const isFav = savedRouteIds.has(route.id);
-            return (
-              <RouteCard
-                key={route.id}
-                route={route}
-                isFavorite={isFav}
-                onPress={() => router.push(`/route/${route.id}`)}
-                onToggleFavorite={() => toggleFavorite(route.id, isFav)}
-              />
-            );
-          })
+        ) : allRoutes.length > 0 ? (
+          <>
+            {allRoutes.map((route) => {
+              const isFav = savedRouteIds.has(route.id);
+              return (
+                <RouteCard
+                  key={route.id}
+                  route={route}
+                  isFavorite={isFav}
+                  onPress={() => router.push(`/route/${route.id}`)}
+                  onToggleFavorite={() => toggleFavorite(route.id, isFav)}
+                />
+              );
+            })}
+
+            {routesQuery.hasNextPage && (
+              <TouchableOpacity
+                style={styles.loadMoreButton}
+                onPress={() => void routesQuery.fetchNextPage()}
+                disabled={routesQuery.isFetchingNextPage}
+                accessibilityRole="button"
+                accessibilityLabel="Carregar mais rotas"
+              >
+                {routesQuery.isFetchingNextPage ? (
+                  <ActivityIndicator size="small" color="#059669" />
+                ) : (
+                  <Text style={styles.loadMoreText}>Carregar Mais Rotas</Text>
+                )}
+              </TouchableOpacity>
+            )}
+          </>
         ) : (
           <EmptyStateView
             title="Nenhuma rota encontrada"
@@ -150,4 +170,19 @@ const styles = StyleSheet.create({
     gap: 8,
     flexWrap: 'wrap',
   },
+  loadMoreButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#059669',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  loadMoreText: {
+    color: '#059669',
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });
+

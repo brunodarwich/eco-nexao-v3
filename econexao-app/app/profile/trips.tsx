@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -7,15 +7,17 @@ import { AppHeader } from '../../src/components/common/AppHeader';
 import { EmptyStateView, ErrorStateView, LoadingView } from '../../src/components/common/UIStateViews';
 import { useMyTripsQuery } from '../../src/hooks/queries';
 import { useAuth } from '../../src/hooks/useAuth';
-import { theme } from '../../src/theme/theme';
+import { useAppTheme } from '../../src/theme/theme';
+import { makeAccessibleButton } from '../../src/utils/accessibility';
 
 export default function TripsHistoryScreen() {
   const router = useRouter();
+  const theme = useAppTheme();
   const { user } = useAuth();
   const tripsQuery = useMyTripsQuery(user?.id);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.surfaceBackground }]}>
       <AppHeader showBack onBackPress={() => router.back()} title="Histórico de Viagens" />
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -28,20 +30,74 @@ export default function TripsHistoryScreen() {
             onRetry={() => void tripsQuery.refetch()}
           />
         ) : tripsQuery.data?.length ? (
-          tripsQuery.data.map((trip: any) => (
-            <View key={trip.id || Math.random().toString()} style={styles.tripCard}>
-              <View style={styles.tripHeader}>
-                <Ionicons name="navigate-circle" size={24} color={theme.colors.brandForest} />
-                <Text style={styles.tripTitle}>{trip.route_name || 'Viagem em Rota Ecológica'}</Text>
-              </View>
-              <Text style={styles.tripDate}>
-                Data: {new Date(trip.created_at || Date.now()).toLocaleDateString('pt-BR')}
-              </Text>
-              <Text style={styles.tripStatus}>
-                Status: {trip.status === 'completed' ? 'Concluída' : 'Em andamento'}
-              </Text>
-            </View>
-          ))
+          tripsQuery.data.map((trip: any) => {
+            const title = trip.route_title || trip.route_name || 'Trilha / Rota Ecológica';
+            const isCompleted = trip.status === 'completed';
+            const hasRoute = Boolean(trip.route_id);
+
+            return (
+              <TouchableOpacity
+                key={trip.id || Math.random().toString()}
+                style={[
+                  styles.tripCard,
+                  {
+                    backgroundColor: theme.colors.surfaceWhite,
+                    borderColor: theme.isHighContrast ? theme.colors.brandForest : 'rgba(117, 155, 113, 0.15)',
+                    borderWidth: theme.isHighContrast ? 2 : 1,
+                  },
+                ]}
+                disabled={!hasRoute}
+                onPress={() => {
+                  if (hasRoute) {
+                    router.push(`/route/${trip.route_id}`);
+                  }
+                }}
+                {...makeAccessibleButton(
+                  `Viagem ${title}`,
+                  hasRoute ? 'Toque para ver os detalhes da rota' : undefined
+                )}
+              >
+                <View style={styles.tripHeader}>
+                  <Ionicons
+                    name={isCompleted ? 'checkmark-circle' : 'compass'}
+                    size={24}
+                    color={isCompleted ? theme.colors.brandForest : theme.colors.brandLeaf}
+                  />
+                  <Text
+                    style={[
+                      styles.tripTitle,
+                      theme.typography.titleMd,
+                      { color: theme.colors.brandDeep, fontWeight: '700' },
+                    ]}
+                  >
+                    {title}
+                  </Text>
+                </View>
+
+                <Text style={[styles.tripDate, theme.typography.bodySm, { color: theme.colors.onSurfaceVariant }]}>
+                  Data: {new Date(trip.created_at || Date.now()).toLocaleDateString('pt-BR')}
+                </Text>
+
+                <View style={styles.statusRow}>
+                  <Text
+                    style={[
+                      styles.tripStatus,
+                      theme.typography.labelSm,
+                      {
+                        color: isCompleted ? theme.colors.brandForest : '#B45309',
+                        fontWeight: '700',
+                      },
+                    ]}
+                  >
+                    Status: {isCompleted ? 'Concluída' : 'Em andamento'}
+                  </Text>
+                  {hasRoute && (
+                    <Ionicons name="chevron-forward" size={16} color={theme.colors.onSurfaceVariant} />
+                  )}
+                </View>
+              </TouchableOpacity>
+            );
+          })
         ) : (
           <EmptyStateView
             title="Nenhuma viagem registrada"
@@ -56,19 +112,14 @@ export default function TripsHistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.surfaceBackground,
   },
   content: {
-    padding: theme.spacing.marginMobile,
+    padding: 16,
     gap: 12,
   },
   tripCard: {
-    backgroundColor: theme.colors.surfaceWhite,
-    borderRadius: theme.radii.lg,
-    padding: theme.spacing.marginMobile,
-    borderWidth: 1,
-    borderColor: 'rgba(117, 155, 113, 0.15)',
-    ...theme.shadows.card,
+    borderRadius: 16,
+    padding: 16,
   },
   tripHeader: {
     flexDirection: 'row',
@@ -77,17 +128,18 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   tripTitle: {
-    ...theme.typography.headlineSm,
-    color: theme.colors.brandDeep,
+    flex: 1,
   },
   tripDate: {
-    ...theme.typography.bodySm,
-    color: theme.colors.onSurfaceVariant,
+    marginBottom: 4,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
   },
   tripStatus: {
-    ...theme.typography.labelSm,
-    color: theme.colors.brandForest,
-    marginTop: 4,
-    fontWeight: '600',
+    marginTop: 2,
   },
 });

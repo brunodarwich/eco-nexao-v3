@@ -12,12 +12,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
-import { Actor } from '../../types';
+import type { ActorSummary } from '../../api/types';
 import { Badge } from '../common/Badge';
 import { makeAccessibleButton } from '../../utils/accessibility';
 
-interface ActorCardProps {
-  actor: Actor;
+export interface ActorCardProps {
+  actor: ActorSummary | (Partial<ActorSummary> & { id: string; name: string; category_label?: string; address?: string | null; green_badge_status?: string; is_favorite?: boolean });
   onPress?: () => void;
   onToggleFavorite?: () => void;
   isFavorite?: boolean;
@@ -28,7 +28,7 @@ export const ActorCard: React.FC<ActorCardProps> = ({
   actor,
   onPress,
   onToggleFavorite,
-  isFavorite = false,
+  isFavorite,
   focusOnMount = false,
 }) => {
   const pressableRef = useRef<View>(null);
@@ -45,6 +45,12 @@ export const ActorCard: React.FC<ActorCardProps> = ({
     if (reactTag != null) AccessibilityInfo.setAccessibilityFocus(reactTag);
   }, [focusOnMount]);
 
+  const effectiveIsFavorite = isFavorite !== undefined ? isFavorite : Boolean((actor as any).is_favorite);
+  const categoryName = (actor.category_label || (actor as any).subCategory || 'Ponto de Apoio').toUpperCase();
+  const hasGreenSeal = actor.green_badge_status === 'verified' || (actor as any).greenBadge === true;
+  const ratingValue = actor.google_rating ?? (typeof (actor as any).rating === 'number' ? (actor as any).rating : null);
+  const imageUrl = actor.cover_image_url || (actor as any).cover_media?.derivatives?.card?.url;
+
   return (
     <View style={styles.card}>
       <Pressable
@@ -52,45 +58,47 @@ export const ActorCard: React.FC<ActorCardProps> = ({
         style={styles.cardPressable}
         onPress={onPress}
         {...makeAccessibleButton(
-          `Ator local ${actor.name}`,
-          `${actor.subCategory}. Avaliação ${actor.rating}. Endereço ${actor.address}. Toque para ver detalhes.`
+          `Estabelecimento ${actor.name}`,
+          `${categoryName}. ${actor.address ? `Endereço: ${actor.address}.` : ''} ${ratingValue ? `Avaliação ${ratingValue}.` : ''} Toque para ver detalhes.`
         )}
       >
         <View style={styles.imageContainer}>
-          <Image source={actor.imageUrl} style={styles.image} resizeMode="cover" />
+          {imageUrl ? (
+            <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
+          ) : (
+            <View style={styles.placeholderImage}>
+              <Ionicons name="storefront-outline" size={40} color={theme.colors.brandSage} />
+            </View>
+          )}
+
           <View style={styles.badgeRow}>
-            {actor.greenBadge && <Badge type="greenSeal" label="Selo Verde" />}
+            {hasGreenSeal && <Badge type="greenSeal" label="Selo Verde" />}
           </View>
         </View>
 
         <View style={styles.content}>
           <View style={styles.headerRow}>
-            <Text style={styles.categoryTag}>{actor.subCategory.toUpperCase()}</Text>
-            <View style={styles.ratingRow}>
-              <Ionicons name="star" size={14} color={theme.colors.brandSun} />
-              <Text style={styles.ratingText}>
-                {actor.rating} ({actor.reviewCount})
-              </Text>
-            </View>
+            <Text style={styles.categoryTag}>{categoryName}</Text>
+            {ratingValue != null && (
+              <View style={styles.ratingRow}>
+                <Ionicons name="star" size={14} color={theme.colors.brandSun} />
+                <Text style={styles.ratingText}>{ratingValue.toFixed(1)}</Text>
+              </View>
+            )}
           </View>
 
           <Text style={styles.name}>{actor.name}</Text>
-          <Text style={styles.address} numberOfLines={1}>
-            <Ionicons name="location-outline" size={13} color={theme.colors.brandSage} /> {actor.address}
-          </Text>
+          {actor.address ? (
+            <Text style={styles.address} numberOfLines={1}>
+              <Ionicons name="location-outline" size={13} color={theme.colors.brandSage} /> {actor.address}
+            </Text>
+          ) : null}
 
-          <Text style={styles.description} numberOfLines={2}>
-            {actor.description}
-          </Text>
-
-          {actor.accessibilityFeatures.length > 0 && (
-            <View style={styles.a11yRow}>
-              <Ionicons name="accessibility" size={12} color={theme.colors.brandLeaf} />
-              <Text style={styles.a11yText} numberOfLines={1}>
-                {actor.accessibilityFeatures.join(' • ')}
-              </Text>
-            </View>
-          )}
+          {(actor as any).description ? (
+            <Text style={styles.description} numberOfLines={2}>
+              {(actor as any).description}
+            </Text>
+          ) : null}
         </View>
       </Pressable>
 
@@ -102,13 +110,13 @@ export const ActorCard: React.FC<ActorCardProps> = ({
             onToggleFavorite();
           }}
           {...makeAccessibleButton(
-            isFavorite ? 'Remover ator dos favoritos' : 'Salvar ator nos favoritos'
+            effectiveIsFavorite ? 'Remover ator dos favoritos' : 'Salvar ator nos favoritos'
           )}
         >
           <Ionicons
-            name={isFavorite ? 'heart' : 'heart-outline'}
+            name={effectiveIsFavorite ? 'heart' : 'heart-outline'}
             size={18}
-            color={isFavorite ? theme.colors.error : theme.colors.onSurface}
+            color={effectiveIsFavorite ? theme.colors.error : theme.colors.onSurface}
           />
         </TouchableOpacity>
       )}
@@ -139,6 +147,13 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
+  },
+  placeholderImage: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   badgeRow: {
     position: 'absolute',
@@ -200,20 +215,5 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginBottom: 10,
   },
-  a11yRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: theme.colors.surfaceContainerLow,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: theme.radii.sm,
-    alignSelf: 'flex-start',
-  },
-  a11yText: {
-    ...theme.typography.labelSm,
-    color: theme.colors.brandLeaf,
-    fontSize: 11,
-    fontWeight: '600',
-  },
 });
+

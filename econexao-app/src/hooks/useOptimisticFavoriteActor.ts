@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AccessibilityInfo } from 'react-native';
 import { apiClient } from '../api/client';
 import { queryKeys } from '../api/queryKeys';
+import type { ActorListEnvelope, ActorDetailEnvelope, ActorSummary } from '../api/types';
 
 interface FavoriteActorVariables {
   actorId: string;
@@ -26,11 +27,52 @@ export function useOptimisticFavoriteActor() {
       const previousRouteQueries = queryClient.getQueriesData({ queryKey: queryKeys.routes.all() });
       const previousFavoriteQueries = queryClient.getQueriesData({ queryKey: queryKeys.favoriteActors() });
 
-      AccessibilityInfo.announceForAccessibility(
-        isFavorite ? 'Ator salvo nos favoritos.' : 'Ator removido dos favoritos.'
+      // Atualiza listagens de atores em rotas (simples ou infinitas)
+      queryClient.setQueriesData<any>(
+        { queryKey: ['routes', 'actors'] },
+        (old: any) => {
+          if (!old) return old;
+          if (Array.isArray(old.pages)) {
+            return {
+              ...old,
+              pages: old.pages.map((page: ActorListEnvelope) => ({
+                ...page,
+                data: (page.data || []).map((actor: ActorSummary) =>
+                  actor.id === actorId ? { ...actor, is_favorite: isFavorite } : actor
+                ),
+              })),
+            };
+          }
+          if (Array.isArray(old.data)) {
+            return {
+              ...old,
+              data: old.data.map((actor: ActorSummary) =>
+                actor.id === actorId ? { ...actor, is_favorite: isFavorite } : actor
+              ),
+            };
+          }
+          return old;
+        }
+      );
+
+      // Atualiza detalhe do ator se estiver em cache
+      queryClient.setQueriesData<ActorDetailEnvelope>(
+        { queryKey: queryKeys.actorDetail(actorId) },
+        (old) => {
+          if (!old?.data) return old;
+          return {
+            ...old,
+            data: { ...old.data, is_favorite: isFavorite },
+          };
+        }
       );
 
       return { previousRouteQueries, previousFavoriteQueries };
+    },
+    onSuccess: (_data, { isFavorite }) => {
+      AccessibilityInfo.announceForAccessibility(
+        isFavorite ? 'Ator salvo nos favoritos com sucesso.' : 'Ator removido dos favoritos.'
+      );
     },
     onError: (_err, _variables, context) => {
       if (context?.previousRouteQueries) {
@@ -44,7 +86,7 @@ export function useOptimisticFavoriteActor() {
         });
       }
       AccessibilityInfo.announceForAccessibility(
-        'Erro ao atualizar favorito do ator. Alteração desfeita.'
+        'Falha ao atualizar favorito do ator. Alteração desfeita.'
       );
     },
     onSettled: () => {
@@ -66,3 +108,4 @@ export function useOptimisticFavoriteActor() {
     mutate: mutation.mutate,
   };
 }
+

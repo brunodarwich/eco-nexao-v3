@@ -159,10 +159,24 @@ class MediaAssetRead(DomainBaseSchema):
     id: uuid.UUID
     owner_type: str
     owner_id: uuid.UUID
-    storage_key: str
+    storage_key: str | None = None
     mime_type: str
     alt_text: str | None = None
     credit: str | None = None
+    license_code: str | None = None
+    processing_status: str = "pending"
+    checksum_sha256: str | None = None
+    width_px: int | None = None
+    height_px: int | None = None
+    derivatives: dict[str, Any] = Field(default_factory=dict)
+    location: dict[str, Any] | None = None
+    processed_at: datetime | None = None
+    rejected_reason: str | None = None
+    deleted_at: datetime | None = None
+    media_kind: str = "stored"
+    external_photo_reference: str | None = None
+    external_attributions: list[Any] | None = None
+    external_cache_expires_at: datetime | None = None
     sort_order: int = 0
 
 

@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/api/v1/actor-categories": {
+    "/api/v1/admin/context": {
         parameters: {
             query?: never;
             header?: never;
@@ -12,10 +12,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Categorias de atores
-         * @description Retorna a taxonomia oficial de categorias de estabelecimentos e atrações.
+         * Obter contexto administrativo
+         * @description Expose only current editorial access; ordinary/anonymous users are denied.
          */
-        get: operations["list_actor_categories_api_v1_actor_categories_get"];
+        get: operations["get_admin_context_api_v1_admin_context_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -24,7 +24,315 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/actors/{actor_id}": {
+    "/api/v1/admin/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar categorias administrativas de atores */
+        get: operations["list_categories_api_v1_admin_categories_get"];
+        put?: never;
+        /** Criar categoria administrativa de atores */
+        post: operations["create_category_api_v1_admin_categories_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/categories/{category_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Obter detalhe administrativo de uma categoria */
+        get: operations["get_category_api_v1_admin_categories__category_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Atualizar categoria administrativa de atores */
+        patch: operations["update_category_api_v1_admin_categories__category_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/accessibility-features": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar funcionalidades de acessibilidade */
+        get: operations["list_accessibility_features_api_v1_admin_accessibility_features_get"];
+        put?: never;
+        /** Criar funcionalidade de acessibilidade */
+        post: operations["create_accessibility_feature_api_v1_admin_accessibility_features_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/accessibility-features/{feature_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Obter detalhe de funcionalidade de acessibilidade */
+        get: operations["get_accessibility_feature_api_v1_admin_accessibility_features__feature_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Atualizar funcionalidade de acessibilidade */
+        patch: operations["update_accessibility_feature_api_v1_admin_accessibility_features__feature_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/actors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar atores administrativos */
+        get: operations["list_actors_api_v1_admin_actors_get"];
+        put?: never;
+        /** Criar ator administrativo */
+        post: operations["create_actor_api_v1_admin_actors_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/actors/{actor_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Obter detalhe administrativo de um ator */
+        get: operations["get_actor_api_v1_admin_actors__actor_id__get"];
+        put?: never;
+        post?: never;
+        /** Arquivar / soft-delete de ator administrativo */
+        delete: operations["delete_actor_api_v1_admin_actors__actor_id__delete"];
+        options?: never;
+        head?: never;
+        /** Atualizar ator administrativo */
+        patch: operations["update_actor_api_v1_admin_actors__actor_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/actors/{actor_id}/route-links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar vínculos de rotas de um ator */
+        get: operations["list_route_links_by_actor_api_v1_admin_actors__actor_id__route_links_get"];
+        put?: never;
+        /** Criar vínculo entre rota e ator */
+        post: operations["create_route_link_api_v1_admin_actors__actor_id__route_links_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/actors/route-links/{link_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remover vínculo entre rota e ator */
+        delete: operations["delete_route_link_api_v1_admin_actors_route_links__link_id__delete"];
+        options?: never;
+        head?: never;
+        /** Atualizar vínculo entre rota e ator */
+        patch: operations["update_route_link_api_v1_admin_actors_route_links__link_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/territory/regions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar regiões administrativas */
+        get: operations["list_regions_api_v1_admin_territory_regions_get"];
+        put?: never;
+        /** Criar região administrativa */
+        post: operations["create_region_api_v1_admin_territory_regions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/territory/regions/{region_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Obter detalhe administrativo de uma região */
+        get: operations["get_region_api_v1_admin_territory_regions__region_id__get"];
+        /** Atualizar região administrativa */
+        put: operations["update_region_api_v1_admin_territory_regions__region_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/territory/routes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar rotas administrativas */
+        get: operations["list_routes_api_v1_admin_territory_routes_get"];
+        put?: never;
+        /** Criar rota administrativa */
+        post: operations["create_route_api_v1_admin_territory_routes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/territory/routes/{route_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Obter detalhe administrativo de uma rota */
+        get: operations["get_route_api_v1_admin_territory_routes__route_id__get"];
+        /** Atualizar rota administrativa */
+        put: operations["update_route_api_v1_admin_territory_routes__route_id__put"];
+        post?: never;
+        /** Arquivar rota administrativa */
+        delete: operations["archive_route_api_v1_admin_territory_routes__route_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/territory/routes/{route_id}/origins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar origens de uma rota administrativa */
+        get: operations["list_origins_api_v1_admin_territory_routes__route_id__origins_get"];
+        put?: never;
+        /** Criar origem de rota administrativa */
+        post: operations["create_origin_api_v1_admin_territory_routes__route_id__origins_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/territory/routes/{route_id}/origins/{origin_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Atualizar origem de rota administrativa */
+        put: operations["update_origin_api_v1_admin_territory_routes__route_id__origins__origin_id__put"];
+        post?: never;
+        /** Excluir origem de rota administrativa */
+        delete: operations["delete_origin_api_v1_admin_territory_routes__route_id__origins__origin_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/territory/routes/{route_id}/origins/{origin_id}/geometries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Criar geometria espacial de rota */
+        post: operations["create_geometry_api_v1_admin_territory_routes__route_id__origins__origin_id__geometries_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/territory/routes/{route_id}/geometries/{geometry_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Atualizar geometria espacial de rota */
+        put: operations["update_geometry_api_v1_admin_territory_routes__route_id__geometries__geometry_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/workflow/{resource_type}/{resource_id}/transition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Transicionar estado editorial
+         * @description Transicionar o estado de um recurso na máquina de estados editorial com validação de publish guard e concorrência.
+         */
+        post: operations["transition_resource_status_api_v1_admin_workflow__resource_type___resource_id__transition_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/workflow/{resource_type}/{resource_id}/publish-guard": {
         parameters: {
             query?: never;
             header?: never;
@@ -32,10 +340,199 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Detalhes de um ator
-         * @description Retorna informações completas de um ator ou estabelecimento específico.
+         * Consultar Publish Guard
+         * @description Consultar os critérios e elegibilidade do Publish Guard para um recurso.
          */
-        get: operations["get_actor_detail_api_v1_actors__actor_id__get"];
+        get: operations["get_publish_guard_status_api_v1_admin_workflow__resource_type___resource_id__publish_guard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar alertas editoriais
+         * @description Listar alertas editoriais ativos ou resolvidos com suporte a filtros de rota e severidade.
+         */
+        get: operations["list_editorial_alerts_api_v1_admin_alerts_get"];
+        put?: never;
+        /** Criar alerta editorial */
+        post: operations["create_editorial_alert_api_v1_admin_alerts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/alerts/{alert_id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resolver alerta editorial
+         * @description Resolver um alerta editorial ativo fornecendo uma nota explicativa de resolução.
+         */
+        post: operations["resolve_editorial_alert_api_v1_admin_alerts__alert_id__resolve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/reconciliation/candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar candidatos de reconciliação
+         * @description Listar candidatos a duplicata para revisão humana e reconciliação editorial.
+         */
+        get: operations["list_reconciliation_candidates_api_v1_admin_reconciliation_candidates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/reconciliation/{candidate_id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Decidir reconciliação
+         * @description Registrar decisão editorial (accept, reject, merge) sobre candidato de reconciliação com justificativa auditada.
+         */
+        post: operations["decide_reconciliation_candidate_api_v1_admin_reconciliation__candidate_id__decision_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/reconciliation/{candidate_id}/compensate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Compensar merge de reconciliação */
+        post: operations["compensate_reconciliation_merge_api_v1_admin_reconciliation__candidate_id__compensate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/alerts/{alert_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Atualizar alerta editorial */
+        put: operations["update_editorial_alert_api_v1_admin_alerts__alert_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/media/process": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Process Editorial Media */
+        post: operations["process_editorial_media_api_v1_admin_media_process_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/media/cleanup/recover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Recover Media Cleanup */
+        post: operations["recover_media_cleanup_api_v1_admin_media_cleanup_recover_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/health/live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Liveness check
+         * @description Retorna status HTTP 200 se o processo FastAPI estiver executando.
+         */
+        get: operations["healthLive"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/health/ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Readiness check
+         * @description Retorna status HTTP 200 se dependências de banco de dados e Supabase estiverem prontas.
+         */
+        get: operations["healthReady"];
         put?: never;
         post?: never;
         delete?: never;
@@ -84,6 +581,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/regions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista de regiões ativas
+         * @description Retorna todas as regiões turísticas ativas disponíveis na plataforma.
+         */
+        get: operations["list_regions_api_v1_regions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/bootstrap": {
         parameters: {
             query?: never;
@@ -104,7 +621,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/content/support": {
+    "/api/v1/routes": {
         parameters: {
             query?: never;
             header?: never;
@@ -112,10 +629,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Conteúdo de suporte, ajuda e contatos editoriais
-         * @description Retorna FAQ, contatos editoriais e links de ajuda.
+         * Listar rotas
+         * @description Retorna lista paginada de rotas turísticas ativas com suporte a busca e filtros.
          */
-        get: operations["get_support_content_api_v1_content_support_get"];
+        get: operations["list_routes_api_v1_routes_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -124,7 +641,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/health/live": {
+    "/api/v1/routes/{route_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -132,10 +649,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Liveness check
-         * @description Retorna status HTTP 200 se o processo FastAPI estiver executando.
+         * Detalhes de uma rota
+         * @description Retorna informações completas e origens de uma rota específica.
          */
-        get: operations["healthLive"];
+        get: operations["get_route_detail_api_v1_routes__route_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -144,7 +661,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/health/ready": {
+    "/api/v1/routes/{route_id}/origins": {
         parameters: {
             query?: never;
             header?: never;
@@ -152,10 +669,130 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Readiness check
-         * @description Retorna status HTTP 200 se dependências de banco de dados e Supabase estiverem prontas.
+         * Origens de uma rota
+         * @description Retorna os pontos de partida registrados para a rota especificada.
          */
-        get: operations["healthReady"];
+        get: operations["get_route_origins_api_v1_routes__route_id__origins_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/routes/{route_id}/geometry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Geometria de uma rota por origem
+         * @description Retorna a geometria GeoJSON e detalhes da rota a partir de uma origem específica.
+         */
+        get: operations["get_route_geometry_api_v1_routes__route_id__geometry_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/routes/{route_id}/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Alertas ativos de uma rota
+         * @description Retorna alertas ativos e informativos associados à rota.
+         */
+        get: operations["get_route_alerts_api_v1_routes__route_id__alerts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/routes/{route_id}/actors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Atores associados a uma rota
+         * @description Retorna lista paginada de estabelecimentos e pontos turísticos associados à rota.
+         */
+        get: operations["get_route_actors_api_v1_routes__route_id__actors_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/routes/{route_id}/map": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Payload otimizado para renderização do mapa
+         * @description Retorna bounds, linha de geometria e pins dos atores para a tela de mapa.
+         */
+        get: operations["get_route_map_payload_api_v1_routes__route_id__map_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/actor-categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Categorias de atores
+         * @description Retorna a taxonomia oficial de categorias de estabelecimentos e atrações.
+         */
+        get: operations["list_actor_categories_api_v1_actor_categories_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/actors/{actor_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Detalhes de um ator
+         * @description Retorna informações completas de um ator ou estabelecimento específico.
+         */
+        get: operations["get_actor_detail_api_v1_actors__actor_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -208,7 +845,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/me/favorite-actors": {
+    "/api/v1/me/preferences": {
         parameters: {
             query?: never;
             header?: never;
@@ -216,40 +853,20 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Atores salvos pelo usuário atual
-         * @description Retorna a lista paginada de atores favoritados pelo usuário autenticado.
+         * Preferências do usuário atual
+         * @description Retorna as preferências de acessibilidade, região e navegação do usuário.
          */
-        get: operations["get_my_favorite_actors_api_v1_me_favorite_actors_get"];
+        get: operations["get_my_preferences_api_v1_me_preferences_get"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/me/favorite-actors/{actor_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
         /**
-         * Salvar ator como favorito (Idempotente)
-         * @description Adiciona o ator aos favoritos do usuário de forma idempotente.
+         * Atualizar preferências do usuário atual
+         * @description Atualiza preferências de acessibilidade e região ativa do usuário.
          */
-        put: operations["add_favorite_actor_api_v1_me_favorite_actors__actor_id__put"];
-        post?: never;
-        /**
-         * Remover ator dos favoritos (Idempotente)
-         * @description Remove o ator dos favoritos do usuário de forma idempotente.
-         */
-        delete: operations["remove_favorite_actor_api_v1_me_favorite_actors__actor_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
+        patch: operations["update_my_preferences_api_v1_me_preferences_patch"];
         trace?: never;
     };
     "/api/v1/me/favorite-routes": {
@@ -296,7 +913,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/me/impact": {
+    "/api/v1/me/favorite-actors": {
         parameters: {
             query?: never;
             header?: never;
@@ -304,10 +921,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Métricas de impacto e selos do usuário
-         * @description Retorna os indicadores de impacto ecológico e selos conquistados pelo usuário.
+         * Atores salvos pelo usuário atual
+         * @description Retorna a lista paginada de atores favoritados pelo usuário autenticado.
          */
-        get: operations["get_my_impact_api_v1_me_impact_get"];
+        get: operations["get_my_favorite_actors_api_v1_me_favorite_actors_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -316,28 +933,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/me/preferences": {
+    "/api/v1/me/favorite-actors/{actor_id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
+        get?: never;
         /**
-         * Preferências do usuário atual
-         * @description Retorna as preferências de acessibilidade, região e navegação do usuário.
+         * Salvar ator como favorito (Idempotente)
+         * @description Adiciona o ator aos favoritos do usuário de forma idempotente.
          */
-        get: operations["get_my_preferences_api_v1_me_preferences_get"];
-        put?: never;
+        put: operations["add_favorite_actor_api_v1_me_favorite_actors__actor_id__put"];
         post?: never;
-        delete?: never;
+        /**
+         * Remover ator dos favoritos (Idempotente)
+         * @description Remove o ator dos favoritos do usuário de forma idempotente.
+         */
+        delete: operations["remove_favorite_actor_api_v1_me_favorite_actors__actor_id__delete"];
         options?: never;
         head?: never;
-        /**
-         * Atualizar preferências do usuário atual
-         * @description Atualiza preferências de acessibilidade e região ativa do usuário.
-         */
-        patch: operations["update_my_preferences_api_v1_me_preferences_patch"];
+        patch?: never;
         trace?: never;
     };
     "/api/v1/me/trips": {
@@ -364,7 +981,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/regions": {
+    "/api/v1/me/impact": {
         parameters: {
             query?: never;
             header?: never;
@@ -372,10 +989,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Lista de regiões ativas
-         * @description Retorna todas as regiões turísticas ativas disponíveis na plataforma.
+         * Métricas de impacto e selos do usuário
+         * @description Retorna os indicadores de impacto ecológico e selos conquistados pelo usuário.
          */
-        get: operations["list_regions_api_v1_regions_get"];
+        get: operations["get_my_impact_api_v1_me_impact_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -384,7 +1001,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/routes": {
+    "/api/v1/content/support": {
         parameters: {
             query?: never;
             header?: never;
@@ -392,130 +1009,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Listar rotas
-         * @description Retorna lista paginada de rotas turísticas ativas com suporte a busca e filtros.
+         * Conteúdo de suporte, ajuda e contatos editoriais
+         * @description Retorna FAQ, contatos editoriais e links de ajuda.
          */
-        get: operations["list_routes_api_v1_routes_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/routes/{route_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Detalhes de uma rota
-         * @description Retorna informações completas e origens de uma rota específica.
-         */
-        get: operations["get_route_detail_api_v1_routes__route_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/routes/{route_id}/actors": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Atores associados a uma rota
-         * @description Retorna lista paginada de estabelecimentos e pontos turísticos associados à rota.
-         */
-        get: operations["get_route_actors_api_v1_routes__route_id__actors_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/routes/{route_id}/alerts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Alertas ativos de uma rota
-         * @description Retorna alertas ativos e informativos associados à rota.
-         */
-        get: operations["get_route_alerts_api_v1_routes__route_id__alerts_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/routes/{route_id}/geometry": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Geometria de uma rota por origem
-         * @description Retorna a geometria GeoJSON e detalhes da rota a partir de uma origem específica.
-         */
-        get: operations["get_route_geometry_api_v1_routes__route_id__geometry_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/routes/{route_id}/map": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Payload otimizado para renderização do mapa
-         * @description Retorna bounds, linha de geometria e pins dos atores para a tela de mapa.
-         */
-        get: operations["get_route_map_payload_api_v1_routes__route_id__map_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/routes/{route_id}/origins": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Origens de uma rota
-         * @description Retorna os pontos de partida registrados para a rota especificada.
-         */
-        get: operations["get_route_origins_api_v1_routes__route_id__origins_get"];
+        get: operations["get_support_content_api_v1_content_support_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -535,19 +1032,19 @@ export interface components {
         };
         /** ActorCategorySchema */
         ActorCategorySchema: {
-            /** Color */
-            color?: string | null;
-            /** Icon */
-            icon?: string | null;
             /**
              * Id
              * Format: uuid
              */
             id: string;
-            /** Label */
-            label: string;
             /** Slug */
             slug: string;
+            /** Label */
+            label: string;
+            /** Icon */
+            icon?: string | null;
+            /** Color */
+            color?: string | null;
             /**
              * Sort Order
              * @default 0
@@ -560,64 +1057,69 @@ export interface components {
         };
         /** ActorDetailSchema */
         ActorDetailSchema: {
-            /** Accessibility Features */
-            accessibility_features: {
-                [key: string]: unknown;
-            }[];
-            /** Address */
-            address?: string | null;
-            category: components["schemas"]["ActorCategorySchema"];
-            /** City */
-            city?: string | null;
-            /** Description */
-            description?: string | null;
-            /** Email */
-            email?: string | null;
-            /** Google Place Id */
-            google_place_id?: string | null;
-            /** Google Rating */
-            google_rating?: number | null;
-            /** Google Review Count */
-            google_review_count?: number | null;
-            /**
-             * Green Badge Status
-             * @default none
-             */
-            green_badge_status: string;
             /**
              * Id
              * Format: uuid
              */
             id: string;
-            /** Instagram */
-            instagram?: string | null;
+            /** Slug */
+            slug: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+            category: components["schemas"]["ActorCategorySchema"];
+            /** Sub Category */
+            sub_category?: string | null;
+            /** Address */
+            address?: string | null;
+            /** City */
+            city?: string | null;
+            /** State Code */
+            state_code?: string | null;
             /** Latitude */
             latitude?: number | null;
             /** Longitude */
             longitude?: number | null;
-            /** Name */
-            name: string;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Instagram */
+            instagram?: string | null;
+            /** Website */
+            website?: string | null;
             /** Opening Hours */
             opening_hours: {
                 [key: string]: unknown;
             };
             /** Payment Methods */
             payment_methods: unknown[];
-            /** Phone */
-            phone?: string | null;
-            /** Slug */
-            slug: string;
-            /** State Code */
-            state_code?: string | null;
-            /** Sub Category */
-            sub_category?: string | null;
+            /**
+             * Green Badge Status
+             * @default none
+             */
+            green_badge_status: string;
             /**
              * Verification Status
              * @default unverified
              */
             verification_status: string;
-            /** Website */
-            website?: string | null;
+            /** Google Place Id */
+            google_place_id?: string | null;
+            /** Google Rating */
+            google_rating?: number | null;
+            /** Google Review Count */
+            google_review_count?: number | null;
+            /** Cover Image Url */
+            cover_image_url?: string | null;
+            cover_media?: components["schemas"]["ResolvedMediaItemSchema"] | null;
+            /** Gallery */
+            gallery?: components["schemas"]["ResolvedMediaItemSchema"][];
+            /** Accessibility Features */
+            accessibility_features: {
+                [key: string]: unknown;
+            }[];
         };
         /** ActorListEnvelope */
         ActorListEnvelope: {
@@ -627,37 +1129,920 @@ export interface components {
         };
         /** ActorSummarySchema */
         ActorSummarySchema: {
-            /** Address */
-            address?: string | null;
-            /** Category Label */
-            category_label: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Slug */
+            slug: string;
+            /** Name */
+            name: string;
             /** Category Slug */
             category_slug: string;
-            /** Google Rating */
-            google_rating?: number | null;
+            /** Category Label */
+            category_label: string;
+            /** Address */
+            address?: string | null;
+            /** Latitude */
+            latitude?: number | null;
+            /** Longitude */
+            longitude?: number | null;
             /**
              * Green Badge Status
              * @default none
              */
             green_badge_status: string;
             /**
+             * Verification Status
+             * @default unverified
+             */
+            verification_status: string;
+            /** Google Rating */
+            google_rating?: number | null;
+            /** Cover Image Url */
+            cover_image_url?: string | null;
+            cover_media?: components["schemas"]["ResolvedMediaItemSchema"] | null;
+        };
+        /**
+         * AdminAccessSchema
+         * @description Database-backed editorial identity; JWT metadata never grants capabilities.
+         */
+        AdminAccessSchema: {
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Scopes */
+            scopes: components["schemas"]["AdminScopeAccessSchema"][];
+        };
+        /** AdminAccessibilityFeatureCreateSchema */
+        AdminAccessibilityFeatureCreateSchema: {
+            /** Slug */
+            slug: string;
+            /** Label */
+            label: string;
+            /** Description */
+            description?: string | null;
+            /** Icon */
+            icon?: string | null;
+        };
+        /** AdminAccessibilityFeatureEnvelope */
+        AdminAccessibilityFeatureEnvelope: {
+            data: components["schemas"]["AdminAccessibilityFeatureSchema"];
+        };
+        /** AdminAccessibilityFeatureListEnvelope */
+        AdminAccessibilityFeatureListEnvelope: {
+            /** Data */
+            data: components["schemas"]["AdminAccessibilityFeatureSchema"][];
+        };
+        /** AdminAccessibilityFeatureSchema */
+        AdminAccessibilityFeatureSchema: {
+            /**
              * Id
              * Format: uuid
              */
             id: string;
+            /** Slug */
+            slug: string;
+            /** Label */
+            label: string;
+            /** Description */
+            description?: string | null;
+            /** Icon */
+            icon?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** AdminAccessibilityFeatureUpdateSchema */
+        AdminAccessibilityFeatureUpdateSchema: {
+            /** Label */
+            label?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Icon */
+            icon?: string | null;
+        };
+        /** AdminActorCreateSchema */
+        AdminActorCreateSchema: {
+            /**
+             * Category Id
+             * Format: uuid
+             */
+            category_id: string;
+            /** Slug */
+            slug: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+            /** Sub Category */
+            sub_category?: string | null;
+            /** Address */
+            address?: string | null;
+            /** City */
+            city?: string | null;
+            /** State Code */
+            state_code?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Instagram */
+            instagram?: string | null;
+            /** Website */
+            website?: string | null;
+            /** Opening Hours */
+            opening_hours?: {
+                [key: string]: unknown;
+            };
+            /** Payment Methods */
+            payment_methods?: unknown[];
             /** Latitude */
             latitude?: number | null;
             /** Longitude */
             longitude?: number | null;
-            /** Name */
-            name: string;
-            /** Slug */
-            slug: string;
+            /**
+             * Green Badge Status
+             * @default none
+             */
+            green_badge_status: string;
             /**
              * Verification Status
              * @default unverified
              */
             verification_status: string;
+            /** Accessibility Feature Ids */
+            accessibility_feature_ids?: string[];
+        };
+        /** AdminActorEnvelope */
+        AdminActorEnvelope: {
+            data: components["schemas"]["AdminActorSchema"];
+        };
+        /** AdminActorListEnvelope */
+        AdminActorListEnvelope: {
+            /** Data */
+            data: components["schemas"]["AdminActorSchema"][];
+            meta: components["schemas"]["PaginationMeta"];
+        };
+        /** AdminActorSchema */
+        AdminActorSchema: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Category Id
+             * Format: uuid
+             */
+            category_id: string;
+            category?: components["schemas"]["AdminCategorySchema"] | null;
+            /** Slug */
+            slug: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+            /** Sub Category */
+            sub_category?: string | null;
+            /** Address */
+            address?: string | null;
+            /** City */
+            city?: string | null;
+            /** State Code */
+            state_code?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Instagram */
+            instagram?: string | null;
+            /** Website */
+            website?: string | null;
+            /** Opening Hours */
+            opening_hours: {
+                [key: string]: unknown;
+            };
+            /** Payment Methods */
+            payment_methods: unknown[];
+            /** Latitude */
+            latitude?: number | null;
+            /** Longitude */
+            longitude?: number | null;
+            /** Green Badge Status */
+            green_badge_status: string;
+            /** Verification Status */
+            verification_status: string;
+            /** Google Rating */
+            google_rating?: number | null;
+            /** Google Review Count */
+            google_review_count?: number | null;
+            /** Accessibility Features */
+            accessibility_features?: components["schemas"]["AdminAccessibilityFeatureSchema"][];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Deleted At */
+            deleted_at?: string | null;
+        };
+        /** AdminActorUpdateSchema */
+        AdminActorUpdateSchema: {
+            /** Category Id */
+            category_id?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Sub Category */
+            sub_category?: string | null;
+            /** Address */
+            address?: string | null;
+            /** City */
+            city?: string | null;
+            /** State Code */
+            state_code?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Instagram */
+            instagram?: string | null;
+            /** Website */
+            website?: string | null;
+            /** Opening Hours */
+            opening_hours?: {
+                [key: string]: unknown;
+            } | null;
+            /** Payment Methods */
+            payment_methods?: unknown[] | null;
+            /** Latitude */
+            latitude?: number | null;
+            /** Longitude */
+            longitude?: number | null;
+            /** Green Badge Status */
+            green_badge_status?: string | null;
+            /** Verification Status */
+            verification_status?: string | null;
+            /** Accessibility Feature Ids */
+            accessibility_feature_ids?: string[] | null;
+            /**
+             * Expected Version
+             * @description Expected ISO string timestamp for optimistic concurrency check
+             */
+            expected_version?: string | null;
+        };
+        /** AdminAuditMetadataSchema */
+        AdminAuditMetadataSchema: {
+            /** Request Id */
+            request_id: string;
+            /** Reason */
+            reason?: string | null;
+            /** Idempotency Key */
+            idempotency_key?: string | null;
+        };
+        /** AdminCategoryCreateSchema */
+        AdminCategoryCreateSchema: {
+            /** Slug */
+            slug: string;
+            /** Label */
+            label: string;
+            /** Icon */
+            icon?: string | null;
+            /** Color */
+            color?: string | null;
+            /**
+             * Sort Order
+             * @default 0
+             */
+            sort_order: number;
+        };
+        /** AdminCategoryEnvelope */
+        AdminCategoryEnvelope: {
+            data: components["schemas"]["AdminCategorySchema"];
+        };
+        /** AdminCategoryListEnvelope */
+        AdminCategoryListEnvelope: {
+            /** Data */
+            data: components["schemas"]["AdminCategorySchema"][];
+        };
+        /** AdminCategorySchema */
+        AdminCategorySchema: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Slug */
+            slug: string;
+            /** Label */
+            label: string;
+            /** Icon */
+            icon?: string | null;
+            /** Color */
+            color?: string | null;
+            /** Sort Order */
+            sort_order: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** AdminCategoryUpdateSchema */
+        AdminCategoryUpdateSchema: {
+            /** Label */
+            label?: string | null;
+            /** Icon */
+            icon?: string | null;
+            /** Color */
+            color?: string | null;
+            /** Sort Order */
+            sort_order?: number | null;
+        };
+        /** AdminContextDataSchema */
+        AdminContextDataSchema: {
+            access: components["schemas"]["AdminAccessSchema"];
+            contract?: components["schemas"]["AdminContractSchema"];
+        };
+        /** AdminContextEnvelope */
+        AdminContextEnvelope: {
+            data: components["schemas"]["AdminContextDataSchema"];
+        };
+        /**
+         * AdminContractSchema
+         * @description Cross-cutting mutation contract for subsequent administrative CRUD tasks.
+         */
+        AdminContractSchema: {
+            /**
+             * Concurrency Header
+             * @default If-Match
+             */
+            concurrency_header: string;
+            /**
+             * Version Field
+             * @default version
+             */
+            version_field: string;
+            /**
+             * Idempotency Header
+             * @default Idempotency-Key
+             */
+            idempotency_header: string;
+            /**
+             * Audit Request Header
+             * @default X-Request-ID
+             */
+            audit_request_header: string;
+            version?: components["schemas"]["AdminVersionSchema"] | null;
+            audit?: components["schemas"]["AdminAuditMetadataSchema"] | null;
+            job_reference?: components["schemas"]["AdminJobReferenceSchema"] | null;
+            upload_reference?: components["schemas"]["AdminUploadReferenceSchema"] | null;
+        };
+        /** AdminJobReferenceSchema */
+        AdminJobReferenceSchema: {
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Status */
+            status: string;
+            /** Status Url */
+            status_url: string;
+        };
+        /** AdminRegionCreateSchema */
+        AdminRegionCreateSchema: {
+            /** Slug */
+            slug: string;
+            /** Name */
+            name: string;
+            /** State Code */
+            state_code: string;
+            /** Latitude */
+            latitude?: number | null;
+            /** Longitude */
+            longitude?: number | null;
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
+        };
+        /** AdminRegionEnvelope */
+        AdminRegionEnvelope: {
+            data: components["schemas"]["AdminRegionSchema"];
+        };
+        /** AdminRegionListEnvelope */
+        AdminRegionListEnvelope: {
+            /** Data */
+            data: components["schemas"]["AdminRegionSchema"][];
+        };
+        /** AdminRegionSchema */
+        AdminRegionSchema: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Slug */
+            slug: string;
+            /** Name */
+            name: string;
+            /** State Code */
+            state_code: string;
+            /** Latitude */
+            latitude?: number | null;
+            /** Longitude */
+            longitude?: number | null;
+            /** Is Active */
+            is_active: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** AdminRegionUpdateSchema */
+        AdminRegionUpdateSchema: {
+            /** Name */
+            name?: string | null;
+            /** State Code */
+            state_code?: string | null;
+            /** Latitude */
+            latitude?: number | null;
+            /** Longitude */
+            longitude?: number | null;
+            /** Is Active */
+            is_active?: boolean | null;
+        };
+        /** AdminRouteActorCreateSchema */
+        AdminRouteActorCreateSchema: {
+            /**
+             * Route Id
+             * Format: uuid
+             */
+            route_id: string;
+            /**
+             * Actor Id
+             * Format: uuid
+             */
+            actor_id: string;
+            /** Distance To Route M */
+            distance_to_route_m?: number | null;
+            /** Route Segment Index */
+            route_segment_index?: number | null;
+            /** Origin Flags */
+            origin_flags?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Is Featured
+             * @default false
+             */
+            is_featured: boolean;
+            /**
+             * Sort Order
+             * @default 0
+             */
+            sort_order: number;
+        };
+        /** AdminRouteActorEnvelope */
+        AdminRouteActorEnvelope: {
+            data: components["schemas"]["AdminRouteActorSchema"];
+        };
+        /** AdminRouteActorListEnvelope */
+        AdminRouteActorListEnvelope: {
+            /** Data */
+            data: components["schemas"]["AdminRouteActorSchema"][];
+        };
+        /** AdminRouteActorSchema */
+        AdminRouteActorSchema: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Route Id
+             * Format: uuid
+             */
+            route_id: string;
+            /**
+             * Actor Id
+             * Format: uuid
+             */
+            actor_id: string;
+            /** Distance To Route M */
+            distance_to_route_m?: number | null;
+            /** Route Segment Index */
+            route_segment_index?: number | null;
+            /** Origin Flags */
+            origin_flags: {
+                [key: string]: unknown;
+            };
+            /** Is Featured */
+            is_featured: boolean;
+            /** Sort Order */
+            sort_order: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** AdminRouteActorUpdateSchema */
+        AdminRouteActorUpdateSchema: {
+            /** Distance To Route M */
+            distance_to_route_m?: number | null;
+            /** Route Segment Index */
+            route_segment_index?: number | null;
+            /** Origin Flags */
+            origin_flags?: {
+                [key: string]: unknown;
+            } | null;
+            /** Is Featured */
+            is_featured?: boolean | null;
+            /** Sort Order */
+            sort_order?: number | null;
+        };
+        /** AdminRouteCreateSchema */
+        AdminRouteCreateSchema: {
+            /**
+             * Region Id
+             * Format: uuid
+             */
+            region_id: string;
+            /** Slug */
+            slug: string;
+            /** Title */
+            title: string;
+            /** Summary */
+            summary?: string | null;
+            /** City */
+            city: string;
+            /** State Code */
+            state_code: string;
+            /**
+             * Status
+             * @default draft
+             */
+            status: string;
+            /**
+             * Is Verified
+             * @default false
+             */
+            is_verified: boolean;
+            /** Best Season */
+            best_season?: string | null;
+            /** Connectivity */
+            connectivity?: string | null;
+            /** Road Access */
+            road_access?: string | null;
+            /** Payment Info */
+            payment_info?: string | null;
+            /** Cover Media Id */
+            cover_media_id?: string | null;
+        };
+        /** AdminRouteEnvelope */
+        AdminRouteEnvelope: {
+            data: components["schemas"]["AdminRouteSchema"];
+        };
+        /** AdminRouteGeometryCreateSchema */
+        AdminRouteGeometryCreateSchema: {
+            /**
+             * Provider
+             * @default osrm
+             */
+            provider: string;
+            /**
+             * Coordinates
+             * @description Array of [lat, lon] coordinate pairs
+             */
+            coordinates: number[][];
+            /** Encoded Polyline */
+            encoded_polyline?: string | null;
+            /** Distance M */
+            distance_m?: number | null;
+            /** Duration S */
+            duration_s?: number | null;
+            /** Bounds */
+            bounds?: {
+                [key: string]: number;
+            } | null;
+            /** Source Hash */
+            source_hash?: string | null;
+        };
+        /** AdminRouteGeometryEnvelope */
+        AdminRouteGeometryEnvelope: {
+            data: components["schemas"]["AdminRouteGeometrySchema"];
+        };
+        /** AdminRouteGeometrySchema */
+        AdminRouteGeometrySchema: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Route Origin Id
+             * Format: uuid
+             */
+            route_origin_id: string;
+            /** Provider */
+            provider: string;
+            /** Encoded Polyline */
+            encoded_polyline?: string | null;
+            /** Geojson */
+            geojson?: {
+                [key: string]: unknown;
+            } | null;
+            /** Distance M */
+            distance_m?: number | null;
+            /** Duration S */
+            duration_s?: number | null;
+            /** Bounds */
+            bounds?: {
+                [key: string]: number;
+            } | null;
+            /** Source Hash */
+            source_hash?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** AdminRouteGeometryUpdateSchema */
+        AdminRouteGeometryUpdateSchema: {
+            /** Coordinates */
+            coordinates?: number[][] | null;
+            /** Encoded Polyline */
+            encoded_polyline?: string | null;
+            /** Distance M */
+            distance_m?: number | null;
+            /** Duration S */
+            duration_s?: number | null;
+            /** Bounds */
+            bounds?: {
+                [key: string]: number;
+            } | null;
+        };
+        /** AdminRouteListEnvelope */
+        AdminRouteListEnvelope: {
+            /** Data */
+            data: components["schemas"]["AdminRouteSchema"][];
+            meta: components["schemas"]["PaginationMeta"];
+        };
+        /** AdminRouteOriginCreateSchema */
+        AdminRouteOriginCreateSchema: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+            /** Latitude */
+            latitude: number;
+            /** Longitude */
+            longitude: number;
+            /** Distance M */
+            distance_m?: number | null;
+            /** Duration S */
+            duration_s?: number | null;
+            /**
+             * Sort Order
+             * @default 0
+             */
+            sort_order: number;
+        };
+        /** AdminRouteOriginEnvelope */
+        AdminRouteOriginEnvelope: {
+            data: components["schemas"]["AdminRouteOriginSchema"];
+        };
+        /** AdminRouteOriginListEnvelope */
+        AdminRouteOriginListEnvelope: {
+            /** Data */
+            data: components["schemas"]["AdminRouteOriginSchema"][];
+        };
+        /** AdminRouteOriginSchema */
+        AdminRouteOriginSchema: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Route Id
+             * Format: uuid
+             */
+            route_id: string;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+            /** Latitude */
+            latitude: number;
+            /** Longitude */
+            longitude: number;
+            /** Distance M */
+            distance_m?: number | null;
+            /** Duration S */
+            duration_s?: number | null;
+            /** Sort Order */
+            sort_order: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** AdminRouteOriginUpdateSchema */
+        AdminRouteOriginUpdateSchema: {
+            /** Name */
+            name?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Latitude */
+            latitude?: number | null;
+            /** Longitude */
+            longitude?: number | null;
+            /** Distance M */
+            distance_m?: number | null;
+            /** Duration S */
+            duration_s?: number | null;
+            /** Sort Order */
+            sort_order?: number | null;
+        };
+        /** AdminRouteSchema */
+        AdminRouteSchema: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Region Id
+             * Format: uuid
+             */
+            region_id: string;
+            /** Slug */
+            slug: string;
+            /** Title */
+            title: string;
+            /** Summary */
+            summary?: string | null;
+            /** City */
+            city: string;
+            /** State Code */
+            state_code: string;
+            /** Status */
+            status: string;
+            /** Is Verified */
+            is_verified: boolean;
+            /** Verified At */
+            verified_at?: string | null;
+            /** Best Season */
+            best_season?: string | null;
+            /** Connectivity */
+            connectivity?: string | null;
+            /** Road Access */
+            road_access?: string | null;
+            /** Payment Info */
+            payment_info?: string | null;
+            /** Cover Media Id */
+            cover_media_id?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** AdminRouteUpdateSchema */
+        AdminRouteUpdateSchema: {
+            /** Region Id */
+            region_id?: string | null;
+            /** Title */
+            title?: string | null;
+            /** Summary */
+            summary?: string | null;
+            /** City */
+            city?: string | null;
+            /** State Code */
+            state_code?: string | null;
+            /** Status */
+            status?: string | null;
+            /** Is Verified */
+            is_verified?: boolean | null;
+            /** Best Season */
+            best_season?: string | null;
+            /** Connectivity */
+            connectivity?: string | null;
+            /** Road Access */
+            road_access?: string | null;
+            /** Payment Info */
+            payment_info?: string | null;
+            /** Cover Media Id */
+            cover_media_id?: string | null;
+            /**
+             * Expected Version
+             * @description Expected ISO string timestamp or version hash for optimistic concurrency
+             */
+            expected_version?: string | null;
+        };
+        /**
+         * AdminScopeAccessSchema
+         * @description Roles and capabilities that are valid together in one authorization scope.
+         */
+        AdminScopeAccessSchema: {
+            /** Scope Type */
+            scope_type: string;
+            /** Scope Id */
+            scope_id?: string | null;
+            /** Roles */
+            roles: string[];
+            /** Capabilities */
+            capabilities: string[];
+        };
+        /** AdminUploadReferenceSchema */
+        AdminUploadReferenceSchema: {
+            /**
+             * Upload Id
+             * Format: uuid
+             */
+            upload_id: string;
+            /** Status */
+            status: string;
+            /** Upload Url */
+            upload_url?: string | null;
+            /** Expires At */
+            expires_at?: string | null;
+        };
+        /** AdminVersionSchema */
+        AdminVersionSchema: {
+            /** Version */
+            version: number;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** AlertResolveRequest */
+        AlertResolveRequest: {
+            /**
+             * Resolution Note
+             * @description Nota explicativa da resolução do alerta
+             */
+            resolution_note: string;
         };
         /** AuthSessionEnvelope */
         AuthSessionEnvelope: {
@@ -665,13 +2050,13 @@ export interface components {
         };
         /** AuthUserSchema */
         AuthUserSchema: {
-            /** Email */
-            email?: string | null;
             /**
              * Id
              * Format: uuid
              */
             id: string;
+            /** Email */
+            email?: string | null;
             /**
              * Is Anonymous
              * @default false
@@ -692,21 +2077,48 @@ export interface components {
         };
         /** AvatarUploadResponseData */
         AvatarUploadResponseData: {
+            /** Upload Url */
+            upload_url: string;
+            /** Storage Key */
+            storage_key: string;
+            /** Public Url */
+            public_url: string;
             /**
              * Expires In
              * @default 3600
              */
             expires_in: number;
-            /** Public Url */
-            public_url: string;
-            /** Storage Key */
-            storage_key: string;
-            /** Upload Url */
-            upload_url: string;
         };
         /** AvatarUploadResponseEnvelope */
         AvatarUploadResponseEnvelope: {
             data: components["schemas"]["AvatarUploadResponseData"];
+        };
+        /** Body_process_editorial_media_api_v1_admin_media_process_post */
+        Body_process_editorial_media_api_v1_admin_media_process_post: {
+            /**
+             * Owner Type
+             * @enum {string}
+             */
+            owner_type: "route" | "origin" | "actor";
+            /**
+             * Owner Id
+             * Format: uuid
+             */
+            owner_id: string;
+            /** Alt Text */
+            alt_text: string;
+            /** Credit */
+            credit: string;
+            /**
+             * License Code
+             * @enum {string}
+             */
+            license_code: "CC-BY-4.0" | "SEMTUR_INSTITUTIONAL" | "PROPRIETARY";
+            /**
+             * Image
+             * Format: binary
+             */
+            image: string;
         };
         /** BootstrapDataSchema */
         BootstrapDataSchema: {
@@ -722,25 +2134,177 @@ export interface components {
         BootstrapResponseEnvelope: {
             data: components["schemas"]["BootstrapDataSchema"];
         };
+        /** CleanupRecoveryEnvelope */
+        CleanupRecoveryEnvelope: {
+            data: components["schemas"]["CleanupRecoverySchema"];
+        };
+        /** CleanupRecoveryRequest */
+        CleanupRecoveryRequest: {
+            /**
+             * Limit
+             * @default 50
+             */
+            limit: number;
+        };
+        /** CleanupRecoverySchema */
+        CleanupRecoverySchema: {
+            /** Completed */
+            completed: number;
+            /** Failed */
+            failed: number;
+        };
         /** ContactInfoSchema */
         ContactInfoSchema: {
             /** Email */
             email: string;
-            /** Operating Hours */
-            operating_hours: string;
-            /** Phone */
+            /**
+             * Phone
+             * @default
+             */
             phone: string;
-            /** Whatsapp */
+            /**
+             * Whatsapp
+             * @default
+             */
             whatsapp: string;
+            /**
+             * Operating Hours
+             * @default
+             */
+            operating_hours: string;
+        };
+        /** EditorialAlertCreateRequest */
+        EditorialAlertCreateRequest: {
+            /** Title */
+            title: string;
+            /** Message */
+            message: string;
+            /**
+             * Severity
+             * @default info
+             * @enum {string}
+             */
+            severity: "info" | "warning" | "critical";
+            /** Source */
+            source?: string | null;
+            /** Starts At */
+            starts_at?: string | null;
+            /** Ends At */
+            ends_at?: string | null;
+            /** Published At */
+            published_at?: string | null;
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
+            /**
+             * Route Id
+             * Format: uuid
+             */
+            route_id: string;
+        };
+        /** EditorialAlertEnvelope */
+        EditorialAlertEnvelope: {
+            data: components["schemas"]["EditorialAlertSchema"];
+        };
+        /** EditorialAlertListEnvelope */
+        EditorialAlertListEnvelope: {
+            /** Data */
+            data: components["schemas"]["EditorialAlertSchema"][];
+            meta: components["schemas"]["PaginationMeta"];
+        };
+        /** EditorialAlertSchema */
+        EditorialAlertSchema: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Route Id
+             * Format: uuid
+             */
+            route_id: string;
+            /** Title */
+            title: string;
+            /** Message */
+            message: string;
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "info" | "warning" | "critical";
+            /** Source */
+            source?: string | null;
+            /** Starts At */
+            starts_at?: string | null;
+            /** Ends At */
+            ends_at?: string | null;
+            /**
+             * Published At
+             * Format: date-time
+             */
+            published_at?: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Resolved At */
+            resolved_at?: string | null;
+            /** Resolved By */
+            resolved_by?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** EditorialAlertUpdateRequest */
+        EditorialAlertUpdateRequest: {
+            /** Title */
+            title: string;
+            /** Message */
+            message: string;
+            /**
+             * Severity
+             * @default info
+             * @enum {string}
+             */
+            severity: "info" | "warning" | "critical";
+            /** Source */
+            source?: string | null;
+            /** Starts At */
+            starts_at?: string | null;
+            /** Ends At */
+            ends_at?: string | null;
+            /** Published At */
+            published_at?: string | null;
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
         };
         /** EditorialInfoSchema */
         EditorialInfoSchema: {
-            /** Last Updated */
-            last_updated: string;
-            /** Publisher */
-            publisher: string;
-            /** Version */
+            /**
+             * Version
+             * @default 1.0.0
+             */
             version: string;
+            /**
+             * Last Updated
+             * @default
+             */
+            last_updated: string;
+            /**
+             * Publisher
+             * @default SEMTUR
+             */
+            publisher: string;
+        };
+        /** EditorialMediaEnvelope */
+        EditorialMediaEnvelope: {
+            data: components["schemas"]["MediaAssetRead"];
         };
         /**
          * ErrorDetail
@@ -752,13 +2316,13 @@ export interface components {
              * @example NOT_FOUND
              */
             code: string;
-            /** Details */
-            details?: unknown | null;
             /**
              * Message
              * @example O recurso solicitado não foi encontrado.
              */
             message: string;
+            /** Details */
+            details?: unknown | null;
         };
         /**
          * ErrorResponse
@@ -774,14 +2338,17 @@ export interface components {
         };
         /** FAQItemSchema */
         FAQItemSchema: {
-            /** Answer */
-            answer: string;
-            /** Category */
-            category: string;
             /** Id */
             id: string;
             /** Question */
             question: string;
+            /** Answer */
+            answer: string;
+            /**
+             * Category
+             * @default Geral
+             */
+            category: string;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -816,34 +2383,217 @@ export interface components {
         /** MapPinSchema */
         MapPinSchema: {
             /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
              * Actor Id
              * Format: uuid
              */
             actor_id: string;
+            /** Name */
+            name: string;
             /** Category Slug */
             category_slug: string;
+            /** Latitude */
+            latitude: number;
+            /** Longitude */
+            longitude: number;
             /** Distance From Origin M */
             distance_from_origin_m?: number | null;
+        };
+        /** MediaAssetRead */
+        MediaAssetRead: {
             /**
              * Id
              * Format: uuid
              */
             id: string;
-            /** Latitude */
-            latitude: number;
-            /** Longitude */
-            longitude: number;
-            /** Name */
-            name: string;
+            /** Owner Type */
+            owner_type: string;
+            /**
+             * Owner Id
+             * Format: uuid
+             */
+            owner_id: string;
+            /** Storage Key */
+            storage_key?: string | null;
+            /** Mime Type */
+            mime_type: string;
+            /** Alt Text */
+            alt_text?: string | null;
+            /** Credit */
+            credit?: string | null;
+            /** License Code */
+            license_code?: string | null;
+            /**
+             * Processing Status
+             * @default pending
+             */
+            processing_status: string;
+            /** Checksum Sha256 */
+            checksum_sha256?: string | null;
+            /** Width Px */
+            width_px?: number | null;
+            /** Height Px */
+            height_px?: number | null;
+            /** Derivatives */
+            derivatives?: {
+                [key: string]: unknown;
+            };
+            /** Location */
+            location?: {
+                [key: string]: unknown;
+            } | null;
+            /** Processed At */
+            processed_at?: string | null;
+            /** Rejected Reason */
+            rejected_reason?: string | null;
+            /** Deleted At */
+            deleted_at?: string | null;
+            /**
+             * Media Kind
+             * @default stored
+             */
+            media_kind: string;
+            /** External Photo Reference */
+            external_photo_reference?: string | null;
+            /** External Attributions */
+            external_attributions?: unknown[] | null;
+            /** External Cache Expires At */
+            external_cache_expires_at?: string | null;
+            /**
+             * Sort Order
+             * @default 0
+             */
+            sort_order: number;
         };
         /** PaginationMeta */
         PaginationMeta: {
+            /** Total */
+            total: number;
             /** Limit */
             limit: number;
             /** Next Cursor */
             next_cursor?: string | null;
-            /** Total */
-            total: number;
+        };
+        /** PublishGuardResultEnvelope */
+        PublishGuardResultEnvelope: {
+            data: components["schemas"]["PublishGuardResultSchema"];
+        };
+        /** PublishGuardResultSchema */
+        PublishGuardResultSchema: {
+            /** Resource Type */
+            resource_type: string;
+            /**
+             * Resource Id
+             * Format: uuid
+             */
+            resource_id: string;
+            /** Current Status */
+            current_status: string;
+            /** Is Eligible */
+            is_eligible: boolean;
+            /** Missing Requirements */
+            missing_requirements?: string[];
+            /** Warnings */
+            warnings?: string[];
+        };
+        /** ReconciliationCandidateListEnvelope */
+        ReconciliationCandidateListEnvelope: {
+            /** Data */
+            data: components["schemas"]["ReconciliationCandidateSchema"][];
+            meta: components["schemas"]["PaginationMeta"];
+        };
+        /** ReconciliationCandidateSchema */
+        ReconciliationCandidateSchema: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Actor Id A
+             * Format: uuid
+             */
+            actor_id_a: string;
+            /**
+             * Actor Id B
+             * Format: uuid
+             */
+            actor_id_b: string;
+            /** Score */
+            score: number;
+            /** Status */
+            status: string;
+            /** Decision Notes */
+            decision_notes?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** ReconciliationCompensationRequest */
+        ReconciliationCompensationRequest: {
+            /**
+             * Reason
+             * @description Justificativa da compensação
+             */
+            reason: string;
+        };
+        /** ReconciliationDecisionEnvelope */
+        ReconciliationDecisionEnvelope: {
+            data: components["schemas"]["ReconciliationDecisionSchema"];
+        };
+        /** ReconciliationDecisionRequest */
+        ReconciliationDecisionRequest: {
+            /**
+             * Decision
+             * @description Decisão editorial sobre o candidato
+             * @enum {string}
+             */
+            decision: "accept" | "reject" | "merge";
+            /**
+             * Reason
+             * @description Justificativa da decisão editorial
+             */
+            reason: string;
+            /**
+             * Target Actor Id
+             * @description UUID do ator primário no caso de mesclagem (merge)
+             */
+            target_actor_id?: string | null;
+        };
+        /** ReconciliationDecisionSchema */
+        ReconciliationDecisionSchema: {
+            /**
+             * Candidate Id
+             * Format: uuid
+             */
+            candidate_id: string;
+            /** Status */
+            status: string;
+            /** Decision */
+            decision: string;
+            /** Decision Notes */
+            decision_notes: string;
+            /**
+             * Audit Log Id
+             * Format: uuid
+             */
+            audit_log_id: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
         };
         /** RegionListEnvelope */
         RegionListEnvelope: {
@@ -857,14 +2607,51 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            /** Is Active */
-            is_active: boolean;
-            /** Name */
-            name: string;
             /** Slug */
             slug: string;
+            /** Name */
+            name: string;
             /** State Code */
             state_code: string;
+            /** Is Active */
+            is_active: boolean;
+        };
+        /** ResolvedMediaItemSchema */
+        ResolvedMediaItemSchema: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Owner Type */
+            owner_type: string;
+            /**
+             * Owner Id
+             * Format: uuid
+             */
+            owner_id: string;
+            /** Url */
+            url: string;
+            /** Derivatives */
+            derivatives?: {
+                [key: string]: string;
+            };
+            /** Alt Text */
+            alt_text?: string | null;
+            /** Credit */
+            credit?: string | null;
+            /** License Code */
+            license_code?: string | null;
+            /**
+             * Media Kind
+             * @default stored
+             */
+            media_kind: string;
+            /**
+             * Sort Order
+             * @default 0
+             */
+            sort_order: number;
         };
         /** RouteAlertListEnvelope */
         RouteAlertListEnvelope: {
@@ -873,41 +2660,41 @@ export interface components {
         };
         /** RouteAlertSchema */
         RouteAlertSchema: {
-            /** Ends At */
-            ends_at?: string | null;
             /**
              * Id
              * Format: uuid
              */
             id: string;
             /**
-             * Is Active
-             * @default true
-             */
-            is_active: boolean;
-            /** Message */
-            message: string;
-            /**
-             * Published At
-             * Format: date-time
-             */
-            published_at: string;
-            /**
              * Route Id
              * Format: uuid
              */
             route_id: string;
+            /** Title */
+            title: string;
+            /** Message */
+            message: string;
             /**
              * Severity
              * @default info
              */
             severity: string;
-            /** Source */
-            source?: string | null;
             /** Starts At */
             starts_at?: string | null;
-            /** Title */
-            title: string;
+            /** Ends At */
+            ends_at?: string | null;
+            /**
+             * Published At
+             * Format: date-time
+             */
+            published_at: string;
+            /** Source */
+            source?: string | null;
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
         };
         /** RouteDetailEnvelope */
         RouteDetailEnvelope: {
@@ -915,34 +2702,21 @@ export interface components {
         };
         /** RouteDetailSchema */
         RouteDetailSchema: {
-            /** Best Season */
-            best_season?: string | null;
-            /** City */
-            city: string;
-            /** Connectivity */
-            connectivity?: string | null;
-            /** Cover Image Url */
-            cover_image_url?: string | null;
-            /** Description */
-            description?: string | null;
             /**
              * Id
              * Format: uuid
              */
             id: string;
-            /**
-             * Is Verified
-             * @default false
-             */
-            is_verified: boolean;
-            /** Origins */
-            origins: components["schemas"]["RouteOriginSchema"][];
-            /** Payment Info */
-            payment_info?: string | null;
-            /** Road Access */
-            road_access?: string | null;
             /** Slug */
             slug: string;
+            /** Title */
+            title: string;
+            /** Summary */
+            summary?: string | null;
+            /** Description */
+            description?: string | null;
+            /** City */
+            city: string;
             /** State Code */
             state_code: string;
             /**
@@ -950,12 +2724,28 @@ export interface components {
              * @default active
              */
             status: string;
-            /** Summary */
-            summary?: string | null;
-            /** Title */
-            title: string;
+            /**
+             * Is Verified
+             * @default false
+             */
+            is_verified: boolean;
             /** Verified At */
             verified_at?: string | null;
+            /** Best Season */
+            best_season?: string | null;
+            /** Connectivity */
+            connectivity?: string | null;
+            /** Road Access */
+            road_access?: string | null;
+            /** Payment Info */
+            payment_info?: string | null;
+            /** Cover Image Url */
+            cover_image_url?: string | null;
+            cover_media?: components["schemas"]["ResolvedMediaItemSchema"] | null;
+            /** Gallery */
+            gallery?: components["schemas"]["ResolvedMediaItemSchema"][];
+            /** Origins */
+            origins: components["schemas"]["RouteOriginSchema"][];
         };
         /** RouteGeometryEnvelope */
         RouteGeometryEnvelope: {
@@ -963,31 +2753,31 @@ export interface components {
         };
         /** RouteGeometrySchema */
         RouteGeometrySchema: {
-            /** Distance M */
-            distance_m?: number | null;
-            /** Duration S */
-            duration_s?: number | null;
-            /** Encoded Polyline */
-            encoded_polyline?: string | null;
-            /** Geojson */
-            geojson?: {
-                [key: string]: unknown;
-            } | null;
             /**
              * Id
              * Format: uuid
              */
             id: string;
             /**
-             * Provider
-             * @default osrm
-             */
-            provider: string;
-            /**
              * Route Origin Id
              * Format: uuid
              */
             route_origin_id: string;
+            /**
+             * Provider
+             * @default osrm
+             */
+            provider: string;
+            /** Encoded Polyline */
+            encoded_polyline?: string | null;
+            /** Geojson */
+            geojson?: {
+                [key: string]: unknown;
+            } | null;
+            /** Distance M */
+            distance_m?: number | null;
+            /** Duration S */
+            duration_s?: number | null;
         };
         /** RouteListEnvelope */
         RouteListEnvelope: {
@@ -1001,13 +2791,6 @@ export interface components {
         };
         /** RouteMapPayloadSchema */
         RouteMapPayloadSchema: {
-            /** Bounds */
-            bounds?: {
-                [key: string]: number;
-            } | null;
-            geometry?: components["schemas"]["RouteGeometrySchema"] | null;
-            /** Pins */
-            pins: components["schemas"]["MapPinSchema"][];
             /**
              * Route Id
              * Format: uuid
@@ -1015,6 +2798,13 @@ export interface components {
             route_id: string;
             /** Selected Origin Id */
             selected_origin_id?: string | null;
+            /** Bounds */
+            bounds?: {
+                [key: string]: number;
+            } | null;
+            geometry?: components["schemas"]["RouteGeometrySchema"] | null;
+            /** Pins */
+            pins: components["schemas"]["MapPinSchema"][];
         };
         /** RouteOriginListEnvelope */
         RouteOriginListEnvelope: {
@@ -1023,26 +2813,26 @@ export interface components {
         };
         /** RouteOriginSchema */
         RouteOriginSchema: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Route Id
+             * Format: uuid
+             */
+            route_id: string;
             /** Code */
             code: string;
+            /** Name */
+            name: string;
             /** Description */
             description?: string | null;
             /** Distance M */
             distance_m?: number | null;
             /** Duration S */
             duration_s?: number | null;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Name */
-            name: string;
-            /**
-             * Route Id
-             * Format: uuid
-             */
-            route_id: string;
             /**
              * Sort Order
              * @default 0
@@ -1051,24 +2841,19 @@ export interface components {
         };
         /** RouteSummarySchema */
         RouteSummarySchema: {
-            /** Best Season */
-            best_season?: string | null;
-            /** City */
-            city: string;
-            /** Cover Image Url */
-            cover_image_url?: string | null;
             /**
              * Id
              * Format: uuid
              */
             id: string;
-            /**
-             * Is Verified
-             * @default false
-             */
-            is_verified: boolean;
             /** Slug */
             slug: string;
+            /** Title */
+            title: string;
+            /** Summary */
+            summary?: string | null;
+            /** City */
+            city: string;
             /** State Code */
             state_code: string;
             /**
@@ -1076,44 +2861,93 @@ export interface components {
              * @default active
              */
             status: string;
-            /** Summary */
-            summary?: string | null;
-            /** Title */
-            title: string;
+            /**
+             * Is Verified
+             * @default false
+             */
+            is_verified: boolean;
+            /** Best Season */
+            best_season?: string | null;
+            /** Cover Image Url */
+            cover_image_url?: string | null;
+            cover_media?: components["schemas"]["ResolvedMediaItemSchema"] | null;
         };
         /** StandardSuccessData */
         StandardSuccessData: {
-            /** Message */
-            message?: string | null;
             /**
              * Success
              * @default true
              */
             success: boolean;
+            /** Message */
+            message?: string | null;
         };
         /** StandardSuccessResponse */
         StandardSuccessResponse: {
-            data?: components["schemas"]["StandardSuccessData"] | null;
             /**
              * Success
              * @default true
              */
             success: boolean;
+            data?: components["schemas"]["StandardSuccessData"] | null;
+        };
+        /** StatusTransitionEnvelope */
+        StatusTransitionEnvelope: {
+            data: components["schemas"]["StatusTransitionSchema"];
+        };
+        /** StatusTransitionRequest */
+        StatusTransitionRequest: {
+            /**
+             * Target Status
+             * @description Novo estado editorial desejado
+             * @enum {string}
+             */
+            target_status: "draft" | "review" | "published" | "archived";
+            /**
+             * Reason
+             * @description Motivo ou justificativa da alteração de estado
+             */
+            reason?: string | null;
+            /**
+             * Expected Version
+             * @description Versão esperada para controle de concorrência otimista
+             */
+            expected_version?: number | null;
+        };
+        /** StatusTransitionSchema */
+        StatusTransitionSchema: {
+            /** Resource Type */
+            resource_type: string;
+            /**
+             * Resource Id
+             * Format: uuid
+             */
+            resource_id: string;
+            /** Previous Status */
+            previous_status: string;
+            /** New Status */
+            new_status: string;
+            /** Version */
+            version: number;
+            /**
+             * Audit Log Id
+             * Format: uuid
+             */
+            audit_log_id: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
         };
         /** SupportContentData */
         SupportContentData: {
+            /** Faq */
+            faq?: components["schemas"]["FAQItemSchema"][];
             contacts: components["schemas"]["ContactInfoSchema"];
-            editorial_info: components["schemas"]["EditorialInfoSchema"];
-            /**
-             * Faq
-             * @default []
-             */
-            faq: components["schemas"]["FAQItemSchema"][];
-            /**
-             * Help Links
-             * @default []
-             */
-            help_links: components["schemas"]["HelpLinkSchema"][];
+            /** Help Links */
+            help_links?: components["schemas"]["HelpLinkSchema"][];
+            editorial_info?: components["schemas"]["EditorialInfoSchema"];
         };
         /** SupportContentEnvelope */
         SupportContentEnvelope: {
@@ -1121,12 +2955,12 @@ export interface components {
         };
         /** TokenVerifyData */
         TokenVerifyData: {
-            user: components["schemas"]["AuthUserSchema"];
             /**
              * Valid
              * @default true
              */
             valid: boolean;
+            user: components["schemas"]["AuthUserSchema"];
         };
         /** TokenVerifyEnvelope */
         TokenVerifyEnvelope: {
@@ -1156,72 +2990,72 @@ export interface components {
         };
         /** TripSchema */
         TripSchema: {
-            /** Completed At */
-            completed_at?: string | null;
-            /** Created At */
-            created_at?: string | null;
             /** Id */
             id: string;
-            /** Route Id */
-            route_id: string;
-            /** Route Title */
-            route_title?: string | null;
-            /** Started At */
-            started_at?: string | null;
-            /** Status */
-            status: string;
-            /** Updated At */
-            updated_at?: string | null;
             /** User Id */
             user_id: string;
+            /** Route Id */
+            route_id: string;
+            /** Started At */
+            started_at?: string | null;
+            /** Completed At */
+            completed_at?: string | null;
+            /** Status */
+            status: string;
+            /** Created At */
+            created_at?: string | null;
+            /** Updated At */
+            updated_at?: string | null;
+            /** Route Title */
+            route_title?: string | null;
         };
         /** UserBadgeSchema */
         UserBadgeSchema: {
-            /** Awarded At */
-            awarded_at?: string | null;
+            /** Id */
+            id: string;
             /** Badge Code */
             badge_code: string;
+            /** Awarded At */
+            awarded_at?: string | null;
             /** Evidence */
             evidence?: {
                 [key: string]: unknown;
             } | null;
-            /** Id */
-            id: string;
         };
         /** UserImpactData */
         UserImpactData: {
-            /**
-             * Badges
-             * @default []
-             */
-            badges: components["schemas"]["UserBadgeSchema"][];
-            /**
-             * Co2 Saved Kg
-             * @default 0
-             */
-            co2_saved_kg: number;
+            /** User Id */
+            user_id: string;
             /**
              * Completed Trips Count
              * @default 0
              */
             completed_trips_count: number;
             /**
-             * Sustainable Impact Score
-             * @default 0
-             */
-            sustainable_impact_score: number;
-            /**
              * Total Trips Count
              * @default 0
              */
             total_trips_count: number;
-            /** User Id */
-            user_id: string;
             /**
              * Visited Actors Count
              * @default 0
              */
             visited_actors_count: number;
+            /**
+             * Sustainable Impact Score
+             * @default 0
+             */
+            sustainable_impact_score: number;
+            /**
+             * Co2 Saved Kg
+             * @default 0
+             */
+            co2_saved_kg: number;
+            /**
+             * Badges
+             * @default []
+             */
+            badges: components["schemas"]["UserBadgeSchema"][];
         };
         /** UserImpactEnvelope */
         UserImpactEnvelope: {
@@ -1233,55 +3067,55 @@ export interface components {
         };
         /** UserPreferencesSchema */
         UserPreferencesSchema: {
-            /** Active Region Id */
-            active_region_id?: string | null;
-            /** Created At */
-            created_at?: string | null;
-            /**
-             * High Contrast
-             * @default false
-             */
-            high_contrast: boolean;
             /**
              * Id
              * Format: uuid
              */
             id: string;
             /**
-             * Locale
-             * @default pt-BR
+             * User Id
+             * Format: uuid
              */
-            locale: string;
+            user_id: string;
+            /** Active Region Id */
+            active_region_id?: string | null;
             /**
              * Screen Reader Mode
              * @default false
              */
             screen_reader_mode: boolean;
             /**
+             * High Contrast
+             * @default false
+             */
+            high_contrast: boolean;
+            /**
              * Text Scale
              * @default 1
              */
             text_scale: number;
+            /**
+             * Locale
+             * @default pt-BR
+             */
+            locale: string;
+            /** Created At */
+            created_at?: string | null;
             /** Updated At */
             updated_at?: string | null;
-            /**
-             * User Id
-             * Format: uuid
-             */
-            user_id: string;
         };
         /** UserPreferencesUpdate */
         UserPreferencesUpdate: {
             /** Active Region Id */
             active_region_id?: string | null;
-            /** High Contrast */
-            high_contrast?: boolean | null;
-            /** Locale */
-            locale?: string | null;
             /** Screen Reader Mode */
             screen_reader_mode?: boolean | null;
+            /** High Contrast */
+            high_contrast?: boolean | null;
             /** Text Scale */
             text_scale?: number | null;
+            /** Locale */
+            locale?: string | null;
         };
         /** UserProfileEnvelope */
         UserProfileEnvelope: {
@@ -1289,35 +3123,35 @@ export interface components {
         };
         /** UserProfileSchema */
         UserProfileSchema: {
-            /** Avatar Media Id */
-            avatar_media_id?: string | null;
-            /** Created At */
-            created_at?: string | null;
             /**
              * Id
              * Format: uuid
              */
             id: string;
-            /** Location */
-            location?: string | null;
             /** Name */
             name?: string | null;
+            /** Location */
+            location?: string | null;
+            /** Avatar Media Id */
+            avatar_media_id?: string | null;
             /**
              * Status
              * @default active
              */
             status: string;
+            /** Created At */
+            created_at?: string | null;
             /** Updated At */
             updated_at?: string | null;
         };
         /** UserProfileUpdate */
         UserProfileUpdate: {
-            /** Avatar Media Id */
-            avatar_media_id?: string | null;
-            /** Location */
-            location?: string | null;
             /** Name */
             name?: string | null;
+            /** Location */
+            location?: string | null;
+            /** Avatar Media Id */
+            avatar_media_id?: string | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -1337,7 +3171,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    list_actor_categories_api_v1_actor_categories_get: {
+    get_admin_context_api_v1_admin_context_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1352,12 +3186,591 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ActorCategoryListEnvelope"];
+                    "application/json": components["schemas"]["AdminContextEnvelope"];
+                };
+            };
+            /** @description JWT Supabase ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Identidade sem membership/capability editorial ativa. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
     };
-    get_actor_detail_api_v1_actors__actor_id__get: {
+    list_categories_api_v1_admin_categories_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCategoryListEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_category_api_v1_admin_categories_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminCategoryCreateSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCategoryEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Slug de categoria já existe. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_category_api_v1_admin_categories__category_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCategoryEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Categoria não encontrada. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_category_api_v1_admin_categories__category_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminCategoryUpdateSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCategoryEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Categoria não encontrada. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_accessibility_features_api_v1_admin_accessibility_features_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminAccessibilityFeatureListEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_accessibility_feature_api_v1_admin_accessibility_features_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminAccessibilityFeatureCreateSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminAccessibilityFeatureEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Slug de acessibilidade já existe. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_accessibility_feature_api_v1_admin_accessibility_features__feature_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                feature_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminAccessibilityFeatureEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Acessibilidade não encontrada. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_accessibility_feature_api_v1_admin_accessibility_features__feature_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                feature_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminAccessibilityFeatureUpdateSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminAccessibilityFeatureEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Acessibilidade não encontrada. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_actors_api_v1_admin_actors_get: {
+        parameters: {
+            query?: {
+                /** @description Filtrar por categoria */
+                category_id?: string | null;
+                /** @description Incluir atores arquivados */
+                include_deleted?: boolean;
+                /** @description Buscar por nome ou slug */
+                q?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminActorListEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_actor_api_v1_admin_actors_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminActorCreateSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminActorEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Categoria vinculada não encontrada. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Slug de ator já existe. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_actor_api_v1_admin_actors__actor_id__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1374,7 +3787,34 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ActorDetailEnvelope"];
+                    "application/json": components["schemas"]["AdminActorEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Ator não encontrado. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1384,6 +3824,1730 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_actor_api_v1_admin_actors__actor_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                actor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminActorEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Ator não encontrado. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_actor_api_v1_admin_actors__actor_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                actor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminActorUpdateSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminActorEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Ator ou categoria não encontrada. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflito de concorrência. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_route_links_by_actor_api_v1_admin_actors__actor_id__route_links_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                actor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRouteActorListEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Ator não encontrado. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_route_link_api_v1_admin_actors__actor_id__route_links_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                actor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminRouteActorCreateSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRouteActorEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Ator não encontrado. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Ator já vinculado a esta rota. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Mismatched actor_id. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    delete_route_link_api_v1_admin_actors_route_links__link_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                link_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Vínculo não encontrado. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_route_link_api_v1_admin_actors_route_links__link_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                link_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminRouteActorUpdateSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRouteActorEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Vínculo não encontrado. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_regions_api_v1_admin_territory_regions_get: {
+        parameters: {
+            query?: {
+                /** @description Incluir regiões inativas */
+                include_inactive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRegionListEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_region_api_v1_admin_territory_regions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminRegionCreateSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRegionEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Slug de região já existe. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_region_api_v1_admin_territory_regions__region_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                region_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRegionEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Região não encontrada. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_region_api_v1_admin_territory_regions__region_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                region_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminRegionUpdateSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRegionEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Região não encontrada. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_routes_api_v1_admin_territory_routes_get: {
+        parameters: {
+            query?: {
+                /** @description Filtrar por ID de região */
+                region_id?: string | null;
+                /** @description Filtrar por status */
+                status?: string | null;
+                /** @description Busca textual por título ou cidade */
+                q?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRouteListEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_route_api_v1_admin_territory_routes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminRouteCreateSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRouteEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Slug de rota já existe. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_route_api_v1_admin_territory_routes__route_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                route_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRouteEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rota não encontrada. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_route_api_v1_admin_territory_routes__route_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                route_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminRouteUpdateSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRouteEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rota não encontrada. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflito de concorrência ou slug. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    archive_route_api_v1_admin_territory_routes__route_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                route_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRouteEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rota não encontrada. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_origins_api_v1_admin_territory_routes__route_id__origins_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                route_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRouteOriginListEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rota não encontrada. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_origin_api_v1_admin_territory_routes__route_id__origins_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                route_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminRouteOriginCreateSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRouteOriginEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rota não encontrada. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Código de origem duplicado para a rota. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_origin_api_v1_admin_territory_routes__route_id__origins__origin_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                route_id: string;
+                origin_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminRouteOriginUpdateSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRouteOriginEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Origem ou rota não encontrada. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_origin_api_v1_admin_territory_routes__route_id__origins__origin_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                route_id: string;
+                origin_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Origem não encontrada. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_geometry_api_v1_admin_territory_routes__route_id__origins__origin_id__geometries_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                route_id: string;
+                origin_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminRouteGeometryCreateSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRouteGeometryEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Origem ou rota não encontrada. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Geometria já existe para este provedor. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Geometria espacial malformada. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_geometry_api_v1_admin_territory_routes__route_id__geometries__geometry_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                route_id: string;
+                geometry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminRouteGeometryUpdateSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRouteGeometryEnvelope"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Permissão negada. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Geometria não encontrada. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    transition_resource_status_api_v1_admin_workflow__resource_type___resource_id__transition_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                resource_type: string;
+                resource_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusTransitionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusTransitionEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_publish_guard_status_api_v1_admin_workflow__resource_type___resource_id__publish_guard_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                resource_type: string;
+                resource_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublishGuardResultEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_editorial_alerts_api_v1_admin_alerts_get: {
+        parameters: {
+            query?: {
+                /** @description Filtrar por rota */
+                route_id?: string | null;
+                /** @description Filtrar por severidade */
+                severity?: string | null;
+                /** @description Filtrar por estado ativo */
+                is_active?: boolean | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorialAlertListEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_editorial_alert_api_v1_admin_alerts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EditorialAlertCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorialAlertEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resolve_editorial_alert_api_v1_admin_alerts__alert_id__resolve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlertResolveRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorialAlertEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_reconciliation_candidates_api_v1_admin_reconciliation_candidates_get: {
+        parameters: {
+            query?: {
+                status?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReconciliationCandidateListEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decide_reconciliation_candidate_api_v1_admin_reconciliation__candidate_id__decision_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReconciliationDecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReconciliationDecisionEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    compensate_reconciliation_merge_api_v1_admin_reconciliation__candidate_id__compensate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReconciliationCompensationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReconciliationDecisionEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_editorial_alert_api_v1_admin_alerts__alert_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EditorialAlertUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorialAlertEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    process_editorial_media_api_v1_admin_media_process_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_process_editorial_media_api_v1_admin_media_process_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorialMediaEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    recover_media_cleanup_api_v1_admin_media_cleanup_recover_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CleanupRecoveryRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CleanupRecoveryEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    healthLive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthStatus"];
+                };
+            };
+        };
+    };
+    healthReady: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dependências operacionais. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthStatus"];
+                };
+            };
+            /** @description Dependência indisponível. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -1441,6 +5605,26 @@ export interface operations {
             };
         };
     };
+    list_regions_api_v1_regions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegionListEnvelope"];
+                };
+            };
+        };
+    };
     get_bootstrap_api_v1_bootstrap_get: {
         parameters: {
             query?: {
@@ -1473,7 +5657,252 @@ export interface operations {
             };
         };
     };
-    get_support_content_api_v1_content_support_get: {
+    list_routes_api_v1_routes_get: {
+        parameters: {
+            query?: {
+                /** @description Filtrar por UUID da região */
+                region_id?: string | null;
+                /** @description Termo de busca por título ou resumo */
+                q?: string | null;
+                /** @description Filtrar rotas salvas */
+                saved?: boolean | null;
+                /** @description Filtrar rotas verificadas com selo */
+                verified?: boolean | null;
+                /** @description Cursor de paginação (offset numérico) */
+                cursor?: string | null;
+                /** @description Quantidade máxima de itens */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouteListEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_route_detail_api_v1_routes__route_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                route_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouteDetailEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_route_origins_api_v1_routes__route_id__origins_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                route_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouteOriginListEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_route_geometry_api_v1_routes__route_id__geometry_get: {
+        parameters: {
+            query: {
+                /** @description UUID da origem de acesso */
+                origin_id: string;
+            };
+            header?: never;
+            path: {
+                route_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouteGeometryEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_route_alerts_api_v1_routes__route_id__alerts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                route_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouteAlertListEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_route_actors_api_v1_routes__route_id__actors_get: {
+        parameters: {
+            query?: {
+                /** @description Termo de busca por nome de ator */
+                q?: string | null;
+                /** @description Slug da categoria do ator */
+                category?: string | null;
+                /** @description UUID da origem */
+                origin_id?: string | null;
+                /** @description Cursor de paginação (offset numérico) */
+                cursor?: string | null;
+                /** @description Quantidade máxima de itens */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                route_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActorListEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_route_map_payload_api_v1_routes__route_id__map_get: {
+        parameters: {
+            query?: {
+                /** @description UUID da origem selecionada */
+                origin_id?: string | null;
+            };
+            header?: never;
+            path: {
+                route_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouteMapPayloadEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_actor_categories_api_v1_actor_categories_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1488,16 +5917,18 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SupportContentEnvelope"];
+                    "application/json": components["schemas"]["ActorCategoryListEnvelope"];
                 };
             };
         };
     };
-    healthLive: {
+    get_actor_detail_api_v1_actors__actor_id__get: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                actor_id: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -1508,36 +5939,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HealthStatus"];
+                    "application/json": components["schemas"]["ActorDetailEnvelope"];
                 };
             };
-        };
-    };
-    healthReady: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Dependências operacionais. */
-            200: {
+            /** @description Validation Error */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HealthStatus"];
-                };
-            };
-            /** @description Dependência indisponível. */
-            503: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -1628,7 +6039,7 @@ export interface operations {
             };
         };
     };
-    get_my_favorite_actors_api_v1_me_favorite_actors_get: {
+    get_my_preferences_api_v1_me_preferences_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1643,21 +6054,23 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ActorListEnvelope"];
+                    "application/json": components["schemas"]["UserPreferencesEnvelope"];
                 };
             };
         };
     };
-    add_favorite_actor_api_v1_me_favorite_actors__actor_id__put: {
+    update_my_preferences_api_v1_me_preferences_patch: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                actor_id: string;
-            };
+            path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserPreferencesUpdate"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -1665,38 +6078,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["StandardSuccessResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    remove_favorite_actor_api_v1_me_favorite_actors__actor_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                actor_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["StandardSuccessResponse"];
+                    "application/json": components["schemas"]["UserPreferencesEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -1792,7 +6174,7 @@ export interface operations {
             };
         };
     };
-    get_my_impact_api_v1_me_impact_get: {
+    get_my_favorite_actors_api_v1_me_favorite_actors_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1807,16 +6189,18 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserImpactEnvelope"];
+                    "application/json": components["schemas"]["ActorListEnvelope"];
                 };
             };
         };
     };
-    get_my_preferences_api_v1_me_preferences_get: {
+    add_favorite_actor_api_v1_me_favorite_actors__actor_id__put: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                actor_id: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -1827,23 +6211,30 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserPreferencesEnvelope"];
+                    "application/json": components["schemas"]["StandardSuccessResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
     };
-    update_my_preferences_api_v1_me_preferences_patch: {
+    remove_favorite_actor_api_v1_me_favorite_actors__actor_id__delete: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                actor_id: string;
+            };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UserPreferencesUpdate"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -1851,7 +6242,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserPreferencesEnvelope"];
+                    "application/json": components["schemas"]["StandardSuccessResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1918,7 +6309,7 @@ export interface operations {
             };
         };
     };
-    list_regions_api_v1_regions_get: {
+    get_my_impact_api_v1_me_impact_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1933,27 +6324,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RegionListEnvelope"];
+                    "application/json": components["schemas"]["UserImpactEnvelope"];
                 };
             };
         };
     };
-    list_routes_api_v1_routes_get: {
+    get_support_content_api_v1_content_support_get: {
         parameters: {
-            query?: {
-                /** @description Filtrar por UUID da região */
-                region_id?: string | null;
-                /** @description Termo de busca por título ou resumo */
-                q?: string | null;
-                /** @description Filtrar rotas salvas */
-                saved?: boolean | null;
-                /** @description Filtrar rotas verificadas com selo */
-                verified?: boolean | null;
-                /** @description Cursor de paginação (offset numérico) */
-                cursor?: string | null;
-                /** @description Quantidade máxima de itens */
-                limit?: number;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
@@ -1966,219 +6344,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RouteListEnvelope"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_route_detail_api_v1_routes__route_id__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                route_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RouteDetailEnvelope"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_route_actors_api_v1_routes__route_id__actors_get: {
-        parameters: {
-            query?: {
-                /** @description Termo de busca por nome de ator */
-                q?: string | null;
-                /** @description Slug da categoria do ator */
-                category?: string | null;
-                /** @description UUID da origem */
-                origin_id?: string | null;
-                /** @description Cursor de paginação (offset numérico) */
-                cursor?: string | null;
-                /** @description Quantidade máxima de itens */
-                limit?: number;
-            };
-            header?: never;
-            path: {
-                route_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ActorListEnvelope"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_route_alerts_api_v1_routes__route_id__alerts_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                route_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RouteAlertListEnvelope"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_route_geometry_api_v1_routes__route_id__geometry_get: {
-        parameters: {
-            query: {
-                /** @description UUID da origem de acesso */
-                origin_id: string;
-            };
-            header?: never;
-            path: {
-                route_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RouteGeometryEnvelope"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_route_map_payload_api_v1_routes__route_id__map_get: {
-        parameters: {
-            query?: {
-                /** @description UUID da origem selecionada */
-                origin_id?: string | null;
-            };
-            header?: never;
-            path: {
-                route_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RouteMapPayloadEnvelope"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_route_origins_api_v1_routes__route_id__origins_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                route_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RouteOriginListEnvelope"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["SupportContentEnvelope"];
                 };
             };
         };

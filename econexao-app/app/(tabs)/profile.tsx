@@ -6,14 +6,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppHeader } from '../../src/components/common/AppHeader';
 import { Badge } from '../../src/components/common/Badge';
 import { LoadingView } from '../../src/components/common/UIStateViews';
+import { AuthModal } from '../../src/components/profile/AuthModal';
+import { EditProfileModal } from '../../src/components/profile/EditProfileModal';
+import { AccountDeletionModal } from '../../src/components/profile/AccountDeletionModal';
 import { apiClient } from '../../src/api/client';
 import { useMyImpactQuery, useMyProfileQuery } from '../../src/hooks/queries';
 import { useAuth } from '../../src/hooks/useAuth';
-import { theme } from '../../src/theme/theme';
+import { theme, useAppTheme } from '../../src/theme/theme';
+
 import { makeAccessibleButton } from '../../src/utils/accessibility';
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const theme = useAppTheme();
   const { user, signOut } = useAuth();
   const profileQuery = useMyProfileQuery(user?.id);
   const impactQuery = useMyImpactQuery(user?.id);
@@ -22,7 +27,11 @@ export default function ProfileScreen() {
   const impact = impactQuery.data;
 
   const [isSealModalVisible, setIsSealModalVisible] = useState(false);
+  const [isAuthModalVisible, setIsAuthModalVisible] = useState(false);
+  const [isEditProfileModalVisible, setIsEditProfileModalVisible] = useState(false);
+  const [isAccountDeletionModalVisible, setIsAccountDeletionModalVisible] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
 
   const isAnonymous = user?.is_anonymous ?? true;
   const userName = profile?.name || (isAnonymous ? 'Visitante Consciente' : 'Usuário ECOnexão');
@@ -50,6 +59,28 @@ export default function ProfileScreen() {
       <AppHeader title="Meu Perfil" />
 
       <ScrollView contentContainerStyle={styles.content}>
+        {/* Guest Linking Banner (ADR 0007 / ECO-1902) */}
+        {isAnonymous && (
+          <View style={styles.guestBanner}>
+            <View style={styles.guestBannerTextCol}>
+              <View style={styles.guestBannerHeader}>
+                <Ionicons name="sparkles" size={16} color="#065F46" />
+                <Text style={styles.guestBannerTitle}>Sessão de Convidado</Text>
+              </View>
+              <Text style={styles.guestBannerBody}>
+                Salve seus favoritos e histórico de viagens vinculando um e-mail.
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.guestBannerButton}
+              onPress={() => setIsAuthModalVisible(true)}
+              {...makeAccessibleButton('Criar conta ou fazer login', 'Abrir tela de autenticação')}
+            >
+              <Text style={styles.guestBannerButtonText}>Salvar Conta</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Profile Info Header (ECO-1101) */}
         <View style={styles.profileHeaderCard}>
           <View style={styles.avatarRow}>
@@ -66,10 +97,24 @@ export default function ProfileScreen() {
             </TouchableOpacity>
 
             <View style={styles.profileTextInfo}>
-              <Text style={styles.userName}>{userName}</Text>
+              <View style={styles.userNameRow}>
+                <Text style={styles.userName}>{userName}</Text>
+                <TouchableOpacity
+                  onPress={() => setIsEditProfileModalVisible(true)}
+                  style={styles.editProfileIconBtn}
+                  {...makeAccessibleButton('Editar informações do perfil')}
+                >
+                  <Ionicons name="pencil" size={16} color={theme.colors.brandForest} />
+                </TouchableOpacity>
+              </View>
               <Text style={styles.userRole}>
                 {isAnonymous ? 'Sessão Convidado' : user?.email ?? 'Conta Autenticada'}
               </Text>
+              {profile?.location && (
+                <Text style={styles.userLocationText}>
+                  <Ionicons name="location-outline" size={12} color={theme.colors.onSurfaceVariant} /> {profile.location}
+                </Text>
+              )}
               
               <TouchableOpacity
                 onPress={() => setIsSealModalVisible(true)}
@@ -188,18 +233,62 @@ export default function ProfileScreen() {
             </View>
             <Ionicons name="chevron-forward" size={18} color={theme.colors.onSurfaceVariant} />
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push('/profile/legal')}
+            {...makeAccessibleButton('Termos & Privacidade LGPD', 'Acessar termos de uso e política de privacidade')}
+          >
+            <View style={styles.menuLeft}>
+              <Ionicons name="shield-checkmark-outline" size={20} color={theme.colors.brandForest} />
+              <Text style={styles.menuText}>Termos & Privacidade</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={theme.colors.onSurfaceVariant} />
+          </TouchableOpacity>
         </View>
 
-        {/* Session Action (Sign Out) */}
-        <TouchableOpacity
-          style={styles.signOutButton}
-          onPress={() => void signOut()}
-          {...makeAccessibleButton('Encerrar sessão', 'Fazer logout da conta atual')}
-        >
-          <Ionicons name="log-out-outline" size={20} color={theme.colors.error} />
-          <Text style={styles.signOutText}>Encerrar Sessão</Text>
-        </TouchableOpacity>
+        {/* Account Deletion & Session Action (Sign Out / LGPD) */}
+        <View style={styles.footerActionsCard}>
+          <TouchableOpacity
+            style={styles.signOutButton}
+            onPress={() => void signOut()}
+            {...makeAccessibleButton('Encerrar sessão', 'Fazer logout da conta atual')}
+          >
+            <Ionicons name="log-out-outline" size={18} color={theme.colors.brandDeep} />
+            <Text style={styles.signOutText}>Encerrar Sessão</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.deleteAccountButton}
+            onPress={() => setIsAccountDeletionModalVisible(true)}
+            {...makeAccessibleButton('Excluir minha conta', 'Solicitar exclusão de conta conforme a LGPD')}
+          >
+            <Ionicons name="trash-outline" size={16} color={theme.colors.error} />
+            <Text style={styles.deleteAccountText}>Excluir Minha Conta (LGPD)</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        visible={isEditProfileModalVisible}
+        onClose={() => setIsEditProfileModalVisible(false)}
+        currentProfile={profile}
+        userId={user?.id}
+      />
+
+      {/* Account Deletion Modal (LGPD) */}
+      <AccountDeletionModal
+        visible={isAccountDeletionModalVisible}
+        onClose={() => setIsAccountDeletionModalVisible(false)}
+      />
+
+      {/* Auth & Account Linking Modal (ADR 0007 / ECO-1902) */}
+      <AuthModal
+        visible={isAuthModalVisible}
+        onClose={() => setIsAuthModalVisible(false)}
+      />
+
 
       {/* Selo Consciente Explanation Modal */}
       <Modal
@@ -235,6 +324,48 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.surfaceBackground,
+  },
+  guestBanner: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+    borderWidth: 1,
+    borderRadius: theme.radii.lg,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  guestBannerTextCol: {
+    flex: 1,
+  },
+  guestBannerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  guestBannerTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#065F46',
+  },
+  guestBannerBody: {
+    fontSize: 12,
+    color: '#047857',
+    lineHeight: 16,
+  },
+  guestBannerButton: {
+    backgroundColor: '#059669',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: theme.radii.md,
+    alignItems: 'center',
+  },
+  guestBannerButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
   content: {
     padding: theme.spacing.marginMobile,
@@ -277,14 +408,30 @@ const styles = StyleSheet.create({
   profileTextInfo: {
     flex: 1,
   },
+  userNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
   userName: {
     ...theme.typography.headlineSm,
     color: theme.colors.brandDeep,
   },
+  editProfileIconBtn: {
+    padding: 4,
+    borderRadius: 6,
+    backgroundColor: 'rgba(51, 96, 30, 0.08)',
+  },
+  userLocationText: {
+    ...theme.typography.labelSm,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: 4,
+  },
   userRole: {
     ...theme.typography.bodySm,
     color: theme.colors.onSurfaceVariant,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   badgeRow: {
     flexDirection: 'row',
@@ -299,6 +446,7 @@ const styles = StyleSheet.create({
     gap: 10,
     ...theme.shadows.card,
   },
+
   sectionTitle: {
     ...theme.typography.headlineSm,
     color: theme.colors.brandForest,
@@ -349,22 +497,44 @@ const styles = StyleSheet.create({
     color: theme.colors.brandDeep,
     fontWeight: '500',
   },
+  footerActionsCard: {
+    gap: 10,
+    marginTop: 4,
+  },
   signOutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: 'rgba(186, 26, 26, 0.08)',
+    backgroundColor: theme.colors.surfaceContainerLow,
     padding: 14,
     borderRadius: theme.radii.xl,
     borderWidth: 1,
-    borderColor: 'rgba(186, 26, 26, 0.2)',
+    borderColor: 'rgba(117, 155, 113, 0.2)',
   },
   signOutText: {
     ...theme.typography.labelSm,
-    color: theme.colors.error,
+    color: theme.colors.brandDeep,
     fontWeight: '700',
   },
+  deleteAccountButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    padding: 12,
+    borderRadius: theme.radii.xl,
+    backgroundColor: 'rgba(186, 26, 26, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(186, 26, 26, 0.15)',
+  },
+  deleteAccountText: {
+    ...theme.typography.labelSm,
+    color: theme.colors.error,
+    fontWeight: '600',
+    fontSize: 12,
+  },
+
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',

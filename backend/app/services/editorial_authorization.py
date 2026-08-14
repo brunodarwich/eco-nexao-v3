@@ -34,6 +34,14 @@ class AuthorizationContext:
     scope_id: uuid.UUID | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class ScopedEditorialAccess:
+    scope_type: str
+    scope_id: uuid.UUID | None
+    roles: frozenset[str]
+    capabilities: frozenset[str]
+
+
 class EditorialAuthorizationService:
     def __init__(self, repository: EditorialAuthorizationRepository) -> None:
         self.repository = repository
@@ -51,6 +59,31 @@ class EditorialAuthorizationService:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="A identidade não possui a capability editorial necessária.",
             )
+
+    async def access_summary(self, context: AuthorizationContext) -> list[ScopedEditorialAccess]:
+        """Return current database-backed editorial access, denying non-members."""
+        rows = await self.repository.scoped_access_for(context.actor_id)
+        grouped: dict[tuple[str, uuid.UUID | None], tuple[set[str], set[str]]] = {}
+        for scope_type, scope_id, role, capability in rows:
+            roles, capabilities = grouped.setdefault((scope_type, scope_id), (set(), set()))
+            roles.add(role)
+            capabilities.add(capability)
+        if not grouped:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="A identidade não possui acesso editorial.",
+            )
+        return [
+            ScopedEditorialAccess(
+                scope_type=scope_type,
+                scope_id=scope_id,
+                roles=frozenset(roles),
+                capabilities=frozenset(capabilities),
+            )
+            for (scope_type, scope_id), (roles, capabilities) in sorted(
+                grouped.items(), key=lambda item: (item[0][0], str(item[0][1] or ""))
+            )
+        ]
 
     async def authorize_transition(
         self,

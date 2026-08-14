@@ -394,6 +394,7 @@ class PindobalPersistenceRepository:
                         JOIN app_private.route_origins o ON o.route_id = rl.route_id
                         JOIN app_private.route_geometries g ON g.route_origin_id = o.id
                         WHERE a.location IS NOT NULL
+                          AND a.deleted_at IS NULL
                           AND extensions.ST_DWithin(a.location, rl.geometry, :threshold)
                         GROUP BY a.id, rl.route_id, rl.geometry, rl.points
                     )
@@ -408,7 +409,8 @@ class PindobalPersistenceRepository:
                         distance_to_route_m = EXCLUDED.distance_to_route_m,
                         route_segment_index = EXCLUDED.route_segment_index,
                         origin_flags = EXCLUDED.origin_flags
-                    WHERE (route_actors.distance_to_route_m,
+                    WHERE route_actors.archived_at IS NULL
+                      AND (route_actors.distance_to_route_m,
                            route_actors.route_segment_index,
                            route_actors.origin_flags)
                           IS DISTINCT FROM
@@ -477,7 +479,10 @@ class PindobalPersistenceRepository:
                     "route_actors_updated": len(spatial_rows) - sum(spatial_rows),
                     "route_actors_total": (
                         await self.session.scalar(
-                            select(func.count(RouteActor.id)).where(RouteActor.route_id == route.id)
+                            select(func.count(RouteActor.id)).where(
+                                RouteActor.route_id == route.id,
+                                RouteActor.archived_at.is_(None),
+                            )
                         )
                     )
                     or 0,

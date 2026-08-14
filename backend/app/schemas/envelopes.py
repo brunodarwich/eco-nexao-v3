@@ -59,6 +59,23 @@ class BootstrapResponseEnvelope(SchemaBase):
 # -----------------------------------------------------------------------------
 
 
+class ResolvedMediaItemSchema(SchemaBase):
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={"required": ["id", "owner_type", "owner_id", "url"]},
+    )
+    id: uuid.UUID
+    owner_type: str
+    owner_id: uuid.UUID
+    url: str
+    derivatives: dict[str, str] = Field(default_factory=dict)
+    alt_text: str | None = None
+    credit: str | None = None
+    license_code: str | None = None
+    media_kind: str = "stored"
+    sort_order: int = 0
+
+
 class RouteSummarySchema(SchemaBase):
     model_config = ConfigDict(
         from_attributes=True,
@@ -76,6 +93,7 @@ class RouteSummarySchema(SchemaBase):
     is_verified: bool = False
     best_season: str | None = None
     cover_image_url: str | None = None
+    cover_media: ResolvedMediaItemSchema | None = None
 
 
 class RouteListEnvelope(SchemaBase):
@@ -135,6 +153,8 @@ class RouteDetailSchema(SchemaBase):
     road_access: str | None = None
     payment_info: str | None = None
     cover_image_url: str | None = None
+    cover_media: ResolvedMediaItemSchema | None = None
+    gallery: list[ResolvedMediaItemSchema] = Field(default_factory=list)
     origins: list[RouteOriginSchema] = Field(default_factory=list)
 
 
@@ -275,6 +295,8 @@ class ActorSummarySchema(SchemaBase):
     green_badge_status: str = "none"
     verification_status: str = "unverified"
     google_rating: float | None = None
+    cover_image_url: str | None = None
+    cover_media: ResolvedMediaItemSchema | None = None
 
 
 class ActorListEnvelope(SchemaBase):
@@ -321,6 +343,9 @@ class ActorDetailSchema(SchemaBase):
     google_place_id: str | None = None
     google_rating: float | None = None
     google_review_count: int | None = None
+    cover_image_url: str | None = None
+    cover_media: ResolvedMediaItemSchema | None = None
+    gallery: list[ResolvedMediaItemSchema] = Field(default_factory=list)
     accessibility_features: list[dict[str, Any]] = Field(default_factory=list)
 
 
@@ -434,6 +459,73 @@ class AuthUserSchema(SchemaBase):
 
 class AuthSessionEnvelope(SchemaBase):
     data: AuthUserSchema
+
+
+# -----------------------------------------------------------------------------
+# Administrative API foundation (ECO-1601)
+# -----------------------------------------------------------------------------
+
+
+class AdminScopeAccessSchema(SchemaBase):
+    """Roles and capabilities that are valid together in one authorization scope."""
+
+    scope_type: str
+    scope_id: uuid.UUID | None = None
+    roles: list[str]
+    capabilities: list[str]
+
+
+class AdminAccessSchema(SchemaBase):
+    """Database-backed editorial identity; JWT metadata never grants capabilities."""
+
+    user_id: uuid.UUID
+    scopes: list[AdminScopeAccessSchema]
+
+
+class AdminVersionSchema(SchemaBase):
+    version: int = Field(ge=1)
+    updated_at: datetime
+
+
+class AdminAuditMetadataSchema(SchemaBase):
+    request_id: str
+    reason: str | None = None
+    idempotency_key: str | None = None
+
+
+class AdminJobReferenceSchema(SchemaBase):
+    job_id: uuid.UUID
+    status: str
+    status_url: str
+
+
+class AdminUploadReferenceSchema(SchemaBase):
+    upload_id: uuid.UUID
+    status: str
+    upload_url: str | None = None
+    expires_at: datetime | None = None
+
+
+class AdminContractSchema(SchemaBase):
+    """Cross-cutting mutation contract for subsequent administrative CRUD tasks."""
+
+    concurrency_header: str = "If-Match"
+    version_field: str = "version"
+    idempotency_header: str = "Idempotency-Key"
+    audit_request_header: str = "X-Request-ID"
+    version: AdminVersionSchema | None = None
+    audit: AdminAuditMetadataSchema | None = None
+    job_reference: AdminJobReferenceSchema | None = None
+    upload_reference: AdminUploadReferenceSchema | None = None
+
+
+class AdminContextDataSchema(SchemaBase):
+    access: AdminAccessSchema
+    contract: AdminContractSchema = Field(default_factory=AdminContractSchema)
+
+
+class AdminContextEnvelope(SchemaBase):
+    data: AdminContextDataSchema
 
 
 class TokenVerifyRequest(BaseModel):

@@ -1,7 +1,8 @@
 """Unified safe environment verification for ECOnexão (ECO-1301).
 
 This script:
-1. Checks local tool availability and versions (Python, Node, npm, pytest, Ruff, mypy, tsc, Jest, Supabase CLI).
+1. Checks local tool availability and versions
+   (Python, Node, npm, pytest, Ruff, mypy, tsc, Jest, Supabase CLI).
 2. Validates local environment configuration (.env and .env.test).
 3. Detects environment isolation issues (e.g. .env and .env.test pointing to the same DB/URL).
 4. NEVER logs or prints secret keys, passwords, DSNs, or API keys.
@@ -11,6 +12,7 @@ This script:
 """
 
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -25,12 +27,15 @@ if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
 
-import re
-
 # Sensitive patterns for output sanitization
 _URL_PASSWORD_REGEX = re.compile(r"://([^:@\s]+):([^@\s]+)@")
-_SECRET_KEY_REGEX = re.compile(r"(sb_secret_[a-zA-Z0-9_-]+|sb_publishable_[a-zA-Z0-9_-]+|eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+)")
-_ENV_PAIR_SECRET_REGEX = re.compile(r"(?i)(password|secret|key|token|dsn|url)\s*=\s*['\"]?([^\s'\"]+)['\"]?")
+_SECRET_KEY_REGEX = re.compile(
+    r"(sb_secret_[a-zA-Z0-9_-]+|sb_publishable_[a-zA-Z0-9_-]+|"
+    r"eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+)"
+)
+_ENV_PAIR_SECRET_REGEX = re.compile(
+    r"(?i)(password|secret|key|token|dsn|url)\s*=\s*['\"]?([^\s'\"]+)['\"]?"
+)
 
 
 def sanitize_text(text: str) -> str:
@@ -48,7 +53,8 @@ def sanitize_text(text: str) -> str:
 
 def check_tool(command: str, args: list[str], cwd: Path | None = None) -> tuple[bool, str]:
     """Check if a CLI tool is installed and retrieve its version string safely."""
-    cmd_name = f"{command}.cmd" if sys.platform == "win32" and not command.endswith(".cmd") else command
+    is_win = sys.platform == "win32"
+    cmd_name = f"{command}.cmd" if is_win and not command.endswith(".cmd") else command
     executable = shutil.which(cmd_name) or shutil.which(command)
     if not executable:
         return False, "NÃO INSTALADO"

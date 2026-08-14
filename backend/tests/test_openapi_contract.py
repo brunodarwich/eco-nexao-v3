@@ -48,6 +48,15 @@ SCHEMA_NAMES = {
     "TripEnvelope": "TripEnvelope",
     "UserImpactEnvelope": "UserImpactEnvelope",
     "SupportContentEnvelope": "SupportContentEnvelope",
+    "AdminAccessSchema": "AdminAccessSchema",
+    "AdminScopeAccessSchema": "AdminScopeAccessSchema",
+    "AdminContractSchema": "AdminContractSchema",
+    "AdminVersionSchema": "AdminVersionSchema",
+    "AdminAuditMetadataSchema": "AdminAuditMetadataSchema",
+    "AdminJobReferenceSchema": "AdminJobReferenceSchema",
+    "AdminUploadReferenceSchema": "AdminUploadReferenceSchema",
+    "AdminContextDataSchema": "AdminContextDataSchema",
+    "AdminContextEnvelope": "AdminContextEnvelope",
 }
 
 
@@ -137,3 +146,16 @@ def test_canonical_routes_declares_optional_authentication() -> None:
     assert "security" in operation and len(operation["security"]) > 0
     sec_item = operation["security"][0]
     assert "HTTPBearer" in sec_item or "BearerAuth" in sec_item
+
+
+def test_admin_boundary_contract_declares_auth_and_safe_errors() -> None:
+    operation = CANONICAL["paths"]["/api/v1/admin/context"]["get"]
+    assert operation["security"] == [{"HTTPBearer": []}]
+    assert {"200", "401", "403"}.issubset(operation["responses"])
+    schemas = CANONICAL["components"]["schemas"]
+    assert {
+        "AdminVersionSchema",
+        "AdminAuditMetadataSchema",
+        "AdminJobReferenceSchema",
+        "AdminUploadReferenceSchema",
+    }.issubset(schemas)

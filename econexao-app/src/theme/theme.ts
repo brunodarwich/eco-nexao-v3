@@ -13,3 +13,5 @@ export const theme = {
 };
 
 export type Theme = typeof theme;
+export { useAppTheme } from './useAppTheme';
+

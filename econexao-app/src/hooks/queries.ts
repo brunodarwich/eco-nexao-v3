@@ -1,8 +1,20 @@
-import { queryOptions, useQuery } from '@tanstack/react-query';
+import { infiniteQueryOptions, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 
 import { apiClient } from '../api/client';
 import { normalizeQueryValue, queryKeys } from '../api/queryKeys';
 import type { GetRouteActorsQuery, ListRoutesQuery } from '../api/types';
+
+export const adminQueries = {
+  context: (isAuthenticated = true) =>
+    queryOptions({
+      queryKey: ['admin', 'context'],
+      queryFn: ({ signal }) => apiClient.getAdminContext({ signal }),
+      select: (envelope) => envelope.data,
+      enabled: Boolean(isAuthenticated),
+      retry: false,
+      meta: { authenticated: true },
+    }),
+};
 
 export const territorialQueries = {
   bootstrap: (userId: string) =>
@@ -28,7 +40,7 @@ export const territorialQueries = {
     };
     return queryOptions({
       queryKey: queryKeys.routes.list(regionId, request, userId),
-      queryFn: () => apiClient.getRoutes(request),
+      queryFn: ({ signal }) => (signal ? apiClient.getRoutes(request, { signal }) : apiClient.getRoutes(request)),
       enabled: Boolean(regionId) && (!params.saved || Boolean(userId)),
       meta: { authenticated: params.saved === true },
     });
@@ -49,7 +61,7 @@ export const territorialQueries = {
       origin_id: normalizeQueryValue(params.origin_id),
       cursor: normalizeQueryValue(params.cursor),
     };
-    return queryOptions({ queryKey: queryKeys.routes.actors(routeId, request), queryFn: () => apiClient.getRouteActors(routeId, request), enabled: Boolean(routeId) });
+    return queryOptions({ queryKey: queryKeys.routes.actors(routeId, request), queryFn: ({ signal }) => (signal ? apiClient.getRouteActors(routeId, request, { signal }) : apiClient.getRouteActors(routeId, request)), enabled: Boolean(routeId) });
   },
   routeMap: (routeId: string, originId?: string) =>
     queryOptions({ queryKey: queryKeys.routes.map(routeId, originId), queryFn: () => apiClient.getRouteMapPayload(routeId, originId), select: (e) => e.data, enabled: Boolean(routeId) }),
@@ -58,6 +70,8 @@ export const territorialQueries = {
   actorDetail: (actorId: string) =>
     queryOptions({ queryKey: queryKeys.actorDetail(actorId), queryFn: () => apiClient.getActorDetail(actorId), select: (e) => e.data, enabled: Boolean(actorId) }),
 };
+
+export const useAdminContextQuery = (isAuthenticated = true) => useQuery(adminQueries.context(isAuthenticated));
 
 export const useRegionsQuery = () => useQuery(territorialQueries.regions());
 export const useRoutesQuery = (regionId: string | undefined, params?: ListRoutesQuery, userId?: string) => useQuery(territorialQueries.routes(regionId, params, userId));
@@ -70,6 +84,47 @@ export const useRouteMapQuery = (routeId: string, originId?: string) => useQuery
 export const useActorCategoriesQuery = () => useQuery(territorialQueries.actorCategories());
 export const useActorDetailQuery = (actorId: string) => useQuery(territorialQueries.actorDetail(actorId));
 export const useBootstrapQuery = (userId: string) => useQuery(territorialQueries.bootstrap(userId));
+
+export const useInfiniteRoutesQuery = (
+  regionId: string | undefined,
+  params: ListRoutesQuery = {},
+  userId?: string
+) =>
+  useInfiniteQuery({
+    queryKey: ['routes', 'infinite', regionId, params, userId],
+    queryFn: ({ pageParam, signal }) =>
+      apiClient.getRoutes(
+        {
+          ...params,
+          region_id: normalizeQueryValue(regionId),
+          cursor: pageParam ? String(pageParam) : undefined,
+        },
+        { signal }
+      ),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.meta.next_cursor ?? undefined,
+    enabled: Boolean(regionId) && (!params.saved || Boolean(userId)),
+  });
+
+export const useInfiniteRouteActorsQuery = (
+  routeId: string,
+  params: GetRouteActorsQuery = {}
+) =>
+  useInfiniteQuery({
+    queryKey: ['routes', 'actors', 'infinite', routeId, params],
+    queryFn: ({ pageParam, signal }) =>
+      apiClient.getRouteActors(
+        routeId,
+        {
+          ...params,
+          cursor: pageParam ? String(pageParam) : undefined,
+        },
+        { signal }
+      ),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.meta.next_cursor ?? undefined,
+    enabled: Boolean(routeId),
+  });
 
 export const userQueries = {
   profile: (userId?: string) =>

@@ -201,6 +201,7 @@ class TerritorialRepository:
             .join(ActorCategory, Actor.category_id == ActorCategory.id)
             .where(
                 RouteActor.route_id == route_id,
+                RouteActor.archived_at.is_(None),
                 Actor.deleted_at.is_(None),
             )
         )

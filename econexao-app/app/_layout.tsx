@@ -11,11 +11,44 @@ import {
   HankenGrotesk_800ExtraBold,
 } from '@expo-google-fonts/hanken-grotesk';
 import { AppContextProvider } from '../src/state/AppContext';
-import { LoadingView } from '../src/components/common/UIStateViews';
+import { LoadingView, ErrorStateView } from '../src/components/common/UIStateViews';
 import { theme } from '../src/theme/theme';
 import { AuthContext, AuthProvider } from '../src/auth/AuthProvider';
-import { ErrorStateView } from '../src/components/common/UIStateViews';
 import { ServerStateProvider } from '../src/api/ServerStateProvider';
+import { NetworkStatusBar } from '../src/components/common/NetworkStatusBar';
+
+function LayoutContent() {
+  return (
+    <>
+      <StatusBar style="dark" />
+      <NetworkStatusBar />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: theme.colors.surfaceBackground },
+        }}
+      >
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="route/[routeId]/index"
+          options={{ headerShown: false, title: 'Detalhes da Rota' }}
+        />
+        <Stack.Screen
+          name="route/[routeId]/map"
+          options={{ headerShown: false, title: 'Mapa em Tela Cheia' }}
+        />
+        <Stack.Screen
+          name="route/[routeId]/catalog"
+          options={{ headerShown: false, title: 'Catálogo Contextual' }}
+        />
+        <Stack.Screen
+          name="admin/index"
+          options={{ headerShown: false, title: 'Painel Editorial' }}
+        />
+      </Stack>
+    </>
+  );
+}
 
 function AuthGate({ children }: React.PropsWithChildren) {
   const auth = useContext(AuthContext);
@@ -56,27 +89,7 @@ export default function RootLayout() {
         <ServerStateProvider>
           <AuthGate>
             <AppContextProvider>
-            <StatusBar style="dark" />
-            <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: theme.colors.surfaceBackground },
-          }}
-        >
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="route/[routeId]/index"
-            options={{ headerShown: false, title: 'Detalhes da Rota' }}
-          />
-          <Stack.Screen
-            name="route/[routeId]/map"
-            options={{ headerShown: false, title: 'Mapa em Tela Cheia' }}
-          />
-          <Stack.Screen
-            name="route/[routeId]/catalog"
-            options={{ headerShown: false, title: 'Catálogo Contextual' }}
-          />
-            </Stack>
+              <LayoutContent />
             </AppContextProvider>
           </AuthGate>
         </ServerStateProvider>

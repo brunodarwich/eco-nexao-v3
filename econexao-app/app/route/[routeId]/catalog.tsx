@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { ActorCard } from '../../../src/components/catalog/ActorCard';
@@ -7,11 +7,10 @@ import { CategoryFilters } from '../../../src/components/catalog/CategoryFilters
 import { AppHeader } from '../../../src/components/common/AppHeader';
 import { EmptyStateView, ErrorStateView, LoadingView } from '../../../src/components/common/UIStateViews';
 import { SearchInput } from '../../../src/components/common/SearchInput';
-import { useActorCategoriesQuery, useRouteActorsQuery } from '../../../src/hooks/queries';
+import { useActorCategoriesQuery, useInfiniteRouteActorsQuery } from '../../../src/hooks/queries';
 import { useOptimisticFavoriteActor } from '../../../src/hooks/useOptimisticFavoriteActor';
 import { theme } from '../../../src/theme/theme';
 import type { ActorSummary } from '../../../src/api/types';
-import type { Actor, CategorySegment } from '../../../src/types';
 
 export default function CatalogScreen() {
   const router = useRouter();
@@ -22,50 +21,33 @@ export default function CatalogScreen() {
   }>();
 
   const [q, setQ] = useState('');
+  const [debouncedQ, setDebouncedQ] = useState('');
   const [category, setCategory] = useState('');
   const [favoriteMap, setFavoriteMap] = useState<Record<string, boolean>>({});
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQ(q);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [q]);
+
   const { toggleFavorite } = useOptimisticFavoriteActor();
 
-  const handleToggleFav = (id: string) => {
-    const current = Boolean(favoriteMap[id]);
+  const handleToggleFav = (id: string, currentStatus?: boolean) => {
+    const current = currentStatus !== undefined ? currentStatus : Boolean(favoriteMap[id]);
     setFavoriteMap((prev) => ({ ...prev, [id]: !current }));
     toggleFavorite(id, current);
   };
 
-
   const categories = useActorCategoriesQuery();
-  const actors = useRouteActorsQuery(routeId, {
-    q: q || undefined,
+  const actorsQuery = useInfiniteRouteActorsQuery(routeId, {
+    q: debouncedQ || undefined,
     category: category || undefined,
     origin_id: originId,
   });
 
-  const mapActorSummaryToActor = (summary: ActorSummary): Actor => {
-    return {
-      id: summary.id,
-      name: summary.name,
-      segment: (summary.category_slug as CategorySegment) || 'hospedagem',
-      subCategory: summary.category_label || 'Ponto de Apoio',
-      group: 'Inventário SEMTUR',
-      address: summary.address ?? 'Endereço local',
-      city: 'Belterra',
-      state: 'PA',
-      phone: '',
-      rating: summary.google_rating ?? 4.5,
-      reviewCount: 8,
-      greenBadge: summary.green_badge_status === 'verified',
-      accessibilityFeatures: [],
-      imageUrl: require('../../../assets/images/pousada_canto_floresta.jpg'),
-      coordinate: {
-        xPercentage: 50,
-        yPercentage: 50,
-        latitude: summary.latitude ?? undefined,
-        longitude: summary.longitude ?? undefined,
-      },
-      description: `Categoria: ${summary.category_label}`,
-    };
-  };
+  const allActors: ActorSummary[] = actorsQuery.data?.pages.flatMap((page) => page.data) ?? [];
 
   return (
     <View style={styles.container}>
@@ -86,33 +68,54 @@ export default function CatalogScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        {actors.isPending ? (
+        {actorsQuery.isPending ? (
           <LoadingView message="Carregando catálogo..." />
-        ) : actors.isError ? (
+        ) : actorsQuery.isError ? (
           <ErrorStateView
             title="Erro ao carregar catálogo"
             message="Não foi possível obter a lista de atores para esta rota."
-            onRetry={() => void actors.refetch()}
+            onRetry={() => void actorsQuery.refetch()}
           />
-        ) : actors.data?.data.length ? (
-          actors.data.data.map((summary) => {
-            const actorObj = mapActorSummaryToActor(summary);
-            return (
-              <ActorCard
-                key={summary.id}
-                actor={actorObj}
-                focusOnMount={summary.id === actorId}
-                isFavorite={Boolean(favoriteMap[summary.id])}
-                onToggleFavorite={() => handleToggleFav(summary.id)}
-                onPress={() => {
-                  const query = new URLSearchParams();
-                  if (originId) query.set('originId', originId);
-                  const suffix = query.toString();
-                  router.push(`/actor/${encodeURIComponent(summary.id)}${suffix ? `?${suffix}` : ''}`);
-                }}
-              />
-            );
-          })
+        ) : allActors.length > 0 ? (
+          <>
+            {allActors.map((summary) => {
+              const isFav = favoriteMap[summary.id] !== undefined
+                ? favoriteMap[summary.id]
+                : (summary as any).is_favorite ?? false;
+
+              return (
+                <ActorCard
+                  key={summary.id}
+                  actor={summary}
+                  focusOnMount={summary.id === actorId}
+                  isFavorite={isFav}
+                  onToggleFavorite={() => handleToggleFav(summary.id, isFav)}
+                  onPress={() => {
+                    const query = new URLSearchParams();
+                    if (originId) query.set('originId', originId);
+                    const suffix = query.toString();
+                    router.push(`/actor/${encodeURIComponent(summary.id)}${suffix ? `?${suffix}` : ''}`);
+                  }}
+                />
+              );
+            })}
+
+            {actorsQuery.hasNextPage && (
+              <TouchableOpacity
+                style={styles.loadMoreButton}
+                onPress={() => void actorsQuery.fetchNextPage()}
+                disabled={actorsQuery.isFetchingNextPage}
+                accessibilityRole="button"
+                accessibilityLabel="Carregar mais atores da rota"
+              >
+                {actorsQuery.isFetchingNextPage ? (
+                  <ActivityIndicator size="small" color="#059669" />
+                ) : (
+                  <Text style={styles.loadMoreText}>Carregar Mais Estabelecimentos</Text>
+                )}
+              </TouchableOpacity>
+            )}
+          </>
         ) : (
           <EmptyStateView
             title="Nenhum ator encontrado"
@@ -148,4 +151,19 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     gap: 12,
   },
+  loadMoreButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#059669',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  loadMoreText: {
+    color: '#059669',
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });
+

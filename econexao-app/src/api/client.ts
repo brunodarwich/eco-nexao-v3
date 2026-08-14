@@ -39,6 +39,31 @@ import {
   UserProfileUpdate,
   SupportContentEnvelope,
   StandardSuccessResponse,
+  AdminContextEnvelope,
+  AdminRegionCreateSchema,
+  AdminRegionEnvelope,
+  AdminRegionListEnvelope,
+  AdminRegionUpdateSchema,
+  AdminRouteCreateSchema,
+  AdminRouteEnvelope,
+  AdminRouteListEnvelope,
+  AdminRouteUpdateSchema,
+  AdminActorCreateSchema,
+  AdminActorEnvelope,
+  AdminActorListEnvelope,
+  AdminActorUpdateSchema,
+  StatusTransitionRequest,
+  StatusTransitionEnvelope,
+  PublishGuardResultEnvelope,
+  ReconciliationCandidateListEnvelope,
+  ReconciliationDecisionRequest,
+  ReconciliationDecisionEnvelope,
+  ReconciliationCompensationRequest,
+  EditorialAlertListEnvelope,
+  EditorialAlertEnvelope,
+  EditorialAlertCreateRequest,
+  EditorialAlertUpdateRequest,
+  AlertResolveRequest,
 } from "./types";
 
 export class ApiClientError extends Error {
@@ -198,7 +223,10 @@ export class ApiClient {
     return this.request<RegionListEnvelope>("/regions");
   }
 
-  public async getRoutes(params?: ListRoutesQuery): Promise<RouteListEnvelope> {
+  public async getRoutes(
+    params?: ListRoutesQuery,
+    options?: { signal?: AbortSignal }
+  ): Promise<RouteListEnvelope> {
     const query = new URLSearchParams();
     if (params?.region_id) query.append("region_id", params.region_id);
     if (params?.q) query.append("q", params.q);
@@ -209,7 +237,7 @@ export class ApiClient {
     if (params?.limit) query.append("limit", String(params.limit));
 
     const queryString = query.toString() ? `?${query.toString()}` : "";
-    return this.request<RouteListEnvelope>(`/routes${queryString}`);
+    return this.request<RouteListEnvelope>(`/routes${queryString}`, { signal: options?.signal });
   }
 
   public async getRouteDetail(routeId: string): Promise<RouteDetailEnvelope> {
@@ -236,7 +264,8 @@ export class ApiClient {
 
   public async getRouteActors(
     routeId: string,
-    params?: GetRouteActorsQuery
+    params?: GetRouteActorsQuery,
+    options?: { signal?: AbortSignal }
   ): Promise<ActorListEnvelope> {
     const query = new URLSearchParams();
     if (params?.q) query.append("q", params.q);
@@ -247,7 +276,8 @@ export class ApiClient {
 
     const queryString = query.toString() ? `?${query.toString()}` : "";
     return this.request<ActorListEnvelope>(
-      `/routes/${routeId}/actors${queryString}`
+      `/routes/${routeId}/actors${queryString}`,
+      { signal: options?.signal }
     );
   }
 
@@ -365,6 +395,193 @@ export class ApiClient {
 
   public async getSupportContent(): Promise<SupportContentEnvelope> {
     return this.request<SupportContentEnvelope>("/content/support");
+  }
+
+  public async getAdminContext(options?: { signal?: AbortSignal }): Promise<AdminContextEnvelope> {
+    return this.request<AdminContextEnvelope>("/admin/context", { signal: options?.signal });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Admin Endpoints (ECO-1802 / ECO-1803)
+  // ---------------------------------------------------------------------------
+
+  public async getAdminRegions(options?: { signal?: AbortSignal }): Promise<AdminRegionListEnvelope> {
+    return this.request<AdminRegionListEnvelope>("/admin/territory/regions", { signal: options?.signal });
+  }
+
+  public async createAdminRegion(data: AdminRegionCreateSchema): Promise<AdminRegionEnvelope> {
+    return this.request<AdminRegionEnvelope>("/admin/territory/regions", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async updateAdminRegion(regionId: string, data: AdminRegionUpdateSchema): Promise<AdminRegionEnvelope> {
+    return this.request<AdminRegionEnvelope>(`/admin/territory/regions/${regionId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async deleteAdminRegion(regionId: string): Promise<StandardSuccessResponse> {
+    return this.request<StandardSuccessResponse>(`/admin/territory/regions/${regionId}`, {
+      method: "DELETE",
+    });
+  }
+
+  public async getAdminRoutes(params?: { region_id?: string }, options?: { signal?: AbortSignal }): Promise<AdminRouteListEnvelope> {
+    const query = params?.region_id ? `?region_id=${encodeURIComponent(params.region_id)}` : "";
+    return this.request<AdminRouteListEnvelope>(`/admin/territory/routes${query}`, { signal: options?.signal });
+  }
+
+  public async createAdminRoute(data: AdminRouteCreateSchema): Promise<AdminRouteEnvelope> {
+    return this.request<AdminRouteEnvelope>("/admin/territory/routes", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async updateAdminRoute(routeId: string, data: AdminRouteUpdateSchema): Promise<AdminRouteEnvelope> {
+    return this.request<AdminRouteEnvelope>(`/admin/territory/routes/${routeId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async deleteAdminRoute(routeId: string): Promise<StandardSuccessResponse> {
+    return this.request<StandardSuccessResponse>(`/admin/territory/routes/${routeId}`, {
+      method: "DELETE",
+    });
+  }
+
+  public async getAdminActors(params?: { route_id?: string; q?: string }, options?: { signal?: AbortSignal }): Promise<AdminActorListEnvelope> {
+    const query = new URLSearchParams();
+    if (params?.route_id) query.append("route_id", params.route_id);
+    if (params?.q) query.append("q", params.q);
+    const queryString = query.toString() ? `?${query.toString()}` : "";
+    return this.request<AdminActorListEnvelope>(`/admin/actors${queryString}`, { signal: options?.signal });
+  }
+
+  public async createAdminActor(data: AdminActorCreateSchema): Promise<AdminActorEnvelope> {
+    return this.request<AdminActorEnvelope>("/admin/actors", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async updateAdminActor(actorId: string, data: AdminActorUpdateSchema): Promise<AdminActorEnvelope> {
+    return this.request<AdminActorEnvelope>(`/admin/actors/${actorId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async deleteAdminActor(actorId: string): Promise<StandardSuccessResponse> {
+    return this.request<StandardSuccessResponse>(`/admin/actors/${actorId}`, {
+      method: "DELETE",
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Workflow, Publish Guard, Reconciliation & Alerts (ECO-1804)
+  // ---------------------------------------------------------------------------
+
+  public async transitionResourceStatus(
+    resourceType: string,
+    resourceId: string,
+    data: StatusTransitionRequest
+  ): Promise<StatusTransitionEnvelope> {
+    return this.request<StatusTransitionEnvelope>(`/admin/workflow/${resourceType}/${resourceId}/transition`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async getPublishGuardStatus(
+    resourceType: string,
+    resourceId: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<PublishGuardResultEnvelope> {
+    return this.request<PublishGuardResultEnvelope>(`/admin/workflow/${resourceType}/${resourceId}/publish-guard`, {
+      signal: options?.signal,
+    });
+  }
+
+  public async getReconciliationCandidates(
+    params?: { status?: string; limit?: number; offset?: number },
+    options?: { signal?: AbortSignal }
+  ): Promise<ReconciliationCandidateListEnvelope> {
+    const query = new URLSearchParams();
+    if (params?.status) query.append("status", params.status);
+    if (params?.limit) query.append("limit", String(params.limit));
+    if (params?.offset) query.append("offset", String(params.offset));
+    const queryString = query.toString() ? `?${query.toString()}` : "";
+    return this.request<ReconciliationCandidateListEnvelope>(`/admin/reconciliation/candidates${queryString}`, {
+      signal: options?.signal,
+    });
+  }
+
+  public async decideReconciliationCandidate(
+    candidateId: string,
+    data: ReconciliationDecisionRequest
+  ): Promise<ReconciliationDecisionEnvelope> {
+    return this.request<ReconciliationDecisionEnvelope>(`/admin/reconciliation/${candidateId}/decision`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async compensateReconciliationMerge(
+    candidateId: string,
+    data: ReconciliationCompensationRequest
+  ): Promise<ReconciliationDecisionEnvelope> {
+    return this.request<ReconciliationDecisionEnvelope>(`/admin/reconciliation/${candidateId}/compensate`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async getEditorialAlerts(
+    params?: { route_id?: string; severity?: string; is_active?: boolean; limit?: number; offset?: number },
+    options?: { signal?: AbortSignal }
+  ): Promise<EditorialAlertListEnvelope> {
+    const query = new URLSearchParams();
+    if (params?.route_id) query.append("route_id", params.route_id);
+    if (params?.severity) query.append("severity", params.severity);
+    if (params?.is_active !== undefined) query.append("is_active", String(params.is_active));
+    if (params?.limit) query.append("limit", String(params.limit));
+    if (params?.offset) query.append("offset", String(params.offset));
+    const queryString = query.toString() ? `?${query.toString()}` : "";
+    return this.request<EditorialAlertListEnvelope>(`/admin/alerts${queryString}`, {
+      signal: options?.signal,
+    });
+  }
+
+  public async createEditorialAlert(data: EditorialAlertCreateRequest): Promise<EditorialAlertEnvelope> {
+    return this.request<EditorialAlertEnvelope>("/admin/alerts", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async updateEditorialAlert(
+    alertId: string,
+    data: EditorialAlertUpdateRequest
+  ): Promise<EditorialAlertEnvelope> {
+    return this.request<EditorialAlertEnvelope>(`/admin/alerts/${alertId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async resolveEditorialAlert(
+    alertId: string,
+    data: AlertResolveRequest
+  ): Promise<EditorialAlertEnvelope> {
+    return this.request<EditorialAlertEnvelope>(`/admin/alerts/${alertId}/resolve`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
   }
 }
 

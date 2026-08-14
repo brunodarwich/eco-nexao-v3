@@ -58,6 +58,29 @@ class EditorialAuthorizationRepository:
         result = await self.db.scalars(statement)
         return set(result.all())
 
+    async def scoped_access_for(
+        self, user_id: uuid.UUID
+    ) -> list[tuple[str, uuid.UUID | None, str, str]]:
+        """Return active role/capability rows without mixing authorization scopes."""
+        statement = (
+            select(
+                EditorialMembership.scope_type,
+                EditorialMembership.scope_id,
+                EditorialMembership.role,
+                EditorialRoleCapability.capability,
+            )
+            .join(
+                EditorialRoleCapability,
+                EditorialRoleCapability.role == EditorialMembership.role,
+            )
+            .where(
+                EditorialMembership.user_id == user_id,
+                EditorialMembership.revoked_at.is_(None),
+            )
+        )
+        result = await self.db.execute(statement)
+        return [(row.scope_type, row.scope_id, row.role, row.capability) for row in result]
+
     async def resource_state(
         self, resource_type: str, resource_id: uuid.UUID
     ) -> EditorialResourceState | None:

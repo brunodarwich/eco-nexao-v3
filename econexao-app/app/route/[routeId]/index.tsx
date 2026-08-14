@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert, ActivityIndicator, AccessibilityInfo } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { AppHeader } from '../../../src/components/common/AppHeader';
 import { EmptyStateView, ErrorStateView, LoadingView } from '../../../src/components/common/UIStateViews';
 import { OriginSelector } from '../../../src/components/routes/OriginSelector';
 import { RouteStats } from '../../../src/components/routes/RouteStats';
 import { useRouteAlertsQuery, useRouteActorsQuery, useRouteDetailQuery } from '../../../src/hooks/queries';
-import { theme } from '../../../src/theme/theme';
+import { theme, useAppTheme } from '../../../src/theme/theme';
+
 import { makeAccessibleButton } from '../../../src/utils/accessibility';
-import { ApiClientError } from '../../../src/api/client';
+import { apiClient, ApiClientError } from '../../../src/api/client';
+import { queryKeys } from '../../../src/api/queryKeys';
+import { useAuth } from '../../../src/hooks/useAuth';
 
 const routePath = (
   routeId: string,
@@ -25,14 +29,28 @@ const routePath = (
   return `/route/${encodeURIComponent(routeId)}/${destination}${suffix ? `?${suffix}` : ''}`;
 };
 
+
+import { AuthContext } from '../../../src/auth/AuthProvider';
+
 export default function RouteDetailScreen() {
   const router = useRouter();
+  const theme = useAppTheme();
+  let queryClient: ReturnType<typeof useQueryClient> | undefined;
+  try {
+    queryClient = useQueryClient();
+  } catch {
+    queryClient = undefined;
+  }
+  const auth = React.useContext(AuthContext);
+  const user = auth?.user;
   const { routeId = '', originId: initialOriginId, actorId } = useLocalSearchParams<{
     routeId: string;
     originId?: string;
     actorId?: string;
   }>();
 
+
+  const [isStartingTrip, setIsStartingTrip] = useState(false);
   const detail = useRouteDetailQuery(routeId);
 
   const [originId, setOriginId] = useState<string | undefined>(initialOriginId);
@@ -45,6 +63,27 @@ export default function RouteDetailScreen() {
 
   const alerts = useRouteAlertsQuery(routeId);
   const actors = useRouteActorsQuery(routeId, { origin_id: effectiveOrigin, limit: 3 });
+
+  const handleStartTrip = async () => {
+    try {
+      setIsStartingTrip(true);
+      await apiClient.createTrip(routeId);
+      if (queryClient && user?.id) {
+
+        void queryClient.invalidateQueries({ queryKey: queryKeys.myTrips(user.id) });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.myImpact(user.id) });
+      }
+
+      AccessibilityInfo.announceForAccessibility('Viagem iniciada com sucesso. Bom passeio sustentável!');
+      Alert.alert('Viagem Iniciada', 'Sua viagem foi registrada no histórico do seu perfil.');
+    } catch {
+      AccessibilityInfo.announceForAccessibility('Erro ao iniciar viagem.');
+      Alert.alert('Erro', 'Não foi possível registrar o início da viagem no momento.');
+    } finally {
+      setIsStartingTrip(false);
+    }
+  };
+
 
   if (detail.isPending) {
     return <LoadingView message="Carregando detalhes da rota..." />;
@@ -148,6 +187,36 @@ export default function RouteDetailScreen() {
             <Text style={styles.secondaryButtonText}>Ver catálogo</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Start Trip CTA */}
+        <TouchableOpacity
+          style={[
+            styles.startTripButton,
+            {
+              backgroundColor: theme.colors.brandForest,
+              borderColor: theme.isHighContrast ? theme.colors.brandDeep : 'transparent',
+              borderWidth: theme.isHighContrast ? 2 : 0,
+            },
+          ]}
+          onPress={handleStartTrip}
+          disabled={isStartingTrip}
+          {...makeAccessibleButton(
+            'Registrar início de viagem nesta rota',
+            'Inicia e registra a contagem de visita e impacto ecológico no seu perfil'
+          )}
+        >
+          {isStartingTrip ? (
+            <ActivityIndicator size="small" color={theme.colors.surfaceWhite} />
+          ) : (
+            <>
+              <Ionicons name="play-circle-outline" size={20} color={theme.colors.surfaceWhite} />
+              <Text style={[styles.startTripText, { color: theme.colors.surfaceWhite }]}>
+                Registrar Início de Viagem
+              </Text>
+            </>
+          )}
+        </TouchableOpacity>
+
 
         {/* Route Alerts Section */}
         <View style={styles.section}>
@@ -311,6 +380,21 @@ const styles = StyleSheet.create({
     gap: 8,
     ...theme.shadows.sm,
   },
+  startTripButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: theme.radii.full,
+    gap: 8,
+    marginVertical: 4,
+    ...theme.shadows.card,
+  },
+  startTripText: {
+    ...theme.typography.labelMd,
+    fontWeight: '700',
+  },
+
   primaryButton: {
     backgroundColor: theme.colors.brandForest,
   },
