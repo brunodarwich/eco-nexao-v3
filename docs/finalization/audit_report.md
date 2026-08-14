@@ -99,7 +99,7 @@ DLL `_rust`. Esses limites impedem conclusões de release.
 | Jobs | Concluídos | PARTIAL | Classes de POI, sem scheduler/worker/lock distribuído | Lock em memória e nenhuma operação | concorrência/perda | Worker e execução administrada | ECO-1605, ECO-2001 |
 | Health/readiness | Concluído | PARTIAL | Live/ready e teste estático | Readiness só DB/PostGIS; sem migrations/Storage | falso ready | Readiness por dependências | ECO-2001 |
 | Observabilidade | Concluída | PARTIAL | JSON log/request_id | `SENTRY_DSN` não usado; sem trace/métrica/alerta | incidentes invisíveis | Instrumentar | ECO-2004 |
-| Compatibilidade Windows/Linux | Concluída | PARTIAL | Política Windows e CI Windows | Sem container Linux/teste de runtime | deploy incerto | Container e CI Linux | ECO-2001 |
+| Compatibilidade Windows/Linux | Concluída | PARTIAL | Política Windows e CI Windows | Sem validação em runtime Linux/CI | deploy incerto | CI Linux e build Render nativo | ECO-2001 |
 
 ## F. Supabase e banco
 
@@ -131,8 +131,8 @@ DLL `_rust`. Esses limites impedem conclusões de release.
 
 | Capacidade | Estado declarado | Estado comprovado | Evidência | Lacuna | Risco | Ação recomendada | Task |
 |---|---|---|---|---|---|---|---|
-| Provedor FastAPI | ADR aceito | BLOCKED | ADR diz apenas “contêineres gerenciados” | Fornecedor/região/custo/SLA indefinidos | arquitetura não executável | Novo ADR humano | ECO-1302 |
-| Container/runtime | Concluído | MISSING | Nenhum Dockerfile/startup/health config | Sem artefato deployável | sem backend hospedado | Criar imagem production | ECO-2001 |
+| Provedor FastAPI | ADR aceito | VERIFIED | ADR 0005 aceito: Render (Web Service Nativo Python sem Docker) | Deploy físico adiado para Marco 20 | baixo | Configuração Render no Marco 20 | ECO-1302, ECO-2001 |
+| Runtime de produção | Planejado | MISSING | Nenhum comando de start/render.yaml criado ainda | Sem configuração de build/start para Render | sem backend hospedado | Configurar runtime nativo Python e build Render | ECO-2001 |
 | CI de qualidade | Concluído | PARTIAL | 2 workflows de lint/type/test | Sem migrations, E2E, build, artifacts, deploy ou approvals | qualidade ≠ release | Pipeline staging | ECO-2002 |
 | Staging | Concluído | MISSING | Sem projeto/deploy/domínio | Sem homologação real | production às cegas | Provisionar/deploy | ECO-1401, ECO-2002 |
 | Web production | Publicado | MISSING | Sem host/config/domínio | export local não é deploy | indisponível | Deploy staging→prod | ECO-2003, ECO-2203 |

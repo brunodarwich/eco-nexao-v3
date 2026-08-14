@@ -1,4 +1,5 @@
-"""Pydantic v2 schemas for internal ECOnexão domain entities and ORM mappings (ECO-0201 to ECO-0206).
+"""Pydantic v2 schemas for internal ECOnexão domain entities and ORM mappings
+(ECO-0201 to ECO-0206).
 
 Note:
     Public and edge API contract envelopes are defined in `app.schemas.envelopes`,

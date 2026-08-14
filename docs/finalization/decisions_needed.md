@@ -7,7 +7,7 @@ equivalente indicado.
 
 | ID | Decisão | Opções mínimas a comparar | Critério de decisão | Evidência/saída / Status Registrado | Bloqueia |
 |---|---|---|---|---|---|
-| ECO-1302 | Provedor de contêiner FastAPI | Render, Fly.io, Railway, Cloud Run | região, custo, egress, health, rollback, SLA | ADR 0005 aceito: Google Cloud Run (`southamerica-east1`). Deploy ADIADO para Marco 20. Sem billing/serviço agora. | ECO-2001–2004 |
+| ECO-1302 | Provedor de hospedagem FastAPI | Render, Fly.io, Railway, Cloud Run | região, custo, egress, health, rollback, SLA | ADR 0005 aceito: Render (Web Service Nativo Python sem Docker). Deploy ADIADO para Marco 20. Sem billing/serviço agora. | ECO-2001–2004 |
 | ECO-1303 | Política editorial e RBAC | papéis admin/editor/reviewer/publisher, painel próprio | segregação de funções, UX, custo, auditabilidade | ADR 0006 aceito: RBAC, state machine, Publish Guard e audit trail. Owner é responsável provisório durante dev. | ECO-1403, ECO-1601–1804 |
 | ECO-1304 | Identidade e sessão | guest+email, magic link, OAuth; web em memória, storage local aceito ou BFF cookie | continuidade de histórico, segurança, custo, plataformas | ADR 0007 aceito: localStorage Web, Opção 1 conflito, expurgo 90d aprovado. | ECO-1902 |
 | ECO-1305 | Política de mídia | bucket público/privado, derivados, CDN, retenção, exclusão, licença/crédito/alt | LGPD, direitos, performance e custo | ADR 0008 aceito: buckets híbridos, EXIF strip, WebP, Google proxy, alt text. | ECO-1402, ECO-1701–1704 |
@@ -20,7 +20,7 @@ equivalente indicado.
 | **Supabase Dev & Test** | Reutilização dos projetos `econexao` (dev) e `econexao-teste` (test) no Plano Free. Proibida colisão. `econexao-teste` é descartável sob autorização. | **APROVADO** | Não | Não |
 | **Supabase Staging** | Provisionamento de projeto Supabase Staging isolado. | **ADIADO** | Não | Sim (Bloqueia Staging) |
 | **Supabase Production** | Provisionamento de projeto Supabase Produção isolado. | **ADIADO / BLOQUEADO** | Não | Sim (Bloqueia Gate 7 / Release) |
-| **Cloud Run Backend** | Adiado deploy/billing. FastAPI será mantido e testado localmente. Primeiro deploy no Marco 20. | **APROVADO (Arquitetura) / ADIADO (Deploy)** | Não | Sim (Bloqueia Staging/Prod) |
+| **Render Backend** | Adiado deploy/billing. FastAPI será mantido e testado localmente. Primeiro deploy no Marco 20. | **APROVADO (Arquitetura) / ADIADO (Deploy)** | Não | Sim (Bloqueia Staging/Prod) |
 | **Domínios & Links** | Sem compra/registro de domínios agora. Desenvol. local; staging em URL provisória. | **PENDENTE / ADIADO** | Não | Sim (Bloqueia ECO-1905 / Release) |
 | **Novos Gastos** | Nenhum custo ou contratação financeira autorizada nesta etapa. | **NÃO AUTORIZADOS** | Não | Não |
 | **Nome Público App** | Nome provisoriamente aprovado: `ECOnexão`. Expo slug: `econexao-app`. | **PROVISÓRIO** | Não | Sim (Bloqueia Release) |

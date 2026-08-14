@@ -43,10 +43,15 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "jest --runInBand",
+    "test": "jest --runInBand --forceExit",
+    "e2e:web": "jest --testPathPattern=src/e2e/webCriticalJourneys.e2e.test.tsx --runInBand --forceExit",
+    "e2e:android": "jest --testPathPattern=src/e2e/androidCriticalJourneys.e2e.test.tsx --runInBand --forceExit",
+    "e2e:ios": "jest --testPathPattern=src/e2e/iosCriticalJourneys.e2e.test.tsx --runInBand --forceExit",
+    "a11y:web": "jest --testPathPattern=src/e2e/accessibilityAudit.e2e.test.tsx --runInBand --forceExit",
     "typecheck": "tsc --noEmit",
     "openapi:generate": "openapi-typescript ../docs/openapi.yaml -o src/api/generated/openapi.ts",
-    "openapi:check": "node scripts/check-openapi-types.mjs"
+    "openapi:check": "node scripts/check-openapi-types.mjs",
+    "export:web": "expo export -p web"
   },
   "jest": {
     "preset": "jest-expo",

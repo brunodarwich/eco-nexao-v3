@@ -1,15 +1,17 @@
 {
   "expo": {
-    "name": "econexao-app",
+    "name": "ECOnexão",
     "slug": "econexao-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "org.econexao.app"
     },
     "android": {
+      "package": "org.econexao.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",

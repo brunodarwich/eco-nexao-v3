@@ -17,7 +17,16 @@ _SENSITIVE_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"(?i)(authorization\s*[:=]\s*bearer\s+)[^\s,;]+"), r"\1***"),
     (re.compile(r"(?i)(bearer\s+)[A-Za-z0-9._~+/=-]+"), r"\1***"),
     (re.compile(r"\bsb_secret_[A-Za-z0-9_-]+\b"), "sb_secret_***"),
-    (re.compile(r"\bAIza[A-Za-z0-9_-]{20,}\b"), "AIza***"),
+    (
+        re.compile(
+            r"(?i)(\"?(?:password|senha|secret|token|api_key)\"?\s*[:=]\s*\"?)[^\",\s&;]+(\"?)"
+        ),
+        r"\1***\2",
+    ),
+    (
+        re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]+\.[A-Za-z0-9._-]+\b"),
+        "eyJ***.***.***",
+    ),
 )
 
 

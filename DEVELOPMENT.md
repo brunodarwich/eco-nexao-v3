@@ -121,6 +121,18 @@ python -m mypy app
 python -m scripts.check_environment
 ```
 
+### Runtime e Deploy no Render (Nativo Python sem Docker — ADR 0005)
+
+O backend é executado como Web Service nativo Python no Render, sem dependência de Docker.
+
+- **Blueprint declarativo:** [`render.yaml`](../render.yaml) na raiz do repositório.
+- **Root Directory:** `backend`
+- **Build Command:** `pip install .`
+- **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- **Health Check:** `/api/v1/health` (e `/api/v1/health/live`)
+- **Graceful Shutdown:** Gerenciado nativamente via `lifespan` com descarte de conexões do pool PostgreSQL.
+- **Variáveis de ambiente:** Configuradas com `sync: false` no blueprint e injetadas de forma criptografada no Dashboard do Render (sem expor segredos no repositório).
+
 ## Supabase remoto sem Docker
 
 Ambientes obrigatoriamente separados:
@@ -241,6 +253,19 @@ desenvolvimento.
 - Antes de promover: revisar SQL, executar testes RLS, rodar advisors, aplicar em development e staging, executar smoke tests.
 - Não criar objetos customizados nos schemas `auth`, `storage` ou `realtime`.
 - Grants e RLS são explícitos e testados separadamente.
+
+## CI/CD de Staging e Migration Gate (GitHub Actions)
+
+O pipeline `.github/workflows/staging-deploy.yml` executa a validação contínua e o deploy automático em Staging:
+
+1. **Backend Quality Gate**: Ruff, Mypy, validação de migrations, testes de segurança de RLS e cobertura pytest (mínimo 85%).
+2. **Frontend Quality Gate**: Sincronização OpenAPI, Typecheck TypeScript e suíte Jest.
+3. **Migration & Secret Gate**: Varredura anti-vazamento de segredos e verificação de ordem de migrations.
+4. **Deploy Staging (Render)**: Disparo do Deploy Hook autenticado e execução de smoke test (`scripts.staging_smoke`) contra os endpoints `/api/v1/health/live` e `/api/v1/health/ready`.
+
+### Secrets requeridos no GitHub Repository / Environment `staging`:
+- `RENDER_STAGING_DEPLOY_HOOK_URL`: URL do Deploy Hook do Web Service no Render.
+- `STAGING_API_BASE_URL`: URL base pública do serviço em staging (ex: `https://api-staging.econexao.org`).
 
 ## Dados Pindobal
 

@@ -801,28 +801,35 @@ descobertos com `supabase --help`; production nunca é usada sem aprovação.
 
 ## Marco 20 — Infraestrutura e staging
 
-### ECO-2001 — Container de produção e runtime FastAPI
+### ECO-2001 — Runtime de produção e serviço FastAPI no Render (Nativo Python sem Docker)
 
-- **Resultado / prioridade / tamanho / executor:** artifact Linux deployable; P0; L;
-  Codex.
-- **Dependências/ADRs:** ECO-1302, ECO-1404, ECO-1605.
-- **Contexto/leitura:** ADR provider, backend config/health/jobs, SDK not relevant.
-- **Arquivos:** Dockerfile/startup/config/tests/docs; no provider deploy yet.
-- **Permitido/proibido:** non-root, pinned deps, health/readiness/graceful shutdown;
-  no embedded secrets/migration auto-run unsafe.
-- **Passos:** multi-stage image; Linux CI; process/worker split; migrations as gated
-  release step; SBOM/image scan.
-- **Aceite/testes/comandos:** provider-approved build/run commands, live/ready,
-  SIGTERM, read-only FS where possible, vulnerability scan and pytest in image.
-- **Evidência/riscos/rollback/DoD:** digest/SBOM; native dependency risk; previous image
-  digest rollback; cross-review deploy.
+- **Resultado / prioridade / tamanho / executor:** serviço web Python implantável no Render; P0; M;
+  Codex / Antigravity.
+- **Dependências / ADRs:** ECO-1302 (ADR 0005 aceito: Render Native Python); sem Docker.
+- **Contexto e leitura:** ADR 0005, backend config/health/jobs, `pyproject.toml`, `DEVELOPMENT.md`.
+- **Arquivos esperados:** `render.yaml` (opcional/declarativo), script de build (`pip install .`),
+  script/comando de startup (`uvicorn app.main:app --host 0.0.0.0 --port $PORT`),
+  `backend/app/api/v1/health.py`, documentação de deploy. Nenhum Dockerfile.
+- **Permitido / proibido:** runtime nativo Python 3.13, dependências fixadas, health/readiness
+  HTTP `/api/v1/health`, graceful shutdown (SIGTERM); proibido uso ou dependência de Docker;
+  proibido embutir segredos no repositório.
+- **Passos:** definir comandos de build (`pip install .` ou `uv sync`) e startup do Uvicorn;
+  garantir healthcheck `/api/v1/health` e tratamento de encerramento seguro (SIGTERM);
+  documentar variáveis de ambiente necessárias no painel Render.
+- **Aceite / testes / comandos:** build e startup validados localmente em runtime Python limpo;
+  verificação do endpoint de health `/api/v1/health`; testes de carga e startup;
+  `python -m pytest tests/test_health.py`.
+- **Evidência / riscos / rollback / DoD:** comandos de build/start comprovados; risco de dependências
+  nativas resolvido via `pyproject.toml`; rollback via painel do Render (1-clique / commit anterior);
+  DoD sem qualquer dependência de Docker.
 - **Prompt de execução:**
   ```text
-  Execute ECO-2001 per accepted provider ADR. Build an immutable non-root Linux image,
-  separate migrations/jobs from startup and prove health/shutdown/tests/scans. Do not
-  deploy or embed secrets. Deliver digest, SBOM and rollback.
+  Execute ECO-2001 conforme ADR 0005 (Render Web Service Nativo Python sem Docker).
+  Configure os comandos de build e start (Uvicorn), valide o healthcheck HTTP /api/v1/health
+  e graceful shutdown sem Dockerfile ou contêineres. Não embuta segredos.
+  Entregue manifesto render.yaml/documentação e handoff completo.
   ```
-- **Entrega:** unlocks ECO-2002.
+- **Entrega:** desbloqueia ECO-2002.
 
 ### ECO-2002 — CI/CD de staging com migration gate
 

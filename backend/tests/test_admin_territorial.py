@@ -790,3 +790,217 @@ async def test_repo_geometry_crud() -> None:
     )
     geojson = await repo.get_geometry_geojson(geom)
     assert geojson is not None and geojson["type"] == "LineString"
+
+
+def test_admin_region_crud_endpoints() -> None:
+    user = authenticated_user()
+    region_id = uuid.uuid4()
+    admin_service = AsyncMock()
+    admin_service.get_region.return_value = {
+        "data": {
+            "id": region_id,
+            "slug": "tapajos",
+            "name": "Tapajós",
+            "state_code": "PA",
+            "is_active": True,
+            "created_at": datetime.now(UTC),
+            "updated_at": datetime.now(UTC),
+        }
+    }
+    admin_service.update_region.return_value = {
+        "data": {
+            "id": region_id,
+            "slug": "tapajos",
+            "name": "Tapajós Atualizado",
+            "state_code": "PA",
+            "is_active": True,
+            "created_at": datetime.now(UTC),
+            "updated_at": datetime.now(UTC),
+        }
+    }
+
+    app.dependency_overrides[get_current_user] = lambda: user
+    app.dependency_overrides[get_territorial_admin_service] = lambda: admin_service
+    try:
+        client = TestClient(app)
+        res_get = client.get(f"/api/v1/admin/territory/regions/{region_id}")
+        assert res_get.status_code == 200
+        assert res_get.json()["data"]["name"] == "Tapajós"
+
+        res_put = client.put(
+            f"/api/v1/admin/territory/regions/{region_id}",
+            json={"name": "Tapajós Atualizado"},
+        )
+        assert res_put.status_code == 200
+        assert res_put.json()["data"]["name"] == "Tapajós Atualizado"
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_admin_route_crud_endpoints() -> None:
+    user = authenticated_user()
+    route_id = uuid.uuid4()
+    region_id = uuid.uuid4()
+    admin_service = AsyncMock()
+    admin_service.get_route.return_value = {
+        "data": {
+            "id": route_id,
+            "region_id": region_id,
+            "slug": "rota-tapajos",
+            "code": "RT01",
+            "title": "Rota Tapajós",
+            "city": "Santarém",
+            "state_code": "PA",
+            "version": 1,
+            "status": "published",
+            "is_verified": True,
+            "created_at": datetime.now(UTC),
+            "updated_at": datetime.now(UTC),
+        }
+    }
+    admin_service.update_route.return_value = {
+        "data": {
+            "id": route_id,
+            "region_id": region_id,
+            "slug": "rota-tapajos",
+            "code": "RT01",
+            "title": "Rota Tapajós VIP",
+            "city": "Santarém",
+            "state_code": "PA",
+            "version": 2,
+            "status": "published",
+            "is_verified": True,
+            "created_at": datetime.now(UTC),
+            "updated_at": datetime.now(UTC),
+        }
+    }
+    admin_service.archive_route.return_value = {
+        "data": {
+            "id": route_id,
+            "region_id": region_id,
+            "slug": "rota-tapajos",
+            "code": "RT01",
+            "title": "Rota Tapajós",
+            "city": "Santarém",
+            "state_code": "PA",
+            "version": 2,
+            "status": "archived",
+            "is_verified": False,
+            "created_at": datetime.now(UTC),
+            "updated_at": datetime.now(UTC),
+        }
+    }
+
+    app.dependency_overrides[get_current_user] = lambda: user
+    app.dependency_overrides[get_territorial_admin_service] = lambda: admin_service
+    try:
+        client = TestClient(app)
+        res_get = client.get(f"/api/v1/admin/territory/routes/{route_id}")
+        assert res_get.status_code == 200
+
+        res_put = client.put(
+            f"/api/v1/admin/territory/routes/{route_id}",
+            json={"title": "Rota Tapajós VIP"},
+        )
+        assert res_put.status_code == 200
+        assert res_put.json()["data"]["title"] == "Rota Tapajós VIP"
+
+        res_del = client.delete(f"/api/v1/admin/territory/routes/{route_id}")
+        assert res_del.status_code == 200
+        assert res_del.json()["data"]["status"] == "archived"
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_admin_origin_and_geometry_endpoints() -> None:
+    user = authenticated_user()
+    route_id = uuid.uuid4()
+    origin_id = uuid.uuid4()
+    geom_id = uuid.uuid4()
+    admin_service = AsyncMock()
+
+    admin_service.create_origin.return_value = {
+        "data": {
+            "id": origin_id,
+            "route_id": route_id,
+            "code": "orig-1",
+            "name": "Origem 1",
+            "latitude": -2.4,
+            "longitude": -54.7,
+            "sort_order": 0,
+            "created_at": datetime.now(UTC),
+            "updated_at": datetime.now(UTC),
+        }
+    }
+    admin_service.update_origin.return_value = {
+        "data": {
+            "id": origin_id,
+            "route_id": route_id,
+            "code": "orig-1",
+            "name": "Origem 1 Atualizada",
+            "latitude": -2.4,
+            "longitude": -54.7,
+            "sort_order": 0,
+            "created_at": datetime.now(UTC),
+            "updated_at": datetime.now(UTC),
+        }
+    }
+    admin_service.delete_origin.return_value = None
+
+    admin_service.create_geometry.return_value = {
+        "data": {
+            "id": geom_id,
+            "route_origin_id": origin_id,
+            "provider": "osrm",
+            "distance_m": 1500,
+            "duration_s": 600,
+            "created_at": datetime.now(UTC),
+            "updated_at": datetime.now(UTC),
+        }
+    }
+    admin_service.update_geometry.return_value = {
+        "data": {
+            "id": geom_id,
+            "route_origin_id": origin_id,
+            "provider": "osrm",
+            "distance_m": 2500,
+            "duration_s": 800,
+            "created_at": datetime.now(UTC),
+            "updated_at": datetime.now(UTC),
+        }
+    }
+
+    app.dependency_overrides[get_current_user] = lambda: user
+    app.dependency_overrides[get_territorial_admin_service] = lambda: admin_service
+    try:
+        client = TestClient(app)
+        res_orig = client.post(
+            f"/api/v1/admin/territory/routes/{route_id}/origins",
+            json={"code": "orig-1", "name": "Origem 1", "latitude": -2.4, "longitude": -54.7},
+        )
+        assert res_orig.status_code == 201
+
+        res_put_orig = client.put(
+            f"/api/v1/admin/territory/routes/{route_id}/origins/{origin_id}",
+            json={"name": "Origem 1 Atualizada"},
+        )
+        assert res_put_orig.status_code == 200
+
+        res_del_orig = client.delete(
+            f"/api/v1/admin/territory/routes/{route_id}/origins/{origin_id}"
+        )
+        assert res_del_orig.status_code == 204
+
+        res_geom = client.post(
+            f"/api/v1/admin/territory/routes/{route_id}/origins/{origin_id}/geometries",
+            json={"coordinates": [[-2.4, -54.7], [-2.5, -54.8]], "provider": "osrm"},
+        )
+        assert res_geom.status_code == 201
+
+        res_put_geom = client.put(
+            f"/api/v1/admin/territory/routes/{route_id}/geometries/{geom_id}",
+            json={"distance_m": 2500},
+        )
+        assert res_put_geom.status_code == 200
+    finally:
+        app.dependency_overrides.clear()

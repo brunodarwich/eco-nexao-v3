@@ -1,0 +1,143 @@
+name: Staging Deployment & Migration Gate
+
+on:
+  push:
+    branches:
+      - staging
+  workflow_dispatch:
+    inputs:
+      trigger_smoke_only:
+        description: "Executar apenas os testes de smoke contra staging"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  backend-gate:
+    name: Backend Quality Gate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Ruff Linter & Formatter Check
+        run: python -m ruff check app tests scripts
+
+      - name: Mypy Strict Type Check
+        run: python -m mypy app scripts/staging_smoke.py
+
+      - name: Migration Ordering Check
+        run: python -m scripts.check_migrations
+
+      - name: Security & RLS Policy Contract Tests
+        run: >-
+          python -m pytest
+          tests/test_check_migrations.py
+          tests/test_rls_policies.py
+          tests/test_media_lifecycle_schema.py
+
+      - name: Pytest Suite with Coverage (Minimum 85%)
+        run: python -m pytest --cov=app --cov-report=term --cov-fail-under=85
+
+  frontend-gate:
+    name: Frontend Contract & Quality Gate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: econexao-app
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: econexao-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify OpenAPI Types Sync
+        run: npm run openapi:check
+
+      - name: TypeScript Typecheck
+        run: npm run typecheck
+
+      - name: Jest Test Suite
+        run: npm test -- --watch=false --forceExit
+
+  migration-and-security-gate:
+    name: Staging Migration & Secret Scan Gate
+    needs: [backend-gate, frontend-gate]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Verify No Production Secrets in Codebase
+        run: |
+          echo "Scanning for accidental secret leaks..."
+          # Fail if private keys, supabase service_role, or production DSNs are committed
+          if grep -rnw --exclude-dir={.git,node_modules,.venv} --exclude="*.test.ts*" --exclude="*.test.tsx" -e "sb_secret_" -e "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" .; then
+            echo "::error::Potential secret leak detected in repository files!"
+            exit 1
+          fi
+          echo "Secret scan passed cleanly."
+
+  deploy-staging:
+    name: Deploy to Render Staging
+    needs: [migration-and-security-gate]
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Trigger Render Staging Deploy Hook
+        if: ${{ !inputs.trigger_smoke_only }}
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+            echo "::warning::RENDER_STAGING_DEPLOY_HOOK_URL not configured. Skipping automated webhook trigger."
+          else
+            echo "Triggering Render staging deployment webhook..."
+            curl -f -X POST "$RENDER_DEPLOY_HOOK"
+            echo "Deployment webhook triggered successfully."
+          fi
+
+      - name: Set up Python for Smoke Test
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Run Staging Smoke Verification
+        env:
+          STAGING_API_URL: ${{ secrets.STAGING_API_BASE_URL }}
+        run: |
+          if [ -z "$STAGING_API_URL" ]; then
+            echo "::warning::STAGING_API_BASE_URL secret not set. Skipping live staging smoke probe."
+          else
+            python backend/scripts/staging_smoke.py --base-url "$STAGING_API_URL" --max-retries 15 --delay 10
+          fi

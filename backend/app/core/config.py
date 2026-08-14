@@ -45,6 +45,14 @@ class Settings(BaseSettings):
     OSRM_BASE_URL: str = "http://router.project-osrm.org"
     SENTRY_DSN: SecretStr = SecretStr("")
 
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_REQUESTS_PER_MINUTE: int = 120
+    SECURITY_HEADERS_ENABLED: bool = True
+
+    DEEP_LINK_ANDROID_PACKAGE_NAME: str = "org.econexao.app"
+    DEEP_LINK_ANDROID_SHA256_FINGERPRINTS: list[str] = []
+    DEEP_LINK_IOS_APP_ID: str = "TEAMID.org.econexao.app"
+
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v: Any) -> Any:

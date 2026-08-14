@@ -27,6 +27,16 @@ async def failure_probe() -> None:
 app.include_router(probe_router)
 
 
+def test_health_root_success() -> None:
+    """Test /api/v1/health returns 200 and HealthStatus schema."""
+    response = client.get("/api/v1/health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ok"
+    assert "timestamp" in data
+    assert "X-Request-ID" in response.headers
+
+
 def test_health_live_success() -> None:
     """Test /api/v1/health/live returns 200 and HealthStatus schema."""
     response = client.get("/api/v1/health/live")

@@ -1,0 +1,34 @@
+# Render Blueprint Specification for ECOnexão Backend (Render Native Python Service)
+# ADR 0005: Provedor de Hospedagem e Runtime FastAPI (Render Native Python sem Docker)
+
+services:
+  - type: web
+    name: econexao-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: "pip install ."
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /api/v1/health
+    plan: starter
+    region: ohio
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.0"
+      - key: APP_NAME
+        value: "ECOnexão API"
+      - key: APP_ENV
+        value: "staging"
+      - key: LOG_LEVEL
+        value: "INFO"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        value: '["https://econexao.app","https://staging.econexao.app","http://localhost:8081"]'

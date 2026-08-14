@@ -3,6 +3,8 @@
 import asyncio
 import sys
 import uuid
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI, Request, status
@@ -14,11 +16,21 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.api.v1 import api_v1_router
 from app.core.config import settings
 from app.core.logging import request_id_ctx_var, setup_logging
+from app.db.session import engine
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 setup_logging(settings.LOG_LEVEL)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
+    """Manage application startup and graceful shutdown."""
+    yield
+    # Graceful shutdown: close database engine connection pool
+    await engine.dispose()
+
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -29,6 +41,7 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
+    lifespan=lifespan,
 )
 
 # Configure CORS Middleware
@@ -49,6 +62,33 @@ app.add_middleware(
 
 
 @app.middleware("http")
+async def security_headers_middleware(request: Request, call_next: Any) -> Any:
+    """Middleware to enforce strict HTTP security headers."""
+    response = await call_next(request)
+    if getattr(settings, "SECURITY_HEADERS_ENABLED", True):
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "geolocation=(self), camera=(), microphone=()"
+        
+        # Enforce HSTS on staging and production or HTTPS requests
+        if settings.APP_ENV in ("staging", "production") or request.url.scheme == "https":
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+            
+        # Prevent caching on dynamic API routes if not explicitly configured
+        if request.url.path.startswith("/api/v1") and "Cache-Control" not in response.headers:
+            response.headers["Cache-Control"] = "no-store, max-age=0"
+    return response
+
+
+@app.middleware("http")
+async def app_rate_limit_middleware(request: Request, call_next: Any) -> Any:
+    """Middleware wrapper for rate limiting."""
+    from app.core.rate_limit import rate_limit_middleware
+    return await rate_limit_middleware(request, call_next)
+
+
+@app.middleware("http")
 async def request_id_middleware(request: Request, call_next: Any) -> Any:
     """Middleware to extract or generate X-Request-ID and propagate it."""
     incoming_id = request.headers.get("X-Request-ID")
@@ -63,6 +103,40 @@ async def request_id_middleware(request: Request, call_next: Any) -> Any:
         return response
     finally:
         request_id_ctx_var.reset(token)
+
+
+@app.get("/.well-known/assetlinks.json", tags=["Well-Known"], include_in_schema=False)
+async def get_android_assetlinks() -> list[dict[str, Any]]:
+    """Digital Asset Links for Android App Links verification."""
+    fingerprints = settings.DEEP_LINK_ANDROID_SHA256_FINGERPRINTS or [
+        "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00"
+    ]
+    return [
+        {
+            "relation": ["delegate_permission/common.handle_all_urls"],
+            "target": {
+                "namespace": "android_app",
+                "package_name": settings.DEEP_LINK_ANDROID_PACKAGE_NAME,
+                "sha256_cert_fingerprints": fingerprints,
+            },
+        }
+    ]
+
+
+@app.get("/.well-known/apple-app-site-association", tags=["Well-Known"], include_in_schema=False)
+async def get_apple_app_site_association() -> dict[str, Any]:
+    """Apple App Site Association for Universal Links verification."""
+    return {
+        "applinks": {
+            "apps": [],
+            "details": [
+                {
+                    "appID": settings.DEEP_LINK_IOS_APP_ID,
+                    "paths": ["/route/*", "/actor/*", "/region/*", "/profile/*"],
+                }
+            ],
+        }
+    }
 
 
 HTTP_STATUS_CODE_MAP: dict[int, str] = {

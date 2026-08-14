@@ -61,7 +61,7 @@ flowchart TD
 | ECO-1903 | Google Antigravity | ECO-1901, 1902, 1904 | AppContext/theme/query client | sim |
 | ECO-1904 | Google Antigravity | ECO-1901–1903 | profile/trips/actor screens | sim |
 | ECO-1905 | Google Antigravity | ECO-2001 | app.json/eas/deep links/legal UI | obrigatória |
-| ECO-2001 | Codex | ECO-1901–1904 | Docker/startup/backend config | obrigatória |
+| ECO-2001 | Codex | ECO-1901–1904 | Render/startup/backend config | obrigatória |
 | ECO-2002 | Codex | ECO-2003 | workflows/migration scripts | obrigatória |
 | ECO-2003 | Codex | ECO-2002, 2004 | hosting config/CORS/domains | sim |
 | ECO-2004 | Codex | ECO-2003 | observability/runbooks/workflows | obrigatória |

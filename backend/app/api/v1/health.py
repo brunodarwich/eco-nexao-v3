@@ -13,6 +13,15 @@ router = APIRouter(prefix="/health", tags=["Health"])
 
 
 @router.get(
+    "",
+    response_model=HealthStatus,
+    status_code=status.HTTP_200_OK,
+    summary="Health check raiz",
+    description="Retorna status HTTP 200 se o serviço estiver respondendo.",
+    operation_id="healthRoot",
+    include_in_schema=False,
+)
+@router.get(
     "/live",
     response_model=HealthStatus,
     status_code=status.HTTP_200_OK,
