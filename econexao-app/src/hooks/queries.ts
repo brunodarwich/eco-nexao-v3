@@ -160,6 +160,7 @@ export const userQueries = {
       queryKey: queryKeys.favoriteActors(userId),
       queryFn: () => apiClient.getMyFavoriteActors(),
       select: (e) => e.data,
+      enabled: Boolean(userId),
       meta: { authenticated: true },
     }),
   preferences: (userId?: string) =>
@@ -184,4 +185,3 @@ export const useMyFavoriteRoutesQuery = (userId?: string) => useQuery(userQuerie
 export const useMyFavoriteActorsQuery = (userId?: string) => useQuery(userQueries.favoriteActors(userId));
 export const useMyPreferencesQuery = (userId?: string) => useQuery(userQueries.preferences(userId));
 export const useSupportContentQuery = () => useQuery(userQueries.supportContent());
-

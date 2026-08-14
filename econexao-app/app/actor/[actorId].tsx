@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -16,9 +16,12 @@ import { AppHeader } from '../../src/components/common/AppHeader';
 import { Badge } from '../../src/components/common/Badge';
 import { EmptyStateView, ErrorStateView, LoadingView } from '../../src/components/common/UIStateViews';
 import { useActorDetailQuery } from '../../src/hooks/queries';
+import { useMyFavoriteActorsQuery } from '../../src/hooks/queries';
 import { useOptimisticFavoriteActor } from '../../src/hooks/useOptimisticFavoriteActor';
+import { useAuth } from '../../src/hooks/useAuth';
 import { theme } from '../../src/theme/theme';
 import { makeAccessibleButton } from '../../src/utils/accessibility';
+import type { ActorSummary } from '../../src/api/types';
 
 export default function ActorDetailScreen() {
   const router = useRouter();
@@ -28,16 +31,11 @@ export default function ActorDetailScreen() {
   }>();
 
   const actorQuery = useActorDetailQuery(actorId);
+  const { user } = useAuth();
+  const favoriteActorsQuery = useMyFavoriteActorsQuery(user?.id);
   const { toggleFavorite, isPending: isFavPending } = useOptimisticFavoriteActor();
-  const [isFavorite, setIsFavorite] = useState(false);
 
   const actor = actorQuery.data;
-
-  const handleToggleFav = () => {
-    const nextState = !isFavorite;
-    setIsFavorite(nextState);
-    toggleFavorite(actorId, isFavorite);
-  };
 
   const openExternalLink = async (url: string, label: string) => {
     try {
@@ -107,7 +105,24 @@ export default function ActorDetailScreen() {
   }
 
   const greenSeal = actor.green_badge_status === 'verified';
-  const categoryLabel = actor.category?.label || actor.sub_category || 'Atração Local';
+  const categoryLabel = actor.category.label;
+  const isFavorite = favoriteActorsQuery.data?.some((favorite) => favorite.id === actor.id) ?? false;
+  const actorSummary: ActorSummary = {
+    id: actor.id,
+    slug: actor.slug,
+    name: actor.name,
+    category_slug: actor.category.slug,
+    category_label: actor.category.label,
+    address: actor.address,
+    latitude: actor.latitude,
+    longitude: actor.longitude,
+    green_badge_status: actor.green_badge_status,
+    verification_status: actor.verification_status,
+    google_rating: actor.google_rating,
+    cover_image_url: actor.cover_image_url,
+    cover_media: actor.cover_media,
+  };
+  const coverImageUrl = actor.cover_media?.url ?? actor.cover_image_url;
 
   return (
     <View style={styles.container}>
@@ -116,11 +131,18 @@ export default function ActorDetailScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Cover / Image Banner */}
         <View style={styles.bannerContainer}>
-          <Image
-            source={require('../../assets/images/pousada_canto_floresta.jpg')}
-            style={styles.bannerImage}
-            resizeMode="cover"
-          />
+          {coverImageUrl ? (
+            <Image
+              source={{ uri: coverImageUrl }}
+              style={styles.bannerImage}
+              resizeMode="cover"
+              accessibilityLabel={actor.cover_media?.alt_text ?? `Imagem de ${actor.name}`}
+            />
+          ) : (
+            <View style={styles.bannerPlaceholder} accessibilityLabel="Imagem não disponível">
+              <Ionicons name="storefront-outline" size={48} color={theme.colors.brandSage} />
+            </View>
+          )}
           <View style={styles.bannerOverlay}>
             <View style={styles.badgeRow}>
               {greenSeal && <Badge type="greenSeal" label="Selo Verde Consciente" />}
@@ -129,20 +151,22 @@ export default function ActorDetailScreen() {
               )}
             </View>
 
-            <TouchableOpacity
-              style={styles.favFloatingButton}
-              onPress={handleToggleFav}
-              disabled={isFavPending}
-              {...makeAccessibleButton(
-                isFavorite ? 'Remover dos favoritos' : 'Salvar nos favoritos'
-              )}
-            >
-              <Ionicons
-                name={isFavorite ? 'heart' : 'heart-outline'}
-                size={22}
-                color={isFavorite ? theme.colors.error : theme.colors.onSurface}
-              />
-            </TouchableOpacity>
+            {favoriteActorsQuery.isSuccess ? (
+              <TouchableOpacity
+                style={styles.favFloatingButton}
+                onPress={() => toggleFavorite(actorSummary, isFavorite)}
+                disabled={isFavPending}
+                {...makeAccessibleButton(
+                  isFavorite ? 'Remover dos favoritos' : 'Salvar nos favoritos'
+                )}
+              >
+                <Ionicons
+                  name={isFavorite ? 'heart' : 'heart-outline'}
+                  size={22}
+                  color={isFavorite ? theme.colors.error : theme.colors.onSurface}
+                />
+              </TouchableOpacity>
+            ) : null}
           </View>
         </View>
 
@@ -222,13 +246,9 @@ export default function ActorDetailScreen() {
           </View>
         </View>
 
-        {/* Provenance / Source Footer */}
-        <View style={styles.provenanceBox}>
-          <Ionicons name="information-circle-outline" size={16} color={theme.colors.brandForest} />
-          <Text style={styles.provenanceText}>
-            Dados integrados do Inventário SEMTUR Belterra e enriquecidos via Google Places.
-          </Text>
-        </View>
+        {actor.cover_media?.credit ? (
+          <Text style={styles.mediaCredit}>Crédito da imagem: {actor.cover_media.credit}</Text>
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -251,6 +271,13 @@ const styles = StyleSheet.create({
   bannerImage: {
     width: '100%',
     height: '100%',
+  },
+  bannerPlaceholder: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.surfaceContainerLow,
   },
   bannerOverlay: {
     position: 'absolute',
@@ -346,20 +373,11 @@ const styles = StyleSheet.create({
   mapChipText: {
     color: theme.colors.surfaceWhite,
   },
-  provenanceBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  mediaCredit: {
     marginHorizontal: theme.spacing.marginMobile,
-    marginTop: 16,
-    padding: 12,
-    backgroundColor: 'rgba(117, 155, 113, 0.08)',
-    borderRadius: theme.radii.lg,
-  },
-  provenanceText: {
+    marginTop: 8,
     ...theme.typography.labelSm,
-    color: theme.colors.brandForest,
-    flex: 1,
+    color: theme.colors.onSurfaceVariant,
     fontSize: 12,
   },
 });

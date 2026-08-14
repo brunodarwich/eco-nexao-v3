@@ -17,7 +17,7 @@ import { Badge } from '../common/Badge';
 import { makeAccessibleButton } from '../../utils/accessibility';
 
 export interface ActorCardProps {
-  actor: ActorSummary | (Partial<ActorSummary> & { id: string; name: string; category_label?: string; address?: string | null; green_badge_status?: string; is_favorite?: boolean });
+  actor: ActorSummary;
   onPress?: () => void;
   onToggleFavorite?: () => void;
   isFavorite?: boolean;
@@ -45,11 +45,11 @@ export const ActorCard: React.FC<ActorCardProps> = ({
     if (reactTag != null) AccessibilityInfo.setAccessibilityFocus(reactTag);
   }, [focusOnMount]);
 
-  const effectiveIsFavorite = isFavorite !== undefined ? isFavorite : Boolean((actor as any).is_favorite);
-  const categoryName = (actor.category_label || (actor as any).subCategory || 'Ponto de Apoio').toUpperCase();
-  const hasGreenSeal = actor.green_badge_status === 'verified' || (actor as any).greenBadge === true;
-  const ratingValue = actor.google_rating ?? (typeof (actor as any).rating === 'number' ? (actor as any).rating : null);
-  const imageUrl = actor.cover_image_url || (actor as any).cover_media?.derivatives?.card?.url;
+  const effectiveIsFavorite = isFavorite ?? false;
+  const categoryName = actor.category_label.toUpperCase();
+  const hasGreenSeal = actor.green_badge_status === 'verified';
+  const ratingValue = actor.google_rating;
+  const imageUrl = actor.cover_media?.derivatives?.card ?? actor.cover_media?.url ?? actor.cover_image_url;
 
   return (
     <View style={styles.card}>
@@ -82,7 +82,7 @@ export const ActorCard: React.FC<ActorCardProps> = ({
             {ratingValue != null && (
               <View style={styles.ratingRow}>
                 <Ionicons name="star" size={14} color={theme.colors.brandSun} />
-                <Text style={styles.ratingText}>{ratingValue.toFixed(1)}</Text>
+                <Text style={styles.ratingText}>{ratingValue.toFixed(1)} Google</Text>
               </View>
             )}
           </View>
@@ -94,11 +94,6 @@ export const ActorCard: React.FC<ActorCardProps> = ({
             </Text>
           ) : null}
 
-          {(actor as any).description ? (
-            <Text style={styles.description} numberOfLines={2}>
-              {(actor as any).description}
-            </Text>
-          ) : null}
         </View>
       </Pressable>
 
@@ -208,12 +203,4 @@ const styles = StyleSheet.create({
     color: theme.colors.onSurfaceVariant,
     marginBottom: 8,
   },
-  description: {
-    ...theme.typography.bodySm,
-    color: theme.colors.onSurfaceVariant,
-    fontSize: 13,
-    lineHeight: 18,
-    marginBottom: 10,
-  },
 });
-

@@ -9,8 +9,6 @@ import { useMyFavoriteActorsQuery } from '../../src/hooks/queries';
 import { useOptimisticFavoriteActor } from '../../src/hooks/useOptimisticFavoriteActor';
 import { useAuth } from '../../src/hooks/useAuth';
 import { theme } from '../../src/theme/theme';
-import type { ActorSummary } from '../../src/api/types';
-import type { Actor, CategorySegment } from '../../src/types';
 
 export default function FavoriteActorsScreen() {
   const router = useRouter();
@@ -32,36 +30,15 @@ export default function FavoriteActorsScreen() {
             onRetry={() => void favActors.refetch()}
           />
         ) : favActors.data?.length ? (
-          favActors.data.map((actorSummary: ActorSummary) => {
-            const actorObj: Actor = {
-              id: actorSummary.id,
-              name: actorSummary.name,
-              segment: (actorSummary.category_slug as CategorySegment) || 'hospedagem',
-              subCategory: actorSummary.category_label || 'Atração',
-              group: 'Inventário SEMTUR',
-              address: actorSummary.address ?? 'Endereço local',
-              city: 'Belterra',
-              state: 'PA',
-              phone: '',
-              rating: actorSummary.google_rating ?? 4.5,
-              reviewCount: 10,
-              greenBadge: actorSummary.green_badge_status === 'verified',
-              accessibilityFeatures: [],
-              imageUrl: require('../../assets/images/pousada_canto_floresta.jpg'),
-              coordinate: { xPercentage: 50, yPercentage: 50 },
-              description: `Categoria: ${actorSummary.category_label}`,
-            };
-
-            return (
+          favActors.data.map((actorSummary) => (
               <ActorCard
                 key={actorSummary.id}
-                actor={actorObj}
+                actor={actorSummary}
                 isFavorite={true}
-                onToggleFavorite={() => toggleFavorite(actorSummary.id, true)}
+                onToggleFavorite={() => toggleFavorite(actorSummary, true)}
                 onPress={() => router.push(`/actor/${actorSummary.id}`)}
               />
-            );
-          })
+          ))
         ) : (
           <EmptyStateView
             title="Nenhum ator favorito"

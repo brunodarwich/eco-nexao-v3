@@ -31,7 +31,7 @@ describe('ECO-1901 — Dados reais, paginação e favoritos consistentes no App 
     jest.clearAllMocks();
     queryClient = new QueryClient({
       defaultOptions: {
-        queries: { retry: false, gcTime: 1000 * 60 },
+        queries: { retry: false, gcTime: Infinity },
         mutations: { retry: false },
       },
     });
@@ -103,24 +103,22 @@ describe('ECO-1901 — Dados reais, paginação e favoritos consistentes no App 
   test('useOptimisticFavoriteActor atualiza cache imediatamente e faz rollback no erro', async () => {
     let hookResult: ReturnType<typeof useOptimisticFavoriteActor> | undefined;
 
-    const queryKey = queryKeys.routes.actors('route-tapajos');
+    const queryKey = queryKeys.favoriteActors('test-user-1');
+    const actor = {
+      id: 'actor-200',
+      slug: 'pousada-sol',
+      name: 'Pousada do Sol',
+      category_slug: 'hospedagem',
+      category_label: 'Hospedagem',
+      green_badge_status: 'verified',
+      verification_status: 'verified',
+    };
     const initialActorList = {
-      data: [
-        {
-          id: 'actor-200',
-          slug: 'pousada-sol',
-          name: 'Pousada do Sol',
-          category_slug: 'hospedagem',
-          category_label: 'Hospedagem',
-          green_badge_status: 'verified',
-          verification_status: 'verified',
-          is_favorite: false,
-        },
-      ],
+      data: [],
       meta: { total: 1, limit: 20 },
     };
 
-    queryClient.setQueryDefaults(['routes', 'actors'], {
+    queryClient.setQueryDefaults(queryKey, {
       queryFn: async () => initialActorList,
     });
     queryClient.setQueryData(queryKey, initialActorList);
@@ -141,10 +139,10 @@ describe('ECO-1901 — Dados reais, paginação e favoritos consistentes no App 
     jest.spyOn(apiClient, 'addFavoriteActor').mockRejectedValueOnce(new Error('Server 500'));
 
     await act(async () => {
-      hookResult!.toggleFavorite('actor-200', false);
+      hookResult!.toggleFavorite(actor, false);
     });
 
     const cachedData = queryClient.getQueryData<typeof initialActorList>(queryKey);
-    expect(cachedData?.data[0].is_favorite).toBe(false);
+    expect(cachedData?.data).toEqual([]);
   });
 });

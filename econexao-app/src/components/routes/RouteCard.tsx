@@ -30,11 +30,18 @@ export const RouteCard: React.FC<RouteCardProps> = ({
         )}
       >
         <View style={styles.imageContainer}>
-          <Image
-            source={route.cover_image_url ? { uri: route.cover_image_url } : require('../../../assets/images/hero_tapajos_sunset.jpg')}
-            style={styles.image}
-            resizeMode="cover"
-          />
+          {route.cover_image_url ? (
+            <Image
+              source={{ uri: route.cover_image_url }}
+              style={styles.image}
+              resizeMode="cover"
+              accessibilityLabel={`Imagem da rota ${route.title}`}
+            />
+          ) : (
+            <View style={styles.imagePlaceholder} accessibilityLabel="Imagem da rota não disponível">
+              <Ionicons name="map-outline" size={44} color={theme.colors.brandSage} />
+            </View>
+          )}
           <View style={styles.gradientOverlay} />
 
           <View style={styles.topRow}>
@@ -105,6 +112,13 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: '100%',
     height: '100%',
+  },
+  imagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.surfaceContainerLow,
   },
   gradientOverlay: {
     position: 'absolute',

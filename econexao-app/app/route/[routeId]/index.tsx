@@ -299,7 +299,7 @@ export default function RouteDetailScreen() {
                     {actor.google_rating && (
                       <View style={styles.ratingBadge}>
                         <Ionicons name="star" size={12} color={theme.colors.brandSun} />
-                        <Text style={styles.ratingText}>{actor.google_rating.toFixed(1)}</Text>
+                        <Text style={styles.ratingText}>{actor.google_rating.toFixed(1)} Google</Text>
                       </View>
                     )}
                   </View>

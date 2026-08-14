@@ -2,72 +2,47 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AccessibilityInfo } from 'react-native';
 import { apiClient } from '../api/client';
 import { queryKeys } from '../api/queryKeys';
-import type { ActorListEnvelope, ActorDetailEnvelope, ActorSummary } from '../api/types';
+import type { ActorListEnvelope, ActorSummary } from '../api/types';
+import { useAuth } from './useAuth';
 
 interface FavoriteActorVariables {
-  actorId: string;
+  actor: ActorSummary;
   isFavorite: boolean;
 }
 
 export function useOptimisticFavoriteActor() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const favoritesKey = queryKeys.favoriteActors(user?.id);
 
   const mutation = useMutation({
-    mutationFn: async ({ actorId, isFavorite }: FavoriteActorVariables) => {
+    mutationFn: async ({ actor, isFavorite }: FavoriteActorVariables) => {
       if (isFavorite) {
-        return apiClient.addFavoriteActor(actorId);
+        return apiClient.addFavoriteActor(actor.id);
       } else {
-        return apiClient.removeFavoriteActor(actorId);
+        return apiClient.removeFavoriteActor(actor.id);
       }
     },
-    onMutate: async ({ actorId, isFavorite }) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.routes.all() });
-      await queryClient.cancelQueries({ queryKey: queryKeys.favoriteActors() });
+    onMutate: async ({ actor, isFavorite }) => {
+      await queryClient.cancelQueries({ queryKey: favoritesKey });
+      const previousFavorites = queryClient.getQueryData<ActorListEnvelope>(favoritesKey);
 
-      const previousRouteQueries = queryClient.getQueriesData({ queryKey: queryKeys.routes.all() });
-      const previousFavoriteQueries = queryClient.getQueriesData({ queryKey: queryKeys.favoriteActors() });
+      queryClient.setQueryData<ActorListEnvelope>(favoritesKey, (old) => {
+        const current = old ?? { data: [], meta: { total: 0, limit: 20 } };
+        const wasFavorite = current.data.some((favorite) => favorite.id === actor.id);
+        const withoutActor = current.data.filter((favorite) => favorite.id !== actor.id);
+        const totalDelta = isFavorite && !wasFavorite ? 1 : !isFavorite && wasFavorite ? -1 : 0;
+        return {
+          ...current,
+          data: isFavorite ? [actor, ...withoutActor] : withoutActor,
+          meta: {
+            ...current.meta,
+            total: Math.max(0, current.meta.total + totalDelta),
+          },
+        };
+      });
 
-      // Atualiza listagens de atores em rotas (simples ou infinitas)
-      queryClient.setQueriesData<any>(
-        { queryKey: ['routes', 'actors'] },
-        (old: any) => {
-          if (!old) return old;
-          if (Array.isArray(old.pages)) {
-            return {
-              ...old,
-              pages: old.pages.map((page: ActorListEnvelope) => ({
-                ...page,
-                data: (page.data || []).map((actor: ActorSummary) =>
-                  actor.id === actorId ? { ...actor, is_favorite: isFavorite } : actor
-                ),
-              })),
-            };
-          }
-          if (Array.isArray(old.data)) {
-            return {
-              ...old,
-              data: old.data.map((actor: ActorSummary) =>
-                actor.id === actorId ? { ...actor, is_favorite: isFavorite } : actor
-              ),
-            };
-          }
-          return old;
-        }
-      );
-
-      // Atualiza detalhe do ator se estiver em cache
-      queryClient.setQueriesData<ActorDetailEnvelope>(
-        { queryKey: queryKeys.actorDetail(actorId) },
-        (old) => {
-          if (!old?.data) return old;
-          return {
-            ...old,
-            data: { ...old.data, is_favorite: isFavorite },
-          };
-        }
-      );
-
-      return { previousRouteQueries, previousFavoriteQueries };
+      return { previousFavorites };
     },
     onSuccess: (_data, { isFavorite }) => {
       AccessibilityInfo.announceForAccessibility(
@@ -75,29 +50,23 @@ export function useOptimisticFavoriteActor() {
       );
     },
     onError: (_err, _variables, context) => {
-      if (context?.previousRouteQueries) {
-        context.previousRouteQueries.forEach(([queryKey, data]) => {
-          queryClient.setQueryData(queryKey, data);
-        });
-      }
-      if (context?.previousFavoriteQueries) {
-        context.previousFavoriteQueries.forEach(([queryKey, data]) => {
-          queryClient.setQueryData(queryKey, data);
-        });
+      if (context?.previousFavorites) {
+        queryClient.setQueryData(favoritesKey, context.previousFavorites);
+      } else {
+        queryClient.removeQueries({ queryKey: favoritesKey, exact: true });
       }
       AccessibilityInfo.announceForAccessibility(
         'Falha ao atualizar favorito do ator. Alteração desfeita.'
       );
     },
     onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.routes.all() });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.favoriteActors() });
+      void queryClient.invalidateQueries({ queryKey: favoritesKey });
     },
   });
 
-  const toggleFavorite = (actorId: string, currentIsFavorite: boolean) => {
+  const toggleFavorite = (actor: ActorSummary, currentIsFavorite: boolean) => {
     if (mutation.isPending) return;
-    mutation.mutate({ actorId, isFavorite: !currentIsFavorite });
+    mutation.mutate({ actor, isFavorite: !currentIsFavorite });
   };
 
   return {
@@ -108,4 +77,3 @@ export function useOptimisticFavoriteActor() {
     mutate: mutation.mutate,
   };
 }
-

@@ -8,7 +8,9 @@ import { AppHeader } from '../../../src/components/common/AppHeader';
 import { EmptyStateView, ErrorStateView, LoadingView } from '../../../src/components/common/UIStateViews';
 import { SearchInput } from '../../../src/components/common/SearchInput';
 import { useActorCategoriesQuery, useInfiniteRouteActorsQuery } from '../../../src/hooks/queries';
+import { useMyFavoriteActorsQuery } from '../../../src/hooks/queries';
 import { useOptimisticFavoriteActor } from '../../../src/hooks/useOptimisticFavoriteActor';
+import { useAuth } from '../../../src/hooks/useAuth';
 import { theme } from '../../../src/theme/theme';
 import type { ActorSummary } from '../../../src/api/types';
 
@@ -23,7 +25,6 @@ export default function CatalogScreen() {
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
   const [category, setCategory] = useState('');
-  const [favoriteMap, setFavoriteMap] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -33,12 +34,8 @@ export default function CatalogScreen() {
   }, [q]);
 
   const { toggleFavorite } = useOptimisticFavoriteActor();
-
-  const handleToggleFav = (id: string, currentStatus?: boolean) => {
-    const current = currentStatus !== undefined ? currentStatus : Boolean(favoriteMap[id]);
-    setFavoriteMap((prev) => ({ ...prev, [id]: !current }));
-    toggleFavorite(id, current);
-  };
+  const { user } = useAuth();
+  const favoriteActorsQuery = useMyFavoriteActorsQuery(user?.id);
 
   const categories = useActorCategoriesQuery();
   const actorsQuery = useInfiniteRouteActorsQuery(routeId, {
@@ -48,6 +45,7 @@ export default function CatalogScreen() {
   });
 
   const allActors: ActorSummary[] = actorsQuery.data?.pages.flatMap((page) => page.data) ?? [];
+  const favoriteActorIds = new Set(favoriteActorsQuery.data?.map((actor) => actor.id) ?? []);
 
   return (
     <View style={styles.container}>
@@ -79,9 +77,7 @@ export default function CatalogScreen() {
         ) : allActors.length > 0 ? (
           <>
             {allActors.map((summary) => {
-              const isFav = favoriteMap[summary.id] !== undefined
-                ? favoriteMap[summary.id]
-                : (summary as any).is_favorite ?? false;
+              const isFav = favoriteActorIds.has(summary.id);
 
               return (
                 <ActorCard
@@ -89,7 +85,11 @@ export default function CatalogScreen() {
                   actor={summary}
                   focusOnMount={summary.id === actorId}
                   isFavorite={isFav}
-                  onToggleFavorite={() => handleToggleFav(summary.id, isFav)}
+                  onToggleFavorite={
+                    favoriteActorsQuery.isSuccess
+                      ? () => toggleFavorite(summary, isFav)
+                      : undefined
+                  }
                   onPress={() => {
                     const query = new URLSearchParams();
                     if (originId) query.set('originId', originId);
@@ -166,4 +166,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-

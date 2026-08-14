@@ -1,5 +1,5 @@
 import { apiClient } from '../api/client';
-import { territorialQueries } from './queries';
+import { territorialQueries, userQueries } from './queries';
 
 describe('territorial query options', () => {
   afterEach(() => jest.restoreAllMocks());
@@ -27,5 +27,7 @@ describe('territorial query options', () => {
     expect(territorialQueries.routeGeometry('route', '').enabled).toBe(false);
     expect(territorialQueries.routes(undefined).enabled).toBe(false);
     expect(territorialQueries.routes('region', { saved: true }).enabled).toBe(false);
+    expect(userQueries.favoriteActors().enabled).toBe(false);
+    expect(userQueries.favoriteActors('user-id').enabled).toBe(true);
   });
 });

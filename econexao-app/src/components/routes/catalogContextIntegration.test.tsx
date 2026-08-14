@@ -3,8 +3,10 @@ import renderer, { act } from 'react-test-renderer';
 
 import CatalogScreen from '../../../app/route/[routeId]/catalog';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useActorCategoriesQuery, useInfiniteRouteActorsQuery } from '../../hooks/queries';
+import { useActorCategoriesQuery, useInfiniteRouteActorsQuery, useMyFavoriteActorsQuery } from '../../hooks/queries';
 import { ActorCard } from '../catalog/ActorCard';
+
+const mockToggleFavoriteActor = jest.fn();
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 
@@ -23,15 +25,20 @@ jest.mock('../../hooks/useApp', () => ({
   }),
 }));
 
+jest.mock('../../hooks/useAuth', () => ({
+  useAuth: () => ({ user: { id: 'user-1' } }),
+}));
+
 jest.mock('../../hooks/queries', () => ({
   useRegionsQuery: jest.fn().mockReturnValue({ data: [] }),
   useActorCategoriesQuery: jest.fn(),
   useInfiniteRouteActorsQuery: jest.fn(),
+  useMyFavoriteActorsQuery: jest.fn(),
 }));
 
 jest.mock('../../hooks/useOptimisticFavoriteActor', () => ({
   useOptimisticFavoriteActor: () => ({
-    toggleFavorite: jest.fn(),
+    toggleFavorite: mockToggleFavoriteActor,
     isPending: false,
   }),
 }));
@@ -48,6 +55,7 @@ describe('CatalogScreen route context', () => {
       actorId: 'actor-2',
     });
     (useActorCategoriesQuery as jest.Mock).mockReturnValue({ data: [] });
+    (useMyFavoriteActorsQuery as jest.Mock).mockReturnValue({ data: [], isSuccess: true });
     (useInfiniteRouteActorsQuery as jest.Mock).mockReturnValue({
       isPending: false,
       isError: false,
@@ -111,5 +119,31 @@ describe('CatalogScreen route context', () => {
 
     expect(push).toHaveBeenCalledWith('/actor/actor-2?originId=origin-porto');
   });
-});
 
+  it('derives favorite state from the authenticated favorites endpoint', async () => {
+    const favoriteActor =
+      (useInfiniteRouteActorsQuery as jest.Mock).mock.results[0]?.value?.data?.pages?.[0]?.data?.[1] ?? {
+        id: 'actor-2',
+        slug: 'ator-2',
+        name: 'Ator Dois',
+        category_slug: 'alimentacao',
+        category_label: 'Alimentação',
+        green_badge_status: 'verified',
+        verification_status: 'verified',
+      };
+    (useMyFavoriteActorsQuery as jest.Mock).mockReturnValue({
+      data: [favoriteActor],
+      isSuccess: true,
+    });
+
+    let tree!: renderer.ReactTestRenderer;
+    await act(async () => {
+      tree = renderer.create(<CatalogScreen />);
+    });
+
+    const favoriteCard = tree.root.findAllByType(ActorCard)[1];
+    expect(favoriteCard.props.isFavorite).toBe(true);
+    await act(async () => favoriteCard.props.onToggleFavorite());
+    expect(mockToggleFavoriteActor).toHaveBeenCalledWith(favoriteCard.props.actor, true);
+  });
+});
