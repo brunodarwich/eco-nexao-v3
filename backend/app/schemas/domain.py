@@ -1,4 +1,10 @@
-"""Pydantic v2 schemas for ECOnexão domain entities (ECO-0201 to ECO-0206)."""
+"""Pydantic v2 schemas for internal ECOnexão domain entities and ORM mappings (ECO-0201 to ECO-0206).
+
+Note:
+    Public and edge API contract envelopes are defined in `app.schemas.envelopes`,
+    `app.schemas.admin_territorial`, `app.schemas.admin_actors`, and `app.schemas.admin_workflow`.
+    Schemas in this module represent canonical internal domain entity representations.
+"""
 
 import uuid
 from datetime import datetime

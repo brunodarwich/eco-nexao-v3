@@ -11,6 +11,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+import { apiClient } from '../../api/client';
+import { removeAuthenticatedQueries } from '../../api/queryClient';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAppTheme } from '../../theme/theme';
 import { useAuth } from '../../hooks/useAuth';
 import { makeAccessibleButton, makeAccessibleHeader } from '../../utils/accessibility';
@@ -25,6 +28,7 @@ export const AccountDeletionModal: React.FC<AccountDeletionModalProps> = ({
   onClose,
 }) => {
   const theme = useAppTheme();
+  const queryClient = useQueryClient();
   const { signOut } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -33,14 +37,21 @@ export const AccountDeletionModal: React.FC<AccountDeletionModalProps> = ({
       setIsProcessing(true);
       AccessibilityInfo.announceForAccessibility('Processando solicitação de exclusão de conta...');
 
-      // Em conformidade com a LGPD: encerramos a sessão e limpamos dados locais
-      await signOut();
+      await apiClient.deleteMyAccount();
+      removeAuthenticatedQueries(queryClient);
+      // A identidade já foi removida no servidor. O manager invalida a sessão
+      // local antes de tentar avisar o Supabase, por isso um erro remoto aqui é inócuo.
+      try {
+        await signOut();
+      } catch {
+        // Auth identity is already gone and local invalidation happens first.
+      }
       AccessibilityInfo.announceForAccessibility(
-        'Sua solicitação foi registrada e sua sessão foi encerrada com sucesso.'
+        'Sua conta foi excluída e a sessão local foi removida.'
       );
       Alert.alert(
         'Conta Encerrada',
-        'Sua sessão foi encerrada e seus identificadores pessoais foram removidos conforme a LGPD.'
+        'Sua conta e seus dados pessoais foram removidos permanentemente.'
       );
       onClose();
     } catch {
@@ -51,7 +62,15 @@ export const AccountDeletionModal: React.FC<AccountDeletionModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={() => {
+        if (!isProcessing) onClose();
+      }}
+      accessibilityViewIsModal
+    >
       <View style={styles.overlay}>
         <View
           style={[
@@ -86,7 +105,7 @@ export const AccountDeletionModal: React.FC<AccountDeletionModalProps> = ({
               • Seus favoritos e preferências salvas serão revogados.
             </Text>
             <Text style={[styles.bulletItem, theme.typography.bodySm, { color: theme.colors.onSurfaceVariant }]}>
-              • Métricas estatísticas de viagens serão mantidas de forma estritamente anônima e agregada para conservação comunitária.
+              • Seu histórico de viagens e seus avatares serão removidos permanentemente.
             </Text>
           </View>
 
@@ -96,6 +115,7 @@ export const AccountDeletionModal: React.FC<AccountDeletionModalProps> = ({
               onPress={onClose}
               disabled={isProcessing}
               {...makeAccessibleButton('Cancelar exclusão de conta')}
+              accessibilityState={{ disabled: isProcessing }}
             >
               <Text style={[styles.cancelButtonText, { color: theme.colors.brandDeep }]}>
                 Voltar
@@ -107,9 +127,15 @@ export const AccountDeletionModal: React.FC<AccountDeletionModalProps> = ({
               onPress={handleConfirmDeletion}
               disabled={isProcessing}
               {...makeAccessibleButton('Confirmar exclusão e encerrar conta')}
+              accessibilityLabel={isProcessing ? 'Exclusão de conta em andamento' : 'Confirmar exclusão e encerrar conta'}
+              accessibilityState={{ disabled: isProcessing, busy: isProcessing }}
             >
               {isProcessing ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ActivityIndicator
+                  size="small"
+                  color="#FFFFFF"
+                  accessibilityLabel="Processando exclusão permanente da conta"
+                />
               ) : (
                 <Text style={styles.deleteButtonText}>Confirmar Exclusão</Text>
               )}

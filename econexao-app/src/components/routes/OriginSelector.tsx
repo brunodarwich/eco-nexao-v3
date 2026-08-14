@@ -4,9 +4,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
 import { makeAccessibleButton } from '../../utils/accessibility';
 import type { RouteOrigin } from '../../api/types';
-import type { OriginPoint } from '../../types';
 
-export type SelectorOrigin = RouteOrigin | OriginPoint;
+export type SelectorOrigin =
+  | RouteOrigin
+  | {
+      id: string;
+      name: string;
+      code?: string;
+      location_name?: string;
+      locationName?: string;
+      description?: string;
+      actor_count?: number;
+      actorCount?: number;
+    };
 
 interface OriginSelectorProps {
   origins: SelectorOrigin[];
@@ -35,18 +45,19 @@ export const OriginSelector: React.FC<OriginSelectorProps> = ({
       <View style={styles.segmentedRow}>
         {origins.map((origin) => {
           const isSelected = origin.id === activeOriginId;
-          const originCode = ('code' in origin ? origin.code : origin.id).toLowerCase();
+          const originCode = ('code' in origin && origin.code ? origin.code : origin.id || '').toLowerCase();
+          const originName = (origin.name || '').toLowerCase();
           
           let iconName: keyof typeof Ionicons.glyphMap = 'boat-outline';
-          let shortName = origin.name;
+          let shortName = origin.name || '';
 
-          if (originCode.includes('rodoviaria') || origin.name.toLowerCase().includes('rodoviária') || origin.name.toLowerCase().includes('rodoviaria')) {
+          if (originCode.includes('rodoviaria') || originName.includes('rodoviária') || originName.includes('rodoviaria')) {
             iconName = 'bus-outline';
             shortName = 'Rodoviária';
-          } else if (originCode.includes('aeroporto') || origin.name.toLowerCase().includes('aeroporto')) {
+          } else if (originCode.includes('aeroporto') || originName.includes('aeroporto')) {
             iconName = 'airplane-outline';
             shortName = 'Aeroporto';
-          } else if (originCode.includes('porto') || origin.name.toLowerCase().includes('porto')) {
+          } else if (originCode.includes('porto') || originName.includes('porto')) {
             iconName = 'boat-outline';
             shortName = 'Porto';
           }

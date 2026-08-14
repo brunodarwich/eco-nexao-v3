@@ -1,6 +1,5 @@
 import type { MapBounds, RouteGeometry } from '../../api/types';
-import type { FlexiblePinItem } from './MapPin';
-import type { MapCoordinate } from './MapAdapter.types';
+import type { FlexiblePinItem, MapCoordinate } from './MapAdapter.types';
 
 const isFiniteCoordinate = (latitude: unknown, longitude: unknown): boolean =>
   typeof latitude === 'number' &&
@@ -13,14 +12,20 @@ const isFiniteCoordinate = (latitude: unknown, longitude: unknown): boolean =>
   longitude <= 180;
 
 export const getItemId = (item: FlexiblePinItem): string =>
-  'actor_id' in item ? item.actor_id : item.id;
+  ('actor_id' in item && item.actor_id ? item.actor_id : item.id) || '';
 
 export const getItemCategory = (item: FlexiblePinItem): string =>
-  'category_slug' in item ? item.category_slug : item.segment;
+  ('category_slug' in item && item.category_slug
+    ? item.category_slug
+    : 'segment' in item && item.segment
+    ? item.segment
+    : 'todos');
 
 export const getItemCoordinate = (item: FlexiblePinItem): MapCoordinate | null => {
   if (
     'latitude' in item &&
+    typeof item.latitude === 'number' &&
+    typeof item.longitude === 'number' &&
     isFiniteCoordinate(item.latitude, item.longitude)
   ) {
     return { latitude: item.latitude, longitude: item.longitude };
@@ -29,11 +34,13 @@ export const getItemCoordinate = (item: FlexiblePinItem): MapCoordinate | null =
   if (
     'coordinate' in item &&
     item.coordinate &&
+    typeof item.coordinate.latitude === 'number' &&
+    typeof item.coordinate.longitude === 'number' &&
     isFiniteCoordinate(item.coordinate.latitude, item.coordinate.longitude)
   ) {
     return {
-      latitude: item.coordinate.latitude as number,
-      longitude: item.coordinate.longitude as number,
+      latitude: item.coordinate.latitude,
+      longitude: item.coordinate.longitude,
     };
   }
 

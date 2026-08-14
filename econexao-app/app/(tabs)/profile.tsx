@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, TouchableOpacity, Modal, Alert } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View, TouchableOpacity, Modal, Alert, Image, ActivityIndicator, AccessibilityInfo } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 
 import { AppHeader } from '../../src/components/common/AppHeader';
 import { Badge } from '../../src/components/common/Badge';
@@ -12,6 +13,8 @@ import { AccountDeletionModal } from '../../src/components/profile/AccountDeleti
 import { apiClient } from '../../src/api/client';
 import { useMyImpactQuery, useMyProfileQuery } from '../../src/hooks/queries';
 import { useAuth } from '../../src/hooks/useAuth';
+import { queryKeys } from '../../src/api/queryKeys';
+import { queryClient } from '../../src/api/queryClient';
 import { theme, useAppTheme } from '../../src/theme/theme';
 
 import { makeAccessibleButton } from '../../src/utils/accessibility';
@@ -31,25 +34,40 @@ export default function ProfileScreen() {
   const [isEditProfileModalVisible, setIsEditProfileModalVisible] = useState(false);
   const [isAccountDeletionModalVisible, setIsAccountDeletionModalVisible] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const avatarBusyRef = useRef(false);
 
 
   const isAnonymous = user?.is_anonymous ?? true;
   const userName = profile?.name || (isAnonymous ? 'Visitante Consciente' : 'Usuário ECOnexão');
 
   const handleAvatarPress = async () => {
+    if (avatarBusyRef.current) return;
+    avatarBusyRef.current = true;
+    setIsUploading(true);
     try {
-      setIsUploading(true);
-      const res = await apiClient.createAvatarUploadUrl({
-        filename: 'avatar.jpg',
-        mime_type: 'image/jpeg',
+      AccessibilityInfo.announceForAccessibility('Abrindo seletor de foto do perfil.');
+      const picker = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
       });
-      Alert.alert(
-        'Upload de Avatar',
-        `URL assinada gerada com sucesso (${res.data.expires_in}s). Seleção de arquivo iniciada.`
-      );
+      if (picker.canceled) return;
+      const asset = picker.assets[0];
+      await apiClient.uploadAvatar({
+        uri: asset.uri,
+        name: asset.fileName || 'avatar.jpg',
+        type: asset.mimeType || 'image/jpeg',
+        file: asset.file,
+      });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.myProfile(user?.id) });
+      AccessibilityInfo.announceForAccessibility('Foto do perfil atualizada com sucesso.');
+      Alert.alert('Foto atualizada', 'Seu avatar foi processado e publicado com segurança.');
     } catch {
-      Alert.alert('Erro no Upload', 'Não foi possível solicitar a URL para upload do avatar.');
+      AccessibilityInfo.announceForAccessibility('Não foi possível atualizar a foto do perfil.');
+      Alert.alert('Erro no upload', 'Não foi possível atualizar a foto. Tente novamente.');
     } finally {
+      avatarBusyRef.current = false;
       setIsUploading(false);
     }
   };
@@ -89,8 +107,24 @@ export default function ProfileScreen() {
               onPress={handleAvatarPress}
               disabled={isUploading}
               {...makeAccessibleButton('Alterar Foto do Perfil', 'Toque para selecionar uma foto')}
+              accessibilityLabel={isUploading ? 'Atualizando foto do perfil' : 'Alterar Foto do Perfil'}
+              accessibilityState={{ disabled: isUploading, busy: isUploading }}
             >
-              <Ionicons name="person" size={32} color={theme.colors.brandForest} />
+              {isUploading ? (
+                <ActivityIndicator
+                  size="small"
+                  color={theme.colors.brandForest}
+                  accessibilityLabel="Upload da foto em andamento"
+                />
+              ) : profile?.avatar?.url ? (
+                <Image
+                  source={{ uri: profile.avatar.url }}
+                  style={styles.avatarImage}
+                  accessible={false}
+                />
+              ) : (
+                <Ionicons name="person" size={32} color={theme.colors.brandForest} />
+              )}
               <View style={styles.avatarEditBadge}>
                 <Ionicons name="camera" size={12} color={theme.colors.surfaceWhite} />
               </View>
@@ -393,6 +427,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 28,
   },
   avatarEditBadge: {
     position: 'absolute',

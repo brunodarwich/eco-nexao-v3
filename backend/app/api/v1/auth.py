@@ -5,7 +5,12 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.core.security import AuthenticatedUser as AuthUser
-from app.core.security import JWTValidationError, get_current_user, verify_supabase_jwt
+from app.core.security import (
+    JWTValidationError,
+    get_current_user,
+    get_current_user_allow_deleted,
+    verify_supabase_jwt,
+)
 from app.schemas.envelopes import (
     AuthSessionEnvelope,
     AuthUserSchema,
@@ -63,4 +68,4 @@ async def verify_auth_token(
         ) from exc
 
 
-__all__ = ["AuthUser", "get_current_user", "router"]
+__all__ = ["AuthUser", "get_current_user", "get_current_user_allow_deleted", "router"]

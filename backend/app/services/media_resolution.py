@@ -86,6 +86,21 @@ class MediaResolutionService:
         cover_item = resolved_items[0] if resolved_items else None
         return cover_item, resolved_items
 
+    async def resolve_asset_by_id(
+        self, asset_id: uuid.UUID, *, owner_type: str, owner_id: uuid.UUID
+    ) -> ResolvedMediaItemSchema | None:
+        """Resolve an exact ready asset while enforcing its expected owner."""
+        asset = await self.db.scalar(
+            select(MediaAsset).where(
+                MediaAsset.id == asset_id,
+                MediaAsset.owner_type == owner_type,
+                MediaAsset.owner_id == owner_id,
+                MediaAsset.deleted_at.is_(None),
+                MediaAsset.processing_status == "ready",
+            )
+        )
+        return self.resolve_asset_urls(asset) if asset is not None else None
+
     async def batch_resolve_covers_for_owners(
         self, owner_type: str, owner_ids: list[uuid.UUID]
     ) -> dict[uuid.UUID, ResolvedMediaItemSchema]:

@@ -3,15 +3,15 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
-from app.api.v1.auth import AuthUser, get_current_user
+from app.api.v1.auth import AuthUser, get_current_user, get_current_user_allow_deleted
 from app.schemas.envelopes import (
     ActorListEnvelope,
-    AvatarUploadRequest,
     AvatarUploadResponseData,
     AvatarUploadResponseEnvelope,
     RouteListEnvelope,
+    StandardSuccessData,
     StandardSuccessResponse,
     TripCreate,
     TripEnvelope,
@@ -22,13 +22,20 @@ from app.schemas.envelopes import (
     UserProfileEnvelope,
     UserProfileUpdate,
 )
-from app.services.dependencies import get_storage_service, get_user_service
-from app.services.storage_service import StorageService
+from app.schemas.error import ErrorResponse
+from app.services.account_lifecycle import AccountDeletionError, AccountLifecycleService
+from app.services.avatar_lifecycle import AvatarLifecycleError, AvatarLifecycleService
+from app.services.dependencies import (
+    get_account_lifecycle_service,
+    get_avatar_lifecycle_service,
+    get_user_service,
+)
 from app.services.user_service import UserService
 
 router = APIRouter(prefix="/me", tags=["User - Profile & Preferences"])
 UserServiceDep = Annotated[UserService, Depends(get_user_service)]
-StorageServiceDep = Annotated[StorageService, Depends(get_storage_service)]
+AvatarLifecycleDep = Annotated[AvatarLifecycleService, Depends(get_avatar_lifecycle_service)]
+AccountLifecycleDep = Annotated[AccountLifecycleService, Depends(get_account_lifecycle_service)]
 
 
 
@@ -60,22 +67,83 @@ async def update_my_profile(
 
 
 @router.post(
-    "/avatar-upload",
+    "/avatar",
     response_model=AvatarUploadResponseEnvelope,
-    summary="Solicitacao de URL para upload de avatar",
-    description="Gera URL assinada para upload seguro de avatar no Supabase Storage.",
+    summary="Substituir avatar",
+    description=(
+        "Recebe uma imagem multipart, sanitiza e gera derivados WebP no backend, "
+        "publicando-os no Supabase Storage sem expor credenciais privilegiadas."
+    ),
+    responses={
+        401: {
+            "model": ErrorResponse,
+            "description": "JWT ausente, inválido ou bloqueado por exclusão de conta.",
+        },
+        422: {
+            "model": ErrorResponse,
+            "description": "Imagem ausente, inválida, incompatível ou acima do limite.",
+        },
+    },
 )
-async def create_avatar_upload_url(
-    request: AvatarUploadRequest,
+async def replace_avatar(
+    file: Annotated[UploadFile, File(description="Imagem JPEG, PNG ou WebP; máximo 5 MiB")],
     current_user: Annotated[AuthUser, Depends(get_current_user)],
-    storage_service: StorageServiceDep,
+    service: AvatarLifecycleDep,
 ) -> AvatarUploadResponseEnvelope:
-    data = await storage_service.create_avatar_upload_url(
-        user_id=current_user.id,
-        filename=request.filename,
-        mime_type=request.mime_type,
+    try:
+        content = await file.read(5 * 1024 * 1024 + 1)
+        result = await service.replace_avatar(
+            user_id=current_user.id,
+            content=content,
+            declared_mime=file.content_type,
+        )
+    except AvatarLifecycleError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
+    finally:
+        await file.close()
+    return AvatarUploadResponseEnvelope(
+        data=AvatarUploadResponseData(
+            media_asset_id=result.media_asset_id,
+            url=result.public_url,
+            derivatives=result.derivatives,
+            alt_text=result.alt_text,
+        )
     )
-    return AvatarUploadResponseEnvelope(data=AvatarUploadResponseData(**data))
+
+
+@router.delete(
+    "/account",
+    response_model=StandardSuccessResponse,
+    summary="Excluir a conta atual",
+    description=(
+        "Remove avatares, dados de domínio e identidade Auth. É idempotente enquanto "
+        "o JWT residual ainda for válido."
+    ),
+    responses={
+        401: {"model": ErrorResponse, "description": "JWT ausente ou inválido."},
+        503: {
+            "model": ErrorResponse,
+            "description": "Saga de exclusão incompleta e segura para nova tentativa.",
+        },
+    },
+)
+async def delete_my_account(
+    current_user: Annotated[AuthUser, Depends(get_current_user_allow_deleted)],
+    service: AccountLifecycleDep,
+) -> StandardSuccessResponse:
+    try:
+        await service.delete_account(current_user.id)
+    except AccountDeletionError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
+        ) from exc
+    return StandardSuccessResponse(
+        data=StandardSuccessData(
+            success=True, message="Conta excluída permanentemente."
+        )
+    )
 
 
 
@@ -227,4 +295,3 @@ async def get_my_impact(
     service: UserServiceDep,
 ) -> UserImpactEnvelope:
     return await service.get_impact(user_id=current_user.id)
-

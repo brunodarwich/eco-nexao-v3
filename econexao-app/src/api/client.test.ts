@@ -1,5 +1,6 @@
 import { ApiClient, ApiClientError } from './client';
 import { onlineManager } from '@tanstack/react-query';
+import { Platform } from 'react-native';
 
 describe('ApiClient auth', () => {
   const originalFetch = global.fetch;
@@ -35,6 +36,76 @@ describe('ApiClient auth', () => {
         headers: expect.objectContaining({ Authorization: 'Bearer access-token' }),
       })
     );
+  });
+
+  it('envia avatar como multipart sem fixar Content-Type ou expor segredo', async () => {
+    global.fetch = jest.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            media_asset_id: 'asset-id',
+            url: 'https://cdn/avatar.webp',
+            derivatives: {},
+            alt_text: 'Avatar',
+          },
+        }),
+        { status: 200 }
+      )
+    );
+    const client = new ApiClient('https://api.example/api/v1');
+    await client.uploadAvatar({
+      uri: 'file:///avatar.png',
+      name: 'avatar.png',
+      type: 'image/png',
+      file: new Blob(['image-bytes'], { type: 'image/png' }),
+    });
+
+    const [url, options] = (global.fetch as jest.Mock).mock.calls[0];
+    expect(url).toBe('https://api.example/api/v1/me/avatar');
+    expect(options.body).toBeInstanceOf(FormData);
+    expect(options.headers['Content-Type']).toBeUndefined();
+    expect(options.headers.Authorization).toBeUndefined();
+  });
+
+  it('materializa um Blob no Web quando o picker não fornece File', async () => {
+    const platform = jest.replaceProperty(Platform, 'OS', 'web');
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(new Blob(['image-bytes'], { type: 'image/png' }), { status: 200 })
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              media_asset_id: 'asset-id',
+              url: 'https://cdn/avatar.webp',
+              derivatives: {},
+              alt_text: 'Avatar',
+            },
+          }),
+          { status: 200 }
+        )
+      );
+    global.fetch = fetchMock;
+
+    try {
+      const client = new ApiClient('https://api.example/api/v1');
+      await client.uploadAvatar({
+        uri: 'blob:https://app.example/avatar',
+        name: 'avatar.png',
+        type: 'image/png',
+      });
+
+      expect(fetchMock).toHaveBeenNthCalledWith(1, 'blob:https://app.example/avatar');
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        'https://api.example/api/v1/me/avatar',
+        expect.objectContaining({ body: expect.any(FormData) })
+      );
+    } finally {
+      platform.restore();
+    }
   });
 
   it('serializa filtros gerados de rotas e atores', async () => {

@@ -1,127 +1,93 @@
-"""Tests for Supabase Storage Service and Avatar Upload endpoint (ECO-0406)."""
+"""Network-free tests for real avatar Storage and multipart API boundaries."""
 
 import uuid
+from unittest.mock import AsyncMock
 
-import pytest
-from fastapi import HTTPException
+import httpx
 from fastapi.testclient import TestClient
+from pydantic import SecretStr
 
-from app.core.config import settings
+from app.api.v1.auth import get_current_user
 from app.core.security import AuthenticatedUser
 from app.main import app
+from app.services.avatar_lifecycle import AvatarResult
+from app.services.avatar_storage import SupabaseAvatarStorage
+from app.services.dependencies import get_avatar_lifecycle_service
 from app.services.storage_service import StorageService
 
 
-@pytest.fixture
-def storage_service() -> StorageService:
-    return StorageService(supabase_url="https://test.supabase.co")
-
-
-def test_storage_service_sanitize_filename(storage_service: StorageService) -> None:
-    assert storage_service.sanitize_filename("../avatar picture!.png") == "avatar_picture_.png"
-    assert storage_service.sanitize_filename("valid-name_123.jpg") == "valid-name_123.jpg"
-
-
-def test_storage_service_validate_file_metadata_valid(storage_service: StorageService) -> None:
-    for valid_mime in ["image/jpeg", "image/png", "image/webp", "image/gif"]:
-        storage_service.validate_file_metadata("photo.jpg", valid_mime)
-
-
-def test_storage_service_validate_file_metadata_invalid(storage_service: StorageService) -> None:
-    with pytest.raises(HTTPException) as exc:
-        storage_service.validate_file_metadata("file.pdf", "application/pdf")
-    assert exc.value.status_code == 400
-    assert "não suportado" in str(exc.value.detail)
-
-    with pytest.raises(HTTPException) as exc:
-        storage_service.validate_file_metadata("exe.bin", "application/x-executable")
-    assert exc.value.status_code == 400
-
-
-@pytest.mark.asyncio
-async def test_create_avatar_upload_url(storage_service: StorageService) -> None:
-    user_id = uuid.uuid4()
-    res = await storage_service.create_avatar_upload_url(user_id, "my_avatar.png", "image/png")
-
-    assert "upload_url" in res
-    assert "storage_key" in res
-    assert "public_url" in res
-    assert res["expires_in"] == 3600
-
-    assert f"avatars/{user_id}/" in res["storage_key"]
-    assert res["public_url"].startswith(f"https://test.supabase.co/storage/v1/object/public/avatars/{user_id}/")
-    assert res["upload_url"].startswith(f"https://test.supabase.co/storage/v1/object/upload/sign/avatars/{user_id}/")
-
-    # Security check: Ensure secret key is NEVER exposed in any returned field
-    secret_val = settings.SUPABASE_SECRET_KEY.get_secret_value()
-    if secret_val:
-        assert secret_val not in res["upload_url"]
-        assert secret_val not in res["public_url"]
-        assert secret_val not in res["storage_key"]
-
-
-def test_public_and_signed_url_formatting(storage_service: StorageService) -> None:
-    pub_url = storage_service.get_public_url("editorial-media", "routes/pindobal_cover.jpg")
-    assert pub_url == "https://test.supabase.co/storage/v1/object/public/editorial-media/routes/pindobal_cover.jpg"
-
-    signed_url = storage_service.create_signed_url("avatars", "user123/file.jpg", expires_in=1800)
-    assert "https://test.supabase.co/storage/v1/object/sign/avatars/user123/file.jpg" in signed_url
-    assert "expires_in=1800" in signed_url
-
-
-def test_avatar_upload_endpoint_authenticated(monkeypatch: pytest.MonkeyPatch) -> None:
-    user_id = uuid.uuid4()
-    mock_user = AuthenticatedUser(
-        id=user_id,
-        email="user@example.com",
-        is_anonymous=False,
-        role="authenticated",
-        claims={"sub": str(user_id)},
+def test_storage_service_only_formats_public_urls() -> None:
+    service = StorageService(supabase_url="https://test.supabase.co")
+    assert service.get_public_url("avatars", "user/avatar.webp") == (
+        "https://test.supabase.co/storage/v1/object/public/avatars/user/avatar.webp"
     )
+    assert not hasattr(service, "create_avatar_upload_url")
+    assert not hasattr(service, "create_signed_url")
+
+
+async def test_avatar_storage_uses_server_secret_and_official_object_routes(
+    monkeypatch,
+) -> None:
     monkeypatch.setattr(
-        "app.core.security.verify_supabase_jwt", lambda token, jwks_client=None: mock_user
+        "app.services.avatar_storage.settings.SUPABASE_SECRET_KEY", SecretStr("secret")
+    )
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        if "/object/list/avatars" in str(request.url):
+            return httpx.Response(200, json=[])
+        return httpx.Response(200, json={})
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        storage = SupabaseAvatarStorage(client=client)
+        await storage.upload("user/avatar.webp", b"webp")
+        await storage.remove(["avatars/user/avatar.webp"])
+        assert await storage.list_user_paths("user") == []
+
+    assert requests[0].method == "POST"
+    assert "/storage/v1/object/avatars/user/avatar.webp" in str(requests[0].url)
+    assert requests[0].headers["x-upsert"] == "false"
+    assert requests[1].method == "DELETE"
+    assert requests[2].method == "POST"
+    assert all(
+        request.headers.get("authorization", "").startswith("Bearer ")
+        for request in requests
     )
 
-    client = TestClient(app)
-    response = client.post(
-        "/api/v1/me/avatar-upload",
-        json={"filename": "avatar.webp", "mime_type": "image/webp"},
-        headers={"Authorization": "Bearer valid_token"},
+
+def test_multipart_avatar_endpoint_delegates_real_bytes() -> None:
+    user_id = uuid.uuid4()
+    user = AuthenticatedUser(user_id, "user@example.com", False, "authenticated", {})
+    service = AsyncMock()
+    service.replace_avatar.return_value = AvatarResult(
+        media_asset_id=uuid.uuid4(),
+        public_url="https://unit-test.supabase.co/avatar.webp",
+        derivatives={"thumb": "https://unit-test.supabase.co/avatar.webp"},
+        alt_text="Foto de perfil do usuário.",
     )
+    app.dependency_overrides[get_current_user] = lambda: user
+    app.dependency_overrides[get_avatar_lifecycle_service] = lambda: service
+    try:
+        response = TestClient(app).post(
+            "/api/v1/me/avatar",
+            files={"file": ("avatar.png", b"real-image-bytes", "image/png")},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
     assert response.status_code == 200
-    data = response.json()["data"]
-    assert "upload_url" in data
-    assert f"avatars/{user_id}/" in data["storage_key"]
-    assert "public_url" in data
+    assert response.json()["data"]["media_asset_id"] == str(
+        service.replace_avatar.return_value.media_asset_id
+    )
+    service.replace_avatar.assert_awaited_once_with(
+        user_id=user_id, content=b"real-image-bytes", declared_mime="image/png"
+    )
 
 
-def test_avatar_upload_endpoint_unauthorized() -> None:
-    client = TestClient(app)
-    response = client.post(
-        "/api/v1/me/avatar-upload",
-        json={"filename": "avatar.png", "mime_type": "image/png"},
+def test_multipart_avatar_endpoint_requires_authentication() -> None:
+    response = TestClient(app).post(
+        "/api/v1/me/avatar",
+        files={"file": ("avatar.png", b"bytes", "image/png")},
     )
     assert response.status_code == 401
-
-
-def test_avatar_upload_endpoint_invalid_mime(monkeypatch: pytest.MonkeyPatch) -> None:
-    user_id = uuid.uuid4()
-    mock_user = AuthenticatedUser(
-        id=user_id,
-        email="user@example.com",
-        is_anonymous=False,
-        role="authenticated",
-        claims={"sub": str(user_id)},
-    )
-    monkeypatch.setattr(
-        "app.core.security.verify_supabase_jwt", lambda token, jwks_client=None: mock_user
-    )
-
-    client = TestClient(app)
-    response = client.post(
-        "/api/v1/me/avatar-upload",
-        json={"filename": "doc.pdf", "mime_type": "application/pdf"},
-        headers={"Authorization": "Bearer valid_token"},
-    )
-    assert response.status_code == 400
-    assert "não suportado" in response.json()["error"]["message"]

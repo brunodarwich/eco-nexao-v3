@@ -13,6 +13,7 @@ from app.core.security import (
     AuthenticatedUser,
     JWTValidationError,
     get_current_user,
+    get_current_user_allow_deleted,
     get_optional_current_user,
     verify_supabase_jwt,
 )
@@ -122,7 +123,7 @@ def test_rejects_non_user_role(monkeypatch: pytest.MonkeyPatch, jwks_client: Moc
 @pytest.mark.asyncio
 async def test_current_user_requires_credentials() -> None:
     with pytest.raises(HTTPException) as exc_info:
-        await get_current_user(None)
+        await get_current_user_allow_deleted(None)
     assert exc_info.value.status_code == 401
 
 
@@ -136,13 +137,13 @@ async def test_current_user_verification_runs_off_event_loop(
     run = AsyncMock(return_value=user)
     monkeypatch.setattr("app.core.security.run_in_threadpool", run)
     credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="token")
-    assert await get_current_user(credentials) == user
+    assert await get_current_user_allow_deleted(credentials) == user
     run.assert_awaited_once()
 
 
 @pytest.mark.asyncio
 async def test_optional_user_allows_absent_credentials() -> None:
-    assert await get_optional_current_user(None) is None
+    assert await get_optional_current_user(None, AsyncMock()) is None
 
 
 @pytest.mark.asyncio
@@ -153,7 +154,7 @@ async def test_optional_user_rejects_invalid_present_token(monkeypatch: pytest.M
     )
     credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="invalid")
     with pytest.raises(HTTPException) as exc_info:
-        await get_optional_current_user(credentials)
+        await get_optional_current_user(credentials, AsyncMock())
     assert exc_info.value.status_code == 401
 
 
@@ -174,8 +175,14 @@ def test_auth_session_endpoint_authenticated(monkeypatch: pytest.MonkeyPatch) ->
         "app.core.security.verify_supabase_jwt", lambda token, jwks_client=None: mock_user
     )
 
+    app.dependency_overrides[get_current_user] = lambda: mock_user
     client = TestClient(app)
-    response = client.get("/api/v1/auth/session", headers={"Authorization": "Bearer valid_token"})
+    try:
+        response = client.get(
+            "/api/v1/auth/session", headers={"Authorization": "Bearer valid_token"}
+        )
+    finally:
+        app.dependency_overrides.clear()
     assert response.status_code == 200
     data = response.json()["data"]
     assert data["id"] == str(user_id)
@@ -234,4 +241,3 @@ def test_auth_verify_endpoint_invalid(monkeypatch: pytest.MonkeyPatch) -> None:
     response = client.post("/api/v1/auth/verify", json={"token": "expired_token"})
     assert response.status_code == 401
     assert "expirado" in response.json()["error"]["message"]
-

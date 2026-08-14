@@ -38,6 +38,16 @@ describe('ECO-1903: Preferências de Acessibilidade e Comportamento Offline', ()
       },
     });
     announceSpy = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockImplementation(() => {});
+    jest.spyOn(apiClient, 'getMyPreferences').mockResolvedValue({
+      data: {
+        id: 'pref-1',
+        user_id: 'test-user-uuid',
+        high_contrast: false,
+        screen_reader_mode: false,
+        text_scale: 1.0,
+        locale: 'pt-BR',
+      },
+    });
     jest.clearAllMocks();
   });
 

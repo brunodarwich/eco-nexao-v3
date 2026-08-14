@@ -9,7 +9,6 @@ import {
   ActorCategoryListEnvelope,
   ActorDetailEnvelope,
   ActorListEnvelope,
-  AvatarUploadRequest,
   AvatarUploadResponseEnvelope,
   BootstrapData,
   BootstrapResponseEnvelope,
@@ -66,6 +65,7 @@ import {
   AlertResolveRequest,
 } from "./types";
 import { onlineManager } from '@tanstack/react-query';
+import { Platform } from 'react-native';
 
 export class ApiClientError extends Error {
   public readonly status: number;
@@ -139,8 +139,9 @@ export class ApiClient {
       );
     }
 
+    const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
     const headers: Record<string, string> = {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       Accept: "application/json",
       "X-Request-ID": requestId,
       ...(options.headers as Record<string, string>),
@@ -376,13 +377,41 @@ export class ApiClient {
     });
   }
 
-  public async createAvatarUploadUrl(
-    request: AvatarUploadRequest
-  ): Promise<AvatarUploadResponseEnvelope> {
-    return this.request<AvatarUploadResponseEnvelope>("/me/avatar-upload", {
+  public async uploadAvatar(file: {
+    uri: string;
+    name: string;
+    type: string;
+    file?: Blob;
+  }): Promise<AvatarUploadResponseEnvelope> {
+    const body = new FormData();
+    if (Platform.OS === 'web') {
+      let browserFile = file.file;
+      if (!browserFile) {
+        const localResponse = await fetch(file.uri);
+        if (!localResponse.ok) {
+          throw new ApiClientError(
+            'Não foi possível ler o arquivo selecionado.',
+            0,
+            'AVATAR_FILE_READ_FAILED'
+          );
+        }
+        browserFile = await localResponse.blob();
+      }
+      body.append('file', browserFile, file.name);
+    } else {
+      body.append(
+        'file',
+        { uri: file.uri, name: file.name, type: file.type } as unknown as Blob
+      );
+    }
+    return this.request<AvatarUploadResponseEnvelope>("/me/avatar", {
       method: "POST",
-      body: JSON.stringify(request),
+      body,
     });
+  }
+
+  public async deleteMyAccount(): Promise<StandardSuccessResponse> {
+    return this.request<StandardSuccessResponse>("/me/account", { method: "DELETE" });
   }
 
   public async getMyPreferences(): Promise<UserPreferencesEnvelope> {
@@ -597,4 +626,3 @@ export class ApiClient {
 }
 
 export const apiClient = new ApiClient();
-

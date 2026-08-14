@@ -1,7 +1,19 @@
 import type { DimensionValue, ImageSourcePropType } from 'react-native';
 
-import type { MapBounds, RouteGeometry } from '../../api/types';
-import type { FlexiblePinItem } from './MapPin';
+import type { MapBounds, MapPin, RouteGeometry } from '../../api/types';
+
+export type FlexiblePinItem =
+  | MapPin
+  | {
+      id: string;
+      name: string;
+      segment?: string;
+      category_slug?: string;
+      actor_id?: string;
+      latitude?: number;
+      longitude?: number;
+      coordinate?: { latitude?: number; longitude?: number };
+    };
 
 export interface MapCoordinate {
   latitude: number;

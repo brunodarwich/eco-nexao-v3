@@ -25,19 +25,29 @@ from app.schemas.envelopes import (
     UserProfileSchema,
     UserProfileUpdate,
 )
+from app.services.media_resolution import MediaResolutionService
 
 
 class UserService:
     def __init__(self, db: AsyncSession) -> None:
         self.repo = UserRepository(db)
+        self.media = MediaResolutionService(db)
 
     async def get_profile(self, user_id: uuid.UUID) -> UserProfileEnvelope:
         profile = await self.repo.get_or_create_profile(user_id)
+        avatar = (
+            await self.media.resolve_asset_by_id(
+                profile.avatar_media_id, owner_type="profile", owner_id=user_id
+            )
+            if profile.avatar_media_id is not None
+            else None
+        )
         schema = UserProfileSchema(
             id=profile.id,
             name=profile.name,
             location=profile.location,
             avatar_media_id=profile.avatar_media_id,
+            avatar=avatar,
             status=profile.status,
             created_at=profile.created_at,
             updated_at=profile.updated_at,
@@ -49,11 +59,19 @@ class UserService:
     ) -> UserProfileEnvelope:
         data_dict = update.model_dump(exclude_unset=True)
         profile = await self.repo.update_profile(user_id, data_dict)
+        avatar = (
+            await self.media.resolve_asset_by_id(
+                profile.avatar_media_id, owner_type="profile", owner_id=user_id
+            )
+            if profile.avatar_media_id is not None
+            else None
+        )
         schema = UserProfileSchema(
             id=profile.id,
             name=profile.name,
             location=profile.location,
             avatar_media_id=profile.avatar_media_id,
+            avatar=avatar,
             status=profile.status,
             created_at=profile.created_at,
             updated_at=profile.updated_at,
@@ -218,4 +236,3 @@ class UserService:
     async def get_impact(self, user_id: uuid.UUID) -> UserImpactEnvelope:
         impact_data = await self.repo.get_user_impact(user_id)
         return UserImpactEnvelope(data=UserImpactData.model_validate(impact_data))
-

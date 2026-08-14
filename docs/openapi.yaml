@@ -2688,18 +2688,19 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
       security:
       - HTTPBearer: []
-  /api/v1/me/avatar-upload:
+  /api/v1/me/avatar:
     post:
       tags:
       - User - Profile & Preferences
-      summary: Solicitacao de URL para upload de avatar
-      description: Gera URL assinada para upload seguro de avatar no Supabase Storage.
-      operationId: create_avatar_upload_url_api_v1_me_avatar_upload_post
+      summary: Substituir avatar
+      description: Recebe uma imagem multipart, sanitiza e gera derivados WebP no backend,
+        publicando-os no Supabase Storage sem expor credenciais privilegiadas.
+      operationId: replace_avatar_api_v1_me_avatar_post
       requestBody:
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: '#/components/schemas/AvatarUploadRequest'
+              $ref: '#/components/schemas/Body_replace_avatar_api_v1_me_avatar_post'
         required: true
       responses:
         '200':
@@ -2708,12 +2709,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AvatarUploadResponseEnvelope'
-        '422':
-          description: Validation Error
+        '401':
+          description: JWT ausente, inválido ou bloqueado por exclusão de conta.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Imagem ausente, inválida, incompatível ou acima do limite.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - HTTPBearer: []
+  /api/v1/me/account:
+    delete:
+      tags:
+      - User - Profile & Preferences
+      summary: Excluir a conta atual
+      description: Remove avatares, dados de domínio e identidade Auth. É idempotente
+        enquanto o JWT residual ainda for válido.
+      operationId: delete_my_account_api_v1_me_account_delete
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardSuccessResponse'
+        '401':
+          description: JWT ausente ou inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Saga de exclusão incompleta e segura para nova tentativa.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
       security:
       - HTTPBearer: []
   /api/v1/me/preferences:
@@ -4995,40 +5031,40 @@ components:
       - is_anonymous
       - role
       title: AuthUserSchema
-    AvatarUploadRequest:
+    Body_replace_avatar_api_v1_me_avatar_post:
       properties:
-        filename:
+        file:
           type: string
-          title: Filename
-        mime_type:
-          type: string
-          title: Mime Type
+          format: binary
+          title: File
+          description: Imagem JPEG, PNG ou WebP; máximo 5 MiB
       type: object
       required:
-      - filename
-      - mime_type
-      title: AvatarUploadRequest
+      - file
+      title: Body_replace_avatar_api_v1_me_avatar_post
     AvatarUploadResponseData:
       properties:
-        upload_url:
+        media_asset_id:
           type: string
-          title: Upload Url
-        storage_key:
+          format: uuid
+          title: Media Asset Id
+        url:
           type: string
-          title: Storage Key
-        public_url:
+          title: Url
+        derivatives:
+          additionalProperties:
+            type: string
+          type: object
+          title: Derivatives
+        alt_text:
           type: string
-          title: Public Url
-        expires_in:
-          type: integer
-          title: Expires In
-          default: 3600
+          title: Alt Text
       type: object
       required:
-      - upload_url
-      - storage_key
-      - public_url
-      - expires_in
+      - media_asset_id
+      - url
+      - derivatives
+      - alt_text
       title: AvatarUploadResponseData
     AvatarUploadResponseEnvelope:
       properties:
@@ -6708,6 +6744,10 @@ components:
             format: uuid
           - type: 'null'
           title: Avatar Media Id
+        avatar:
+          anyOf:
+          - $ref: '#/components/schemas/ResolvedMediaItemSchema'
+          - type: 'null'
         status:
           type: string
           title: Status
@@ -6740,12 +6780,6 @@ components:
           - type: string
           - type: 'null'
           title: Location
-        avatar_media_id:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Avatar Media Id
       type: object
       title: UserProfileUpdate
     ValidationError:

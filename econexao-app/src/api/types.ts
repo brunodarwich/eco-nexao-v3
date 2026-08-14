@@ -41,7 +41,6 @@ export type UserProfileEnvelope = Schemas['UserProfileEnvelope'];
 export type UserProfileSchema = Schemas['UserProfileSchema'];
 export type UserProfileUpdate = Schemas['UserProfileUpdate'];
 
-export type AvatarUploadRequest = Schemas['AvatarUploadRequest'];
 export type AvatarUploadResponseEnvelope = Schemas['AvatarUploadResponseEnvelope'];
 export type UserImpactEnvelope = Schemas['UserImpactEnvelope'];
 export type UserImpactData = Schemas['UserImpactData'];

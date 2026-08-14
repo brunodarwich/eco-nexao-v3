@@ -1,5 +1,8 @@
 import React from 'react';
 import renderer, { act } from 'react-test-renderer';
+import { TouchableOpacity } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import ProfileScreen from '../../../app/(tabs)/profile';
 import FavoriteRoutesScreen from '../../../app/profile/favorite-routes';
@@ -17,8 +20,10 @@ import {
   useMyPreferencesQuery,
   useSupportContentQuery,
 } from '../../hooks/queries';
+import { apiClient } from '../../api/client';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
+jest.mock('expo-image-picker', () => ({ launchImageLibraryAsync: jest.fn() }));
 jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
   useLocalSearchParams: jest.fn().mockReturnValue({}),
@@ -57,6 +62,13 @@ jest.mock('../../hooks/useOptimisticFavoriteActor', () => ({
   }),
 }));
 
+jest.mock('../../hooks/useOptimisticFavoriteRoute', () => ({
+  useOptimisticFavoriteRoute: () => ({
+    mutate: jest.fn(),
+    isPending: false,
+  }),
+}));
+
 jest.mock('../../hooks/useOptimisticPreferences', () => ({
   useOptimisticPreferences: () => ({
     mutate: jest.fn(),
@@ -68,11 +80,21 @@ jest.mock('../../hooks/useOptimisticPreferences', () => ({
 describe('Marco 11 — Integration Tests', () => {
   const push = jest.fn();
   const back = jest.fn();
+  let queryClient: QueryClient;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+    });
     (useRouter as jest.Mock).mockReturnValue({ push, back });
   });
+
+  const renderProfile = () => (
+    <QueryClientProvider client={queryClient}>
+      <ProfileScreen />
+    </QueryClientProvider>
+  );
 
   it('ProfileScreen renders user profile and impact metrics', async () => {
     (useMyProfileQuery as jest.Mock).mockReturnValue({
@@ -92,10 +114,85 @@ describe('Marco 11 — Integration Tests', () => {
 
     let tree!: renderer.ReactTestRenderer;
     await act(async () => {
-      tree = renderer.create(<ProfileScreen />);
+      tree = renderer.create(renderProfile());
     });
 
     expect(tree.toJSON()).toBeTruthy();
+  });
+
+  it('cancela o picker sem iniciar upload', async () => {
+    (useMyProfileQuery as jest.Mock).mockReturnValue({ data: {}, isPending: false });
+    (useMyImpactQuery as jest.Mock).mockReturnValue({ data: {}, isPending: false });
+    (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({ canceled: true });
+    const upload = jest.spyOn(apiClient, 'uploadAvatar');
+    let tree!: renderer.ReactTestRenderer;
+    await act(async () => {
+      tree = renderer.create(renderProfile());
+    });
+    const avatar = tree.root.findAllByType(TouchableOpacity).find(
+      (item) => item.props.accessibilityLabel === 'Alterar Foto do Perfil'
+    );
+    await act(async () => avatar!.props.onPress());
+    expect(upload).not.toHaveBeenCalled();
+    expect(avatar!.props.accessibilityState).toEqual({ disabled: false, busy: false });
+  });
+
+  it('impede seletores concorrentes enquanto o primeiro está aberto', async () => {
+    (useMyProfileQuery as jest.Mock).mockReturnValue({ data: {}, isPending: false });
+    (useMyImpactQuery as jest.Mock).mockReturnValue({ data: {}, isPending: false });
+    let resolvePicker!: (result: { canceled: true }) => void;
+    (ImagePicker.launchImageLibraryAsync as jest.Mock).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolvePicker = resolve;
+      })
+    );
+    let tree!: renderer.ReactTestRenderer;
+    await act(async () => {
+      tree = renderer.create(renderProfile());
+    });
+    const avatar = tree.root.findAllByType(TouchableOpacity).find(
+      (item) => item.props.accessibilityLabel === 'Alterar Foto do Perfil'
+    );
+    let first!: Promise<void>;
+    await act(async () => {
+      first = avatar!.props.onPress();
+      avatar!.props.onPress();
+      await Promise.resolve();
+    });
+    expect(ImagePicker.launchImageLibraryAsync).toHaveBeenCalledTimes(1);
+    resolvePicker({ canceled: true });
+    await act(async () => first);
+  });
+
+  it('envia o arquivo escolhido ao endpoint multipart real', async () => {
+    (useMyProfileQuery as jest.Mock).mockReturnValue({ data: {}, isPending: false });
+    (useMyImpactQuery as jest.Mock).mockReturnValue({ data: {}, isPending: false });
+    (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({
+      canceled: false,
+      assets: [{ uri: 'file:///avatar.png', fileName: 'avatar.png', mimeType: 'image/png' }],
+    });
+    const upload = jest.spyOn(apiClient, 'uploadAvatar').mockResolvedValue({
+      data: {
+        media_asset_id: 'asset-id',
+        url: 'https://cdn/avatar.webp',
+        derivatives: {},
+        alt_text: 'Avatar',
+      },
+    });
+    let tree!: renderer.ReactTestRenderer;
+    await act(async () => {
+      tree = renderer.create(renderProfile());
+    });
+    const avatar = tree.root.findAllByType(TouchableOpacity).find(
+      (item) => item.props.accessibilityLabel === 'Alterar Foto do Perfil'
+    );
+    await act(async () => avatar!.props.onPress());
+    expect(upload).toHaveBeenCalledWith({
+      uri: 'file:///avatar.png',
+      name: 'avatar.png',
+      type: 'image/png',
+      file: undefined,
+    });
   });
 
   it('FavoriteRoutesScreen renders route cards and handles click', async () => {

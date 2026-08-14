@@ -14,7 +14,7 @@ import { theme, useAppTheme } from '../../../src/theme/theme';
 import { makeAccessibleButton } from '../../../src/utils/accessibility';
 import { apiClient, ApiClientError } from '../../../src/api/client';
 import { queryKeys } from '../../../src/api/queryKeys';
-import { useAuth } from '../../../src/hooks/useAuth';
+import { AuthContext } from '../../../src/auth/AuthProvider';
 
 const routePath = (
   routeId: string,
@@ -28,9 +28,6 @@ const routePath = (
   const suffix = query.toString();
   return `/route/${encodeURIComponent(routeId)}/${destination}${suffix ? `?${suffix}` : ''}`;
 };
-
-
-import { AuthContext } from '../../../src/auth/AuthProvider';
 
 export default function RouteDetailScreen() {
   const router = useRouter();

@@ -6,6 +6,7 @@ import { AppHeader } from '../../src/components/common/AppHeader';
 import { EmptyStateView, ErrorStateView, LoadingView } from '../../src/components/common/UIStateViews';
 import { RouteCard } from '../../src/components/routes/RouteCard';
 import { useMyFavoriteRoutesQuery } from '../../src/hooks/queries';
+import { useOptimisticFavoriteRoute } from '../../src/hooks/useOptimisticFavoriteRoute';
 import { useAuth } from '../../src/hooks/useAuth';
 import { theme } from '../../src/theme/theme';
 
@@ -13,6 +14,7 @@ export default function FavoriteRoutesScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const favRoutes = useMyFavoriteRoutesQuery(user?.id);
+  const toggleFavoriteRoute = useOptimisticFavoriteRoute();
 
   return (
     <View style={styles.container}>
@@ -34,6 +36,12 @@ export default function FavoriteRoutesScreen() {
               route={route}
               onPress={() => router.push(`/route/${route.id}`)}
               isFavorite={true}
+              onToggleFavorite={() =>
+                toggleFavoriteRoute.mutate({
+                  routeId: route.id,
+                  isFavorite: false,
+                })
+              }
             />
           ))
         ) : (

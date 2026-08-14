@@ -576,6 +576,20 @@ class Profile(Base):
     )
 
 
+class DeletedUserTombstone(Base):
+    """Private marker that survives deletion of the managed Auth identity."""
+
+    __tablename__ = "deleted_user_tombstones"
+    __table_args__ = {"schema": "app_private"}
+
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    status: Mapped[str] = mapped_column(VARCHAR(20), default="processing", nullable=False)
+    requested_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.clock_timestamp(), nullable=False
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class UserPreference(Base):
     __tablename__ = "user_preferences"
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import renderer, { act } from 'react-test-renderer';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AccessibilityInfo, TextInput, TouchableOpacity } from 'react-native';
+import { AccessibilityInfo, Modal, TextInput, TouchableOpacity } from 'react-native';
 
 import { AppContextProvider } from '../../state/AppContext';
 import { EditProfileModal } from './EditProfileModal';
@@ -153,7 +153,15 @@ describe('ECO-1904: Perfil, Trips, Termos Legais e LGPD', () => {
     expect(mockClose).toHaveBeenCalled();
   });
 
-  test('AccountDeletionModal apresenta informações LGPD e encerra a sessão', async () => {
+  test('AccountDeletionModal só confirma e limpa sessão após resposta real', async () => {
+    const deleteSpy = jest.spyOn(apiClient, 'deleteMyAccount').mockResolvedValueOnce({
+      success: true,
+      data: { success: true, message: 'Conta excluída permanentemente.' },
+    });
+    queryClient.setQueryDefaults(['authenticated-test'], {
+      meta: { authenticated: true },
+    });
+    queryClient.setQueryData(['authenticated-test'], { private: true });
     const mockClose = jest.fn();
     let tree!: renderer.ReactTestRenderer;
 
@@ -177,9 +185,96 @@ describe('ECO-1904: Perfil, Trips, Termos Legais e LGPD', () => {
       await confirmBtn!.props.onPress();
     });
 
-    expect(mockSignOut).toHaveBeenCalled();
+    expect(deleteSpy).toHaveBeenCalledTimes(1);
+    expect(mockSignOut).toHaveBeenCalledTimes(1);
+    expect(queryClient.getQueryData(['authenticated-test'])).toBeUndefined();
     expect(announceSpy).toHaveBeenCalled();
     expect(mockClose).toHaveBeenCalled();
+  });
+
+  test('AccountDeletionModal conclui limpeza local quando signOut remoto falha', async () => {
+    jest.spyOn(apiClient, 'deleteMyAccount').mockResolvedValueOnce({
+      success: true,
+      data: { success: true, message: 'Conta excluída permanentemente.' },
+    });
+    mockSignOut.mockRejectedValueOnce(new Error('identidade já removida'));
+    const mockClose = jest.fn();
+    queryClient.setQueryDefaults(['authenticated-test'], {
+      meta: { authenticated: true },
+    });
+    queryClient.setQueryData(['authenticated-test'], { private: true });
+
+    let tree!: renderer.ReactTestRenderer;
+    await act(async () => {
+      tree = renderer.create(
+        <QueryClientProvider client={queryClient}>
+          <AccountDeletionModal visible={true} onClose={mockClose} />
+        </QueryClientProvider>
+      );
+    });
+    const confirm = tree.root.findAllByType(TouchableOpacity).find(
+      (item) => item.props.accessibilityLabel?.includes('Confirmar exclusão')
+    );
+    await act(async () => confirm!.props.onPress());
+
+    expect(queryClient.getQueryData(['authenticated-test'])).toBeUndefined();
+    expect(mockClose).toHaveBeenCalledTimes(1);
+    expect(announceSpy).toHaveBeenCalledWith(
+      'Sua conta foi excluída e a sessão local foi removida.'
+    );
+  });
+
+  test('AccountDeletionModal não fecha pelo botão voltar durante processamento', async () => {
+    let resolveDelete!: (value: { success: true; data: { success: true; message: string } }) => void;
+    jest.spyOn(apiClient, 'deleteMyAccount').mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveDelete = resolve;
+      })
+    );
+    const mockClose = jest.fn();
+    let tree!: renderer.ReactTestRenderer;
+    await act(async () => {
+      tree = renderer.create(
+        <QueryClientProvider client={queryClient}>
+          <AccountDeletionModal visible={true} onClose={mockClose} />
+        </QueryClientProvider>
+      );
+    });
+    const confirm = tree.root.findAllByType(TouchableOpacity).find(
+      (item) => item.props.accessibilityLabel?.includes('Confirmar exclusão')
+    );
+    let pending!: Promise<void>;
+    await act(async () => {
+      pending = confirm!.props.onPress();
+      await Promise.resolve();
+    });
+    await act(async () => tree.root.findByType(Modal).props.onRequestClose());
+    expect(mockClose).not.toHaveBeenCalled();
+
+    resolveDelete({ success: true, data: { success: true, message: 'ok' } });
+    await act(async () => pending);
+  });
+
+  test('AccountDeletionModal mantém sessão e não anuncia sucesso quando API falha', async () => {
+    jest.spyOn(apiClient, 'deleteMyAccount').mockRejectedValueOnce(new Error('offline'));
+    const mockClose = jest.fn();
+    let tree!: renderer.ReactTestRenderer;
+    await act(async () => {
+      tree = renderer.create(
+        <QueryClientProvider client={queryClient}>
+          <AccountDeletionModal visible={true} onClose={mockClose} />
+        </QueryClientProvider>
+      );
+    });
+    const confirm = tree.root.findAllByType(TouchableOpacity).find(
+      (item) => item.props.accessibilityLabel?.includes('Confirmar exclusão')
+    );
+    await act(async () => confirm!.props.onPress());
+    expect(mockSignOut).not.toHaveBeenCalled();
+    expect(announceSpy).not.toHaveBeenCalledWith(
+      'Sua conta foi excluída e a sessão local foi removida.'
+    );
+    expect(mockClose).not.toHaveBeenCalled();
   });
 
   test('LegalAndPrivacyScreen renderiza termos e privacidade sem erros', async () => {
@@ -232,4 +327,3 @@ describe('ECO-1904: Perfil, Trips, Termos Legais e LGPD', () => {
     expect(announceSpy).toHaveBeenCalledWith(expect.stringContaining('Viagem iniciada com sucesso'));
   });
 });
-

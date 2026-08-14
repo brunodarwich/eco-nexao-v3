@@ -9,9 +9,13 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt import PyJWKClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
 from app.core.config import settings
+from app.db.session import get_db
+from app.models.domain import DeletedUserTombstone
 
 security_scheme = HTTPBearer(auto_error=False)
 BearerCredentials = Annotated[
@@ -102,8 +106,12 @@ def verify_supabase_jwt(
         raise JWTValidationError("Token JWT inválido.") from exc
 
 
-async def get_current_user(credentials: BearerCredentials) -> AuthenticatedUser:
-    """Require a valid Supabase Auth Bearer token."""
+async def get_current_user_allow_deleted(credentials: BearerCredentials) -> AuthenticatedUser:
+    """Require a valid token without applying the deletion tombstone gate.
+
+    This dependency is intentionally limited to the idempotent account-deletion
+    retry route. Normal application routes must use ``get_current_user``.
+    """
     if not credentials or not credentials.credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -121,12 +129,41 @@ async def get_current_user(credentials: BearerCredentials) -> AuthenticatedUser:
         ) from exc
 
 
-async def get_optional_current_user(credentials: BearerCredentials) -> AuthenticatedUser | None:
+async def _reject_deleted_user(user: AuthenticatedUser, db: AsyncSession) -> None:
+    marker = await db.scalar(
+        select(DeletedUserTombstone.user_id).where(
+            DeletedUserTombstone.user_id == user.id
+        )
+    )
+    if marker is not None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Esta conta foi excluída ou está em processo de exclusão.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+async def get_current_user(
+    credentials: BearerCredentials,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> AuthenticatedUser:
+    """Require a valid Supabase token whose account is not tombstoned."""
+    user = await get_current_user_allow_deleted(credentials)
+    await _reject_deleted_user(user, db)
+    return user
+
+
+async def get_optional_current_user(
+    credentials: BearerCredentials,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> AuthenticatedUser | None:
     """Return a validated identity when a Bearer token is present."""
     if not credentials or not credentials.credentials:
         return None
     try:
-        return await run_in_threadpool(verify_supabase_jwt, credentials.credentials)
+        user = await run_in_threadpool(verify_supabase_jwt, credentials.credentials)
+        await _reject_deleted_user(user, db)
+        return user
     except JWTValidationError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

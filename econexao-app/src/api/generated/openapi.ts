@@ -7,7 +7,10 @@ export interface paths {
     "/api/v1/admin/context": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -27,7 +30,10 @@ export interface paths {
     "/api/v1/admin/categories": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -45,7 +51,10 @@ export interface paths {
     "/api/v1/admin/categories/{category_id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -63,7 +72,10 @@ export interface paths {
     "/api/v1/admin/accessibility-features": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -81,7 +93,10 @@ export interface paths {
     "/api/v1/admin/accessibility-features/{feature_id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -99,7 +114,10 @@ export interface paths {
     "/api/v1/admin/actors": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -117,7 +135,10 @@ export interface paths {
     "/api/v1/admin/actors/{actor_id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -136,7 +157,10 @@ export interface paths {
     "/api/v1/admin/actors/{actor_id}/route-links": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -154,7 +178,10 @@ export interface paths {
     "/api/v1/admin/actors/route-links/{link_id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -172,7 +199,10 @@ export interface paths {
     "/api/v1/admin/territory/regions": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -190,7 +220,10 @@ export interface paths {
     "/api/v1/admin/territory/regions/{region_id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -208,7 +241,10 @@ export interface paths {
     "/api/v1/admin/territory/routes": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -226,7 +262,10 @@ export interface paths {
     "/api/v1/admin/territory/routes/{route_id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -245,7 +284,10 @@ export interface paths {
     "/api/v1/admin/territory/routes/{route_id}/origins": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -263,7 +305,10 @@ export interface paths {
     "/api/v1/admin/territory/routes/{route_id}/origins/{origin_id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -281,7 +326,10 @@ export interface paths {
     "/api/v1/admin/territory/routes/{route_id}/origins/{origin_id}/geometries": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -298,7 +346,10 @@ export interface paths {
     "/api/v1/admin/territory/routes/{route_id}/geometries/{geometry_id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -315,7 +366,10 @@ export interface paths {
     "/api/v1/admin/workflow/{resource_type}/{resource_id}/transition": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -335,7 +389,10 @@ export interface paths {
     "/api/v1/admin/workflow/{resource_type}/{resource_id}/publish-guard": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -355,7 +412,10 @@ export interface paths {
     "/api/v1/admin/alerts": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -376,7 +436,10 @@ export interface paths {
     "/api/v1/admin/alerts/{alert_id}/resolve": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -396,7 +459,10 @@ export interface paths {
     "/api/v1/admin/reconciliation/candidates": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -416,7 +482,10 @@ export interface paths {
     "/api/v1/admin/reconciliation/{candidate_id}/decision": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -436,7 +505,10 @@ export interface paths {
     "/api/v1/admin/reconciliation/{candidate_id}/compensate": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -453,7 +525,10 @@ export interface paths {
     "/api/v1/admin/alerts/{alert_id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -470,7 +545,10 @@ export interface paths {
     "/api/v1/admin/media/process": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -487,7 +565,10 @@ export interface paths {
     "/api/v1/admin/media/cleanup/recover": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -825,7 +906,7 @@ export interface paths {
         patch: operations["update_my_profile_api_v1_me_patch"];
         trace?: never;
     };
-    "/api/v1/me/avatar-upload": {
+    "/api/v1/me/avatar": {
         parameters: {
             query?: never;
             header?: never;
@@ -835,11 +916,31 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Solicitacao de URL para upload de avatar
-         * @description Gera URL assinada para upload seguro de avatar no Supabase Storage.
+         * Substituir avatar
+         * @description Recebe uma imagem multipart, sanitiza e gera derivados WebP no backend, publicando-os no Supabase Storage sem expor credenciais privilegiadas.
          */
-        post: operations["create_avatar_upload_url_api_v1_me_avatar_upload_post"];
+        post: operations["replace_avatar_api_v1_me_avatar_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Excluir a conta atual
+         * @description Remove avatares, dados de domínio e identidade Auth. É idempotente enquanto o JWT residual ainda for válido.
+         */
+        delete: operations["delete_my_account_api_v1_me_account_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2068,26 +2169,30 @@ export interface components {
              */
             role: string;
         };
-        /** AvatarUploadRequest */
-        AvatarUploadRequest: {
-            /** Filename */
-            filename: string;
-            /** Mime Type */
-            mime_type: string;
+        /** Body_replace_avatar_api_v1_me_avatar_post */
+        Body_replace_avatar_api_v1_me_avatar_post: {
+            /**
+             * File
+             * Format: binary
+             * @description Imagem JPEG, PNG ou WebP; máximo 5 MiB
+             */
+            file: string;
         };
         /** AvatarUploadResponseData */
         AvatarUploadResponseData: {
-            /** Upload Url */
-            upload_url: string;
-            /** Storage Key */
-            storage_key: string;
-            /** Public Url */
-            public_url: string;
             /**
-             * Expires In
-             * @default 3600
+             * Media Asset Id
+             * Format: uuid
              */
-            expires_in: number;
+            media_asset_id: string;
+            /** Url */
+            url: string;
+            /** Derivatives */
+            derivatives: {
+                [key: string]: string;
+            };
+            /** Alt Text */
+            alt_text: string;
         };
         /** AvatarUploadResponseEnvelope */
         AvatarUploadResponseEnvelope: {
@@ -3134,6 +3239,7 @@ export interface components {
             location?: string | null;
             /** Avatar Media Id */
             avatar_media_id?: string | null;
+            avatar?: components["schemas"]["ResolvedMediaItemSchema"] | null;
             /**
              * Status
              * @default active
@@ -3150,8 +3256,6 @@ export interface components {
             name?: string | null;
             /** Location */
             location?: string | null;
-            /** Avatar Media Id */
-            avatar_media_id?: string | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -3164,7 +3268,10 @@ export interface components {
         };
     };
     responses: never;
-    parameters: never;
+    parameters: {
+        /** @description Escopo regional explícito da operação editorial. */
+        AdminRegionScope: string | null;
+    };
     requestBodies: never;
     headers: never;
     pathItems: never;
@@ -3174,7 +3281,10 @@ export interface operations {
     get_admin_context_api_v1_admin_context_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -3212,7 +3322,10 @@ export interface operations {
     list_categories_api_v1_admin_categories_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -3250,7 +3363,10 @@ export interface operations {
     create_category_api_v1_admin_categories_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -3310,7 +3426,10 @@ export interface operations {
     get_category_api_v1_admin_categories__category_id__get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 category_id: string;
             };
@@ -3368,7 +3487,10 @@ export interface operations {
     update_category_api_v1_admin_categories__category_id__patch: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 category_id: string;
             };
@@ -3430,7 +3552,10 @@ export interface operations {
     list_accessibility_features_api_v1_admin_accessibility_features_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -3468,7 +3593,10 @@ export interface operations {
     create_accessibility_feature_api_v1_admin_accessibility_features_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -3528,7 +3656,10 @@ export interface operations {
     get_accessibility_feature_api_v1_admin_accessibility_features__feature_id__get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 feature_id: string;
             };
@@ -3586,7 +3717,10 @@ export interface operations {
     update_accessibility_feature_api_v1_admin_accessibility_features__feature_id__patch: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 feature_id: string;
             };
@@ -3657,7 +3791,10 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -3704,7 +3841,10 @@ export interface operations {
     create_actor_api_v1_admin_actors_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -3773,7 +3913,10 @@ export interface operations {
     get_actor_api_v1_admin_actors__actor_id__get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 actor_id: string;
             };
@@ -3831,7 +3974,10 @@ export interface operations {
     delete_actor_api_v1_admin_actors__actor_id__delete: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 actor_id: string;
             };
@@ -3889,7 +4035,10 @@ export interface operations {
     update_actor_api_v1_admin_actors__actor_id__patch: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 actor_id: string;
             };
@@ -3960,7 +4109,10 @@ export interface operations {
     list_route_links_by_actor_api_v1_admin_actors__actor_id__route_links_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 actor_id: string;
             };
@@ -4018,7 +4170,10 @@ export interface operations {
     create_route_link_api_v1_admin_actors__actor_id__route_links_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 actor_id: string;
             };
@@ -4089,7 +4244,10 @@ export interface operations {
     delete_route_link_api_v1_admin_actors_route_links__link_id__delete: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 link_id: string;
             };
@@ -4149,7 +4307,10 @@ export interface operations {
     update_route_link_api_v1_admin_actors_route_links__link_id__patch: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 link_id: string;
             };
@@ -4214,7 +4375,10 @@ export interface operations {
                 /** @description Incluir regiões inativas */
                 include_inactive?: boolean;
             };
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -4261,7 +4425,10 @@ export interface operations {
     create_region_api_v1_admin_territory_regions_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -4321,7 +4488,10 @@ export interface operations {
     get_region_api_v1_admin_territory_regions__region_id__get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 region_id: string;
             };
@@ -4379,7 +4549,10 @@ export interface operations {
     update_region_api_v1_admin_territory_regions__region_id__put: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 region_id: string;
             };
@@ -4450,7 +4623,10 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -4497,7 +4673,10 @@ export interface operations {
     create_route_api_v1_admin_territory_routes_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -4557,7 +4736,10 @@ export interface operations {
     get_route_api_v1_admin_territory_routes__route_id__get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 route_id: string;
             };
@@ -4615,7 +4797,10 @@ export interface operations {
     update_route_api_v1_admin_territory_routes__route_id__put: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 route_id: string;
             };
@@ -4686,7 +4871,10 @@ export interface operations {
     archive_route_api_v1_admin_territory_routes__route_id__delete: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 route_id: string;
             };
@@ -4744,7 +4932,10 @@ export interface operations {
     list_origins_api_v1_admin_territory_routes__route_id__origins_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 route_id: string;
             };
@@ -4802,7 +4993,10 @@ export interface operations {
     create_origin_api_v1_admin_territory_routes__route_id__origins_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 route_id: string;
             };
@@ -4873,7 +5067,10 @@ export interface operations {
     update_origin_api_v1_admin_territory_routes__route_id__origins__origin_id__put: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 route_id: string;
                 origin_id: string;
@@ -4936,7 +5133,10 @@ export interface operations {
     delete_origin_api_v1_admin_territory_routes__route_id__origins__origin_id__delete: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 route_id: string;
                 origin_id: string;
@@ -4993,7 +5193,10 @@ export interface operations {
     create_geometry_api_v1_admin_territory_routes__route_id__origins__origin_id__geometries_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 route_id: string;
                 origin_id: string;
@@ -5065,7 +5268,10 @@ export interface operations {
     update_geometry_api_v1_admin_territory_routes__route_id__geometries__geometry_id__put: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 route_id: string;
                 geometry_id: string;
@@ -5128,7 +5334,10 @@ export interface operations {
     transition_resource_status_api_v1_admin_workflow__resource_type___resource_id__transition_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 resource_type: string;
                 resource_id: string;
@@ -5164,7 +5373,10 @@ export interface operations {
     get_publish_guard_status_api_v1_admin_workflow__resource_type___resource_id__publish_guard_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 resource_type: string;
                 resource_id: string;
@@ -5205,7 +5417,10 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -5234,7 +5449,10 @@ export interface operations {
     create_editorial_alert_api_v1_admin_alerts_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -5267,7 +5485,10 @@ export interface operations {
     resolve_editorial_alert_api_v1_admin_alerts__alert_id__resolve_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 alert_id: string;
             };
@@ -5306,7 +5527,10 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -5335,7 +5559,10 @@ export interface operations {
     decide_reconciliation_candidate_api_v1_admin_reconciliation__candidate_id__decision_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 candidate_id: string;
             };
@@ -5370,7 +5597,10 @@ export interface operations {
     compensate_reconciliation_merge_api_v1_admin_reconciliation__candidate_id__compensate_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 candidate_id: string;
             };
@@ -5405,7 +5635,10 @@ export interface operations {
     update_editorial_alert_api_v1_admin_alerts__alert_id__put: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path: {
                 alert_id: string;
             };
@@ -5440,7 +5673,10 @@ export interface operations {
     process_editorial_media_api_v1_admin_media_process_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -5473,7 +5709,10 @@ export interface operations {
     recover_media_cleanup_api_v1_admin_media_cleanup_recover_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Escopo regional explícito da operação editorial. */
+                "X-Region-ID"?: components["parameters"]["AdminRegionScope"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -6006,7 +6245,7 @@ export interface operations {
             };
         };
     };
-    create_avatar_upload_url_api_v1_me_avatar_upload_post: {
+    replace_avatar_api_v1_me_avatar_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -6015,7 +6254,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["AvatarUploadRequest"];
+                "multipart/form-data": components["schemas"]["Body_replace_avatar_api_v1_me_avatar_post"];
             };
         };
         responses: {
@@ -6028,13 +6267,60 @@ export interface operations {
                     "application/json": components["schemas"]["AvatarUploadResponseEnvelope"];
                 };
             };
-            /** @description Validation Error */
+            /** @description JWT ausente, inválido ou bloqueado por exclusão de conta. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Imagem ausente, inválida, incompatível ou acima do limite. */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    delete_my_account_api_v1_me_account_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StandardSuccessResponse"];
+                };
+            };
+            /** @description JWT ausente ou inválido. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Saga de exclusão incompleta e segura para nova tentativa. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

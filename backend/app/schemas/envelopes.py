@@ -363,6 +363,7 @@ class UserProfileSchema(SchemaBase):
     name: str | None = None
     location: str | None = None
     avatar_media_id: uuid.UUID | None = None
+    avatar: ResolvedMediaItemSchema | None = None
     status: str = "active"
     created_at: datetime | None = None
     updated_at: datetime | None = None
@@ -375,7 +376,6 @@ class UserProfileEnvelope(SchemaBase):
 class UserProfileUpdate(BaseModel):
     name: str | None = None
     location: str | None = None
-    avatar_media_id: uuid.UUID | None = None
 
 
 class UserPreferencesSchema(SchemaBase):
@@ -413,26 +413,15 @@ class StandardSuccessResponse(SchemaBase):
 
 
 # -----------------------------------------------------------------------------
-# Storage & Avatar Upload (ECO-0406)
+# Server-side Avatar Upload (ECO-1701)
 # -----------------------------------------------------------------------------
 
 
-class AvatarUploadRequest(BaseModel):
-    filename: str
-    mime_type: str
-
-
 class AvatarUploadResponseData(SchemaBase):
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_schema_extra={
-            "required": ["upload_url", "storage_key", "public_url", "expires_in"]
-        },
-    )
-    upload_url: str
-    storage_key: str
-    public_url: str
-    expires_in: int = 3600
+    media_asset_id: uuid.UUID
+    url: str
+    derivatives: dict[str, str]
+    alt_text: str
 
 
 class AvatarUploadResponseEnvelope(SchemaBase):
