@@ -4,12 +4,14 @@ on:
   pull_request:
     paths:
       - "backend/**"
+      - "supabase/**"
       - "docs/openapi.yaml"
       - ".github/workflows/backend-quality.yml"
   push:
     branches: [main, master]
     paths:
       - "backend/**"
+      - "supabase/**"
       - "docs/openapi.yaml"
       - ".github/workflows/backend-quality.yml"
 
@@ -41,6 +43,16 @@ jobs:
 
       - name: Mypy
         run: python -m mypy app
+
+      - name: Validate ordered Supabase migrations
+        run: python -m scripts.check_migrations
+
+      - name: Validate migration security contracts
+        run: >-
+          python -m pytest
+          tests/test_check_migrations.py
+          tests/test_rls_policies.py
+          tests/test_media_lifecycle_schema.py
 
       - name: Tests, coverage, and secret scan
         run: python -m pytest --cov=app --cov-report=term --cov-fail-under=85

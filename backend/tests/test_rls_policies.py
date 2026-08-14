@@ -35,7 +35,7 @@ DOMAIN_TABLES = (
 def test_migration_files_and_seed_exist() -> None:
     """The ordered migration chain and configured seed hook must exist."""
     filenames = {path.name for path in MIGRATIONS_DIR.glob("*.sql")}
-    assert filenames == {
+    required_filenames = {
         "20260811000000_init_postgis_and_base_schemas.sql",
         "20260811010000_domain_tables.sql",
         "20260811020000_rls_and_permissions.sql",
@@ -52,6 +52,7 @@ def test_migration_files_and_seed_exist() -> None:
         "20260813152038_allow_media_processing_without_storage_key.sql",
         "20260813175721_archive_duplicate_route_actor_links.sql",
     }
+    assert required_filenames <= filenames
     assert (REPOSITORY_ROOT / "supabase" / "seed.sql").is_file()
 
 

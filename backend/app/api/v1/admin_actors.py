@@ -27,7 +27,7 @@ from app.schemas.admin_actors import (
 from app.schemas.error import ErrorResponse
 from app.services.actor_admin import ActorAdminService
 from app.services.dependencies import get_actor_admin_service
-from app.services.editorial_authorization import AuthorizationContext
+from app.services.editorial_authorization import AuthorizationContext, authorization_context_for
 
 router = APIRouter(prefix="/admin", tags=["Admin Actors"])
 
@@ -36,7 +36,7 @@ ActorAdminDep = Annotated[ActorAdminService, Depends(get_actor_admin_service)]
 
 
 def _build_context(user: AuthenticatedUser) -> AuthorizationContext:
-    return AuthorizationContext(actor_id=user.id)
+    return authorization_context_for(user.id)
 
 
 # -----------------------------------------------------------------------------

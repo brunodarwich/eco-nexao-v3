@@ -62,10 +62,13 @@ SCHEMA_NAMES = {
 
 
 def _parameters(operation: dict[str, Any]) -> set[tuple[str, str, bool]]:
-    return {
-        (parameter["in"], parameter["name"], bool(parameter.get("required", False)))
-        for parameter in operation.get("parameters", [])
-    }
+    parameters = operation.get("parameters", [])
+    result: set[tuple[str, str, bool]] = set()
+    for parameter in parameters:
+        if "$ref" in parameter:
+            parameter = CANONICAL["components"]["parameters"][_ref_name(parameter)]
+        result.add((parameter["in"], parameter["name"], bool(parameter.get("required", False))))
+    return result
 
 
 def _ref_name(schema: dict[str, Any]) -> str | None:
@@ -87,43 +90,74 @@ def _shape(schema: dict[str, Any], schemas: dict[str, Any]) -> tuple[set[str], s
     return properties, required
 
 
+def _without_titles(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {key: _without_titles(item) for key, item in value.items() if key != "title"}
+    if isinstance(value, list):
+        return [_without_titles(item) for item in value]
+    return value
+
+
 def test_fastapi_operations_match_canonical_territorial_contract() -> None:
-    """Implemented territorial endpoints cannot silently drift from the contract."""
+    """Every runtime operation must match the canonical path, parameters and response."""
     runtime_paths = app.openapi()["paths"]
     canonical_paths = CANONICAL["paths"]
 
-    for canonical_path, canonical_path_item in canonical_paths.items():
-        runtime_path = f"/api/v1{canonical_path}"
-        if runtime_path not in runtime_paths:
-            # Future endpoints remain governed by their own ECO tasks.
-            continue
-        for method, canonical_operation in canonical_path_item.items():
+    assert set(runtime_paths) == set(canonical_paths), "FastAPI/OpenAPI path drift"
+    for path, runtime_path_item in runtime_paths.items():
+        canonical_path_item = canonical_paths[path]
+        runtime_methods = {
+            method
+            for method in runtime_path_item
+            if method in {"get", "post", "put", "patch", "delete"}
+        }
+        canonical_methods = {
+            method
+            for method in canonical_path_item
+            if method in {"get", "post", "put", "patch", "delete"}
+        }
+        assert runtime_methods == canonical_methods, f"Method drift in {path}"
+        for method in runtime_methods:
+            canonical_operation = canonical_path_item[method]
             if method not in {"get", "post", "put", "patch", "delete"}:
                 continue
-            assert method in runtime_paths[runtime_path], f"Missing {method.upper()} {runtime_path}"
-            runtime_operation = runtime_paths[runtime_path][method]
-            assert _parameters(runtime_operation) == _parameters(canonical_operation), (
-                f"Parameter drift in {method.upper()} {canonical_path}"
+            runtime_operation = runtime_path_item[method]
+            canonical_parameters = _parameters(canonical_path_item) | _parameters(
+                canonical_operation
+            )
+            assert _parameters(runtime_operation) == canonical_parameters, (
+                f"Parameter drift in {method.upper()} {path}"
             )
             canonical_success = (
                 canonical_operation["responses"].get("200")
                 or canonical_operation["responses"].get("201")
                 or canonical_operation["responses"].get("202")
+                or canonical_operation["responses"].get("204")
             )
             runtime_success = (
                 runtime_operation["responses"].get("200")
                 or runtime_operation["responses"].get("201")
                 or runtime_operation["responses"].get("202")
+                or runtime_operation["responses"].get("204")
             )
             assert canonical_success is not None and runtime_success is not None
-            canonical_schema = canonical_success["content"]["application/json"]["schema"]
-            runtime_schema = runtime_success["content"]["application/json"]["schema"]
+            canonical_content = canonical_success.get("content")
+            runtime_content = runtime_success.get("content")
+            assert bool(canonical_content) == bool(runtime_content)
+            if not canonical_content or not runtime_content:
+                continue
+            canonical_schema = canonical_content["application/json"]["schema"]
+            runtime_schema = runtime_content["application/json"]["schema"]
             canonical_name = _ref_name(canonical_schema)
             runtime_name = _ref_name(runtime_schema)
-            assert canonical_name is not None
-            assert runtime_name == SCHEMA_NAMES.get(canonical_name, canonical_name), (
-                f"Response model drift in {method.upper()} {canonical_path}"
-            )
+            if canonical_name is not None:
+                assert runtime_name == SCHEMA_NAMES.get(canonical_name, canonical_name), (
+                    f"Response model drift in {method.upper()} {path}"
+                )
+            else:
+                assert _without_titles(runtime_schema) == _without_titles(canonical_schema), (
+                    f"Inline response drift in {method.upper()} {path}"
+                )
 
 
 def test_fastapi_models_match_canonical_territorial_schemas() -> None:

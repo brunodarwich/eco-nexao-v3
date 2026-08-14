@@ -14,8 +14,8 @@ from app.schemas.envelopes import (
 from app.schemas.error import ErrorResponse
 from app.services.dependencies import get_editorial_authorization_service
 from app.services.editorial_authorization import (
-    AuthorizationContext,
     EditorialAuthorizationService,
+    authorization_context_for,
 )
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -51,7 +51,7 @@ async def get_admin_context(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="A identidade não possui acesso editorial.",
         )
-    context = AuthorizationContext(actor_id=current_user.id)
+    context = authorization_context_for(current_user.id)
     scopes = await authorization.access_summary(context)
     return AdminContextEnvelope(
         data=AdminContextDataSchema(

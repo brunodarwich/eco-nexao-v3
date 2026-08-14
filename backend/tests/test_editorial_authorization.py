@@ -44,6 +44,31 @@ async def test_anonymous_or_regular_user_is_denied_by_default() -> None:
     assert exc.value.status_code == 403
 
 
+def test_region_scope_rejects_cross_region_and_global_only_operations() -> None:
+    service, _ = service_with("territory.write")
+    region_id = uuid.uuid4()
+    context = AuthorizationContext(
+        actor_id=uuid.uuid4(), scope_type="region", scope_id=region_id
+    )
+
+    service.require_region_scope(context, region_id)
+    with pytest.raises(HTTPException) as cross_region:
+        service.require_region_scope(context, uuid.uuid4())
+    with pytest.raises(HTTPException) as global_only:
+        service.require_global_scope(context)
+
+    assert cross_region.value.status_code == 403
+    assert global_only.value.status_code == 403
+
+
+def test_global_scope_can_access_any_region() -> None:
+    service, _ = service_with("territory.write")
+    context = AuthorizationContext(actor_id=uuid.uuid4())
+
+    service.require_region_scope(context, uuid.uuid4())
+    service.require_global_scope(context)
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("current", "target", "capability"),

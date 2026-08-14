@@ -1,12 +1,15 @@
 """Deny-by-default editorial authorization rules from ADR 0006."""
 
 import uuid
+from collections.abc import AsyncIterator
+from contextvars import ContextVar
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 from secrets import token_urlsafe
+from typing import Annotated
 
-from fastapi import HTTPException, status
+from fastapi import Header, HTTPException, status
 
 from app.models.domain import (
     EditorialInvitation,
@@ -26,12 +29,38 @@ TRANSITIONS: dict[tuple[str, str], str] = {
 }
 REASON_REQUIRED = {("review", "draft"), ("published", "draft")}
 
+editorial_region_scope_ctx: ContextVar[uuid.UUID | None] = ContextVar(
+    "editorial_region_scope", default=None
+)
+
+
+async def bind_editorial_region_scope(
+    x_region_id: Annotated[
+        uuid.UUID | None,
+        Header(alias="X-Region-ID", description="Escopo regional explícito da operação editorial."),
+    ] = None,
+) -> AsyncIterator[None]:
+    """Bind the optional regional scope for one administrative request."""
+    token = editorial_region_scope_ctx.set(x_region_id)
+    try:
+        yield
+    finally:
+        editorial_region_scope_ctx.reset(token)
+
 
 @dataclass(frozen=True)
 class AuthorizationContext:
     actor_id: uuid.UUID
     scope_type: str = "global"
     scope_id: uuid.UUID | None = None
+
+
+def authorization_context_for(actor_id: uuid.UUID) -> AuthorizationContext:
+    """Build an authorization context from the request-bound regional scope."""
+    region_id = editorial_region_scope_ctx.get()
+    if region_id is None:
+        return AuthorizationContext(actor_id=actor_id)
+    return AuthorizationContext(actor_id=actor_id, scope_type="region", scope_id=region_id)
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,6 +87,28 @@ class EditorialAuthorizationService:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="A identidade não possui a capability editorial necessária.",
+            )
+
+    @staticmethod
+    def require_global_scope(context: AuthorizationContext) -> None:
+        """Reject region-scoped access to platform-wide resources."""
+        if context.scope_type != "global" or context.scope_id is not None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="A operação exige escopo editorial global.",
+            )
+
+    @staticmethod
+    def require_region_scope(
+        context: AuthorizationContext, resource_region_id: uuid.UUID
+    ) -> None:
+        """Prevent a selected regional scope from crossing into another region."""
+        if context.scope_type == "global":
+            return
+        if context.scope_type != "region" or context.scope_id != resource_region_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="O recurso não pertence ao escopo regional autorizado.",
             )
 
     async def access_summary(self, context: AuthorizationContext) -> list[ScopedEditorialAccess]:

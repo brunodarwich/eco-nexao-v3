@@ -52,6 +52,8 @@ class TerritorialAdminService:
     ) -> AdminRegionListEnvelope:
         await self.auth_service.require_capability(context, "territory.write")
         regions = await self.repo.list_regions(include_inactive=include_inactive)
+        if context.scope_type == "region" and context.scope_id is not None:
+            regions = [region for region in regions if region.id == context.scope_id]
 
         schemas = []
         for r in regions:
@@ -81,6 +83,7 @@ class TerritorialAdminService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Região com ID {region_id} não foi encontrada.",
             )
+        self.auth_service.require_region_scope(context, region.id)
 
         lat, lon = await self.repo.get_region_coordinates(region)
         return AdminRegionEnvelope(
@@ -100,6 +103,7 @@ class TerritorialAdminService:
     async def create_region(
         self, context: AuthorizationContext, body: AdminRegionCreateSchema
     ) -> AdminRegionEnvelope:
+        self.auth_service.require_global_scope(context)
         await self.auth_service.require_capability(context, "territory.write")
 
         existing = await self.repo.get_region_by_slug(body.slug)
@@ -159,6 +163,7 @@ class TerritorialAdminService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Região com ID {region_id} não foi encontrada.",
             )
+        self.auth_service.require_region_scope(context, region.id)
 
         updated = await self.repo.update_region(
             region_id=region_id,
@@ -219,6 +224,10 @@ class TerritorialAdminService:
         offset: int = 0,
     ) -> AdminRouteListEnvelope:
         await self.auth_service.require_capability(context, "territory.write")
+        if context.scope_type == "region":
+            if region_id is not None and region_id != context.scope_id:
+                self.auth_service.require_region_scope(context, region_id)
+            region_id = context.scope_id
         routes, total = await self.repo.list_routes(
             region_id=region_id,
             status=status_filter,
@@ -264,6 +273,7 @@ class TerritorialAdminService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Rota com ID {route_id} não foi encontrada.",
             )
+        self.auth_service.require_region_scope(context, route.region_id)
 
         return AdminRouteEnvelope(
             data=AdminRouteSchema(
@@ -299,6 +309,7 @@ class TerritorialAdminService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Região vinculada (ID: {body.region_id}) não foi encontrada.",
             )
+        self.auth_service.require_region_scope(context, body.region_id)
 
         # Check slug conflict
         existing = await self.repo.get_route_by_slug(body.slug)
@@ -376,6 +387,9 @@ class TerritorialAdminService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Rota com ID {route_id} não foi encontrada.",
             )
+        self.auth_service.require_region_scope(context, route.region_id)
+        if body.region_id is not None:
+            self.auth_service.require_region_scope(context, body.region_id)
 
         # Optimistic concurrency check if expected_version is provided
         if body.expected_version:
@@ -460,6 +474,7 @@ class TerritorialAdminService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Rota com ID {route_id} não foi encontrada.",
             )
+        self.auth_service.require_region_scope(context, route.region_id)
 
         archived = await self.repo.archive_route(route_id)
         if not archived:
@@ -512,6 +527,7 @@ class TerritorialAdminService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Rota com ID {route_id} não foi encontrada.",
             )
+        self.auth_service.require_region_scope(context, route.region_id)
 
         origins = await self.repo.list_origins_by_route(route_id)
         schemas = []
@@ -548,6 +564,7 @@ class TerritorialAdminService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Rota com ID {route_id} não foi encontrada.",
             )
+        self.auth_service.require_region_scope(context, route.region_id)
 
         existing = await self.repo.get_origin_by_code(route_id, body.code)
         if existing:
@@ -608,6 +625,12 @@ class TerritorialAdminService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Origem com ID {origin_id} não foi encontrada para a rota informada.",
             )
+        route = await self.repo.get_route_by_id(route_id)
+        if route is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Rota não encontrada."
+            )
+        self.auth_service.require_region_scope(context, route.region_id)
 
         updated = await self.repo.update_origin(
             origin_id=origin_id,
@@ -661,6 +684,12 @@ class TerritorialAdminService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Origem com ID {origin_id} não foi encontrada.",
             )
+        route = await self.repo.get_route_by_id(route_id)
+        if route is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Rota não encontrada."
+            )
+        self.auth_service.require_region_scope(context, route.region_id)
 
         await self.repo.delete_origin(origin_id)
         self.auth_repo.append_audit(
@@ -689,6 +718,12 @@ class TerritorialAdminService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Origem com ID {origin_id} não pertence à rota informada.",
             )
+        route = await self.repo.get_route_by_id(route_id)
+        if route is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Rota não encontrada."
+            )
+        self.auth_service.require_region_scope(context, route.region_id)
 
         # Validate coordinates length
         if len(body.coordinates) < 2:
@@ -754,6 +789,12 @@ class TerritorialAdminService:
     ) -> AdminRouteGeometryEnvelope:
         await self.auth_service.require_capability(context, "territory.write")
         geom = await self.repo.get_geometry_by_id(geometry_id)
+        route = await self.repo.get_route_by_id(route_id)
+        if route is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Rota não encontrada."
+            )
+        self.auth_service.require_region_scope(context, route.region_id)
         if not geom:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

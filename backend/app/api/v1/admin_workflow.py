@@ -27,6 +27,7 @@ from app.services.dependencies import (
 from app.services.editorial_authorization import (
     AuthorizationContext,
     EditorialAuthorizationService,
+    authorization_context_for,
 )
 from app.services.workflow_admin import WorkflowAdminService
 
@@ -45,7 +46,7 @@ def _build_context(user: AuthenticatedUser) -> AuthorizationContext:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="A identidade não possui acesso editorial.",
         )
-    return AuthorizationContext(actor_id=user.id)
+    return authorization_context_for(user.id)
 
 
 # -----------------------------------------------------------------------------

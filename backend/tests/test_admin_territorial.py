@@ -63,6 +63,31 @@ def test_admin_list_regions_requires_authorization() -> None:
     assert response.json()["error"]["code"] == "FORBIDDEN"
 
 
+def test_admin_region_header_reaches_service_context() -> None:
+    user = authenticated_user()
+    region_id = uuid.uuid4()
+    admin_service = AsyncMock()
+    admin_service.list_regions.return_value = {"data": []}
+
+    app.dependency_overrides[get_current_user] = lambda: user
+    app.dependency_overrides[get_territorial_admin_service] = lambda: admin_service
+    try:
+        response = TestClient(app).get(
+            "/api/v1/admin/territory/regions",
+            headers={
+                "Authorization": "Bearer token",
+                "X-Region-ID": str(region_id),
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    context = admin_service.list_regions.await_args.args[0]
+    assert context.scope_type == "region"
+    assert context.scope_id == region_id
+
+
 def test_admin_create_region_duplicate_slug_conflict() -> None:
     user = authenticated_user()
     admin_service = AsyncMock()
@@ -534,6 +559,16 @@ async def test_service_geometry_operations() -> None:
     )
 
     service.repo.get_origin_by_id = AsyncMock(return_value=origin)
+    service.repo.get_route_by_id = AsyncMock(
+        return_value=Route(
+            id=route_id,
+            region_id=uuid.uuid4(),
+            slug="rota-geometria",
+            title="Rota Geometria",
+            city="Belterra",
+            state_code="PA",
+        )
+    )
     service.repo.get_geometry_by_origin = AsyncMock(return_value=None)
     service.repo.create_geometry = AsyncMock(return_value=geom)
     service.repo.get_geometry_by_id = AsyncMock(return_value=geom)
@@ -755,4 +790,3 @@ async def test_repo_geometry_crud() -> None:
     )
     geojson = await repo.get_geometry_geojson(geom)
     assert geojson is not None and geojson["type"] == "LineString"
-

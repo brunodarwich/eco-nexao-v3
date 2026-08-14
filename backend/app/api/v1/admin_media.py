@@ -14,7 +14,7 @@ from app.schemas.admin_media import (
 )
 from app.schemas.domain import MediaAssetRead
 from app.services.dependencies import get_media_lifecycle_service
-from app.services.editorial_authorization import AuthorizationContext
+from app.services.editorial_authorization import AuthorizationContext, authorization_context_for
 from app.services.media_lifecycle import (
     EditorialMediaInput,
     MediaLifecycleFailure,
@@ -29,7 +29,7 @@ MediaLifecycleDep = Annotated[MediaLifecycleService, Depends(get_media_lifecycle
 def _context(user: AuthenticatedUser) -> AuthorizationContext:
     if user.is_anonymous:
         raise HTTPException(status_code=403, detail="A identidade não possui acesso editorial.")
-    return AuthorizationContext(actor_id=user.id)
+    return authorization_context_for(user.id)
 
 
 @router.post("/process", response_model=EditorialMediaEnvelope, status_code=201)

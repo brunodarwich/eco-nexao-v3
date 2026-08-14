@@ -6,6 +6,8 @@ info:
   version: 1.0.0
 paths:
   /api/v1/admin/context:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin
@@ -35,6 +37,8 @@ paths:
       security:
       - HTTPBearer: []
   /api/v1/admin/categories:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Actors
@@ -106,6 +110,8 @@ paths:
       security:
       - HTTPBearer: []
   /api/v1/admin/categories/{category_id}:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Actors
@@ -205,6 +211,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/accessibility-features:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Actors
@@ -276,6 +284,8 @@ paths:
       security:
       - HTTPBearer: []
   /api/v1/admin/accessibility-features/{feature_id}:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Actors
@@ -375,6 +385,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/actors:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Actors
@@ -506,6 +518,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/actors/{actor_id}:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Actors
@@ -657,6 +671,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/actors/{actor_id}/route-links:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Actors
@@ -762,6 +778,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
   /api/v1/admin/actors/route-links/{link_id}:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     patch:
       tags:
       - Admin Actors
@@ -865,6 +883,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/territory/regions:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Territorial
@@ -952,6 +972,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/territory/regions/{region_id}:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Territorial
@@ -1051,6 +1073,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/territory/routes:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Territorial
@@ -1177,6 +1201,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/territory/routes/{route_id}:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Territorial
@@ -1328,6 +1354,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/territory/routes/{route_id}/origins:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Territorial
@@ -1433,6 +1461,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/territory/routes/{route_id}/origins/{origin_id}:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     put:
       tags:
       - Admin Territorial
@@ -1542,6 +1572,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/territory/routes/{route_id}/origins/{origin_id}/geometries:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     post:
       tags:
       - Admin Territorial
@@ -1608,6 +1640,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
   /api/v1/admin/territory/routes/{route_id}/geometries/{geometry_id}:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     put:
       tags:
       - Admin Territorial
@@ -1668,6 +1702,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/workflow/{resource_type}/{resource_id}/transition:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     post:
       tags:
       - Admin Workflow
@@ -1711,6 +1747,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/workflow/{resource_type}/{resource_id}/publish-guard:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Workflow
@@ -1748,6 +1786,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/alerts:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Workflow
@@ -1846,6 +1886,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/alerts/{alert_id}/resolve:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     post:
       tags:
       - Admin Workflow
@@ -1883,6 +1925,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/reconciliation/candidates:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Workflow
@@ -1932,6 +1976,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/reconciliation/{candidate_id}/decision:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     post:
       tags:
       - Admin Workflow
@@ -1969,6 +2015,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/reconciliation/{candidate_id}/compensate:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     post:
       tags:
       - Admin Workflow
@@ -2004,6 +2052,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/alerts/{alert_id}:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     put:
       tags:
       - Admin Workflow
@@ -2039,6 +2089,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/media/process:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     post:
       tags:
       - Admin Media
@@ -2066,6 +2118,8 @@ paths:
       security:
       - HTTPBearer: []
   /api/v1/admin/media/cleanup/recover:
+    parameters:
+    - $ref: '#/components/parameters/AdminRegionScope'
     post:
       tags:
       - Admin Media
@@ -2933,6 +2987,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/SupportContentEnvelope'
 components:
+  parameters:
+    AdminRegionScope:
+      name: X-Region-ID
+      in: header
+      required: false
+      description: Escopo regional explícito da operação editorial.
+      schema:
+        anyOf:
+        - type: string
+          format: uuid
+        - type: 'null'
   schemas:
     ActorCategoryListEnvelope:
       properties:

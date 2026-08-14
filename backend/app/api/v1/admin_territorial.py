@@ -25,7 +25,7 @@ from app.schemas.admin_territorial import (
 )
 from app.schemas.error import ErrorResponse
 from app.services.dependencies import get_territorial_admin_service
-from app.services.editorial_authorization import AuthorizationContext
+from app.services.editorial_authorization import AuthorizationContext, authorization_context_for
 from app.services.territorial_admin import TerritorialAdminService
 
 router = APIRouter(prefix="/admin/territory", tags=["Admin Territorial"])
@@ -37,7 +37,7 @@ TerritorialAdminDep = Annotated[
 
 
 def _build_context(user: AuthenticatedUser) -> AuthorizationContext:
-    return AuthorizationContext(actor_id=user.id)
+    return authorization_context_for(user.id)
 
 
 # -----------------------------------------------------------------------------
