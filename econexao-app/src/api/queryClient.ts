@@ -15,11 +15,16 @@ export function createQueryClient(): QueryClient {
     defaultOptions: {
       queries: {
         staleTime: 60_000,
-        gcTime: 30 * 60_000,
+        gcTime: process.env.NODE_ENV === 'test' ? Infinity : 30 * 60_000,
         retry: shouldRetry,
         refetchOnReconnect: true,
       },
-      mutations: { retry: false },
+      mutations: {
+        retry: false,
+        // Execute the mutationFn so ApiClient can reject immediately with an
+        // explicit offline error instead of silently queueing a write.
+        networkMode: 'always',
+      },
     },
   });
 }

@@ -1,4 +1,5 @@
-import { QueryClientProvider, focusManager, useQueryClient } from '@tanstack/react-query';
+import { QueryClientProvider, focusManager, onlineManager, useQueryClient } from '@tanstack/react-query';
+import { useNetworkState } from 'expo-network';
 import React, { useContext, useEffect, useRef } from 'react';
 import { AppState, Platform } from 'react-native';
 
@@ -22,6 +23,8 @@ function SessionCacheBoundary({ children }: React.PropsWithChildren) {
 }
 
 export function ServerStateProvider({ children }: React.PropsWithChildren) {
+  const networkState = useNetworkState();
+
   useEffect(() => {
     if (Platform.OS === 'web') return;
     const subscription = AppState.addEventListener('change', (state) => {
@@ -29,6 +32,12 @@ export function ServerStateProvider({ children }: React.PropsWithChildren) {
     });
     return () => subscription.remove();
   }, []);
+
+  useEffect(() => {
+    const isOnline =
+      networkState.isConnected !== false && networkState.isInternetReachable !== false;
+    onlineManager.setOnline(isOnline);
+  }, [networkState.isConnected, networkState.isInternetReachable]);
 
   return (
     <QueryClientProvider client={queryClient}>

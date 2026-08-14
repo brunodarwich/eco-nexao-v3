@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, AccessibilityInfo } from 'react-native';
-import { useQueryClient, useIsFetching, useIsMutating } from '@tanstack/react-query';
+import { onlineManager, useQueryClient } from '@tanstack/react-query';
+import { getNetworkStateAsync, useNetworkState } from 'expo-network';
 import { useAppTheme } from '../../theme/theme';
 import { makeAccessibleButton } from '../../utils/accessibility';
 
@@ -15,25 +16,26 @@ export const NetworkStatusBar: React.FC<NetworkStatusBarProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const theme = useAppTheme();
-  const [isOffline, setIsOffline] = useState(isOfflineOverride ?? false);
+  const networkState = useNetworkState();
   const [isReconnecting, setIsReconnecting] = useState(false);
-
-  useEffect(() => {
-    if (isOfflineOverride !== undefined) {
-      setIsOffline(isOfflineOverride);
-    }
-  }, [isOfflineOverride]);
+  const isOffline =
+    isOfflineOverride ??
+    (networkState.isConnected === false || networkState.isInternetReachable === false);
 
   const handleReconnect = async () => {
     setIsReconnecting(true);
     AccessibilityInfo.announceForAccessibility('Tentando restabelecer conexão com o servidor...');
     try {
       if (onReconnect) {
-        onReconnect();
+        await onReconnect();
       }
+      const currentState = await getNetworkStateAsync();
+      if (currentState.isConnected === false || currentState.isInternetReachable === false) {
+        throw new Error('offline');
+      }
+      onlineManager.setOnline(true);
       await queryClient.invalidateQueries();
       await queryClient.refetchQueries({ type: 'active' });
-      setIsOffline(false);
       AccessibilityInfo.announceForAccessibility('Conexão restabelecida com sucesso.');
     } catch {
       AccessibilityInfo.announceForAccessibility('Ainda sem conexão com o servidor.');
@@ -63,7 +65,7 @@ export const NetworkStatusBar: React.FC<NetworkStatusBarProps> = ({
           Modo Offline
         </Text>
         <Text style={[styles.message, theme.typography.bodySm, { color: '#FFE0CC' }]}>
-          Exibindo dados locais em cache. Ações de escrita serão pausadas até a reconexão.
+          Dados já carregados podem estar desatualizados. Ações de escrita ficam bloqueadas até a reconexão.
         </Text>
       </View>
 

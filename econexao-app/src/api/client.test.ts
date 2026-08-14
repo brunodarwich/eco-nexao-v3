@@ -1,11 +1,25 @@
 import { ApiClient, ApiClientError } from './client';
+import { onlineManager } from '@tanstack/react-query';
 
 describe('ApiClient auth', () => {
   const originalFetch = global.fetch;
 
   afterEach(() => {
+    onlineManager.setOnline(true);
     global.fetch = originalFetch;
     jest.restoreAllMocks();
+  });
+
+  it('bloqueia mutation offline sem chamar a rede', async () => {
+    global.fetch = jest.fn();
+    onlineManager.setOnline(false);
+    const client = new ApiClient('https://api.example/api/v1');
+
+    await expect(client.updateMyPreferences({ high_contrast: true })).rejects.toMatchObject({
+      status: 0,
+      code: 'OFFLINE_MUTATION_BLOCKED',
+    });
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 
   it('envia o token atual', async () => {

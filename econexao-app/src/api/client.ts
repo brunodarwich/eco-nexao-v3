@@ -65,6 +65,7 @@ import {
   EditorialAlertUpdateRequest,
   AlertResolveRequest,
 } from "./types";
+import { onlineManager } from '@tanstack/react-query';
 
 export class ApiClientError extends Error {
   public readonly status: number;
@@ -127,6 +128,16 @@ export class ApiClient {
   ): Promise<T> {
     const url = `${this.baseUrl.replace(/\/$/, "")}${endpoint}`;
     const requestId = this.generateRequestId();
+    const method = (options.method ?? 'GET').toUpperCase();
+
+    if (method !== 'GET' && method !== 'HEAD' && !onlineManager.isOnline()) {
+      throw new ApiClientError(
+        'Esta ação precisa de conexão. Reconecte e tente novamente.',
+        0,
+        'OFFLINE_MUTATION_BLOCKED',
+        requestId
+      );
+    }
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -586,5 +597,4 @@ export class ApiClient {
 }
 
 export const apiClient = new ApiClient();
-
 
