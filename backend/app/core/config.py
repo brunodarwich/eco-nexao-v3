@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     SUPABASE_URL: str = "https://your-project.supabase.co"
     SUPABASE_PUBLISHABLE_KEY: str = ""
     SUPABASE_SECRET_KEY: SecretStr = SecretStr("")
+    SUPABASE_JWT_SECRET: SecretStr = SecretStr("")
     SUPABASE_JWKS_URL: str = ""
     SUPABASE_JWT_ISSUER: str = ""
     SUPABASE_JWT_AUDIENCE: str = "authenticated"

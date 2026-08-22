@@ -23,7 +23,7 @@ BearerCredentials = Annotated[
     Depends(security_scheme),
 ]
 
-ALLOWED_JWT_ALGORITHMS = ("RS256", "ES256", "EdDSA")
+ALLOWED_JWT_ALGORITHMS = ("RS256", "ES256", "EdDSA", "HS256")
 
 
 @dataclass(frozen=True, slots=True)
@@ -64,13 +64,19 @@ def verify_supabase_jwt(
     try:
         header = jwt.get_unverified_header(token)
         algorithm = header.get("alg")
-        if algorithm not in ALLOWED_JWT_ALGORITHMS:
+        if not algorithm or algorithm not in ALLOWED_JWT_ALGORITHMS:
             raise JWTValidationError("Algoritmo de assinatura JWT não permitido.")
-        if not header.get("kid"):
-            raise JWTValidationError("Token JWT não informa a chave de assinatura.")
 
-        client = jwks_client or get_supabase_jwks_client()
-        signing_key = client.get_signing_key_from_jwt(token).key
+        if algorithm == "HS256":
+            signing_key = settings.SUPABASE_JWT_SECRET.get_secret_value() if hasattr(settings.SUPABASE_JWT_SECRET, "get_secret_value") else str(settings.SUPABASE_JWT_SECRET)
+            if not signing_key:
+                raise JWTValidationError("SUPABASE_JWT_SECRET não configurado no servidor.")
+        else:
+            if not header.get("kid"):
+                raise JWTValidationError("Token JWT não informa a chave de assinatura.")
+            client = jwks_client or get_supabase_jwks_client()
+            signing_key = client.get_signing_key_from_jwt(token).key
+
         payload: dict[str, Any] = jwt.decode(
             token,
             key=signing_key,

@@ -68,7 +68,7 @@ def test_verify_anonymous_token(monkeypatch: pytest.MonkeyPatch, jwks_client: Mo
     assert user.is_anonymous is True
 
 
-@pytest.mark.parametrize("algorithm", ["HS256", "none", None])
+@pytest.mark.parametrize("algorithm", ["none", "HS512", None])
 def test_rejects_disallowed_algorithm(
     monkeypatch: pytest.MonkeyPatch, jwks_client: Mock, algorithm: str | None
 ) -> None:
