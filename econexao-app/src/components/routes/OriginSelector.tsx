@@ -75,7 +75,7 @@ export const OriginSelector: React.FC<OriginSelectorProps> = ({
             >
               <Ionicons
                 name={iconName}
-                size={18}
+                size={16}
                 color={isSelected ? theme.colors.onPrimary : theme.colors.brandForest}
               />
               <Text
@@ -118,7 +118,7 @@ export const OriginSelector: React.FC<OriginSelectorProps> = ({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: theme.colors.surfaceWhite,
-    padding: 12,
+    padding: 14,
     borderRadius: theme.radii.lg,
     borderWidth: 1,
     borderColor: 'rgba(117, 155, 113, 0.2)',
@@ -139,18 +139,18 @@ const styles = StyleSheet.create({
   },
   segmentedRow: {
     flexDirection: 'row',
-    gap: 6,
-    marginBottom: 8,
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 10,
   },
   pillButton: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 6,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
     borderRadius: theme.radii.full,
-    gap: 5,
+    gap: 6,
     borderWidth: 1,
   },
   pillSelected: {
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   },
   pillUnselected: {
     backgroundColor: theme.colors.surfaceContainerLow,
-    borderColor: 'transparent',
+    borderColor: 'rgba(117, 155, 113, 0.15)',
   },
   pillText: {
     ...theme.typography.labelSm,
@@ -175,8 +175,8 @@ const styles = StyleSheet.create({
   },
   activeDetailCard: {
     backgroundColor: 'rgba(51, 96, 30, 0.04)',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
     borderRadius: theme.radii.md,
     borderLeftWidth: 3,
     borderLeftColor: theme.colors.brandForest,

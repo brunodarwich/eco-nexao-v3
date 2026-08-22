@@ -7,7 +7,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { AppHeader } from '../../../src/components/common/AppHeader';
 import { EmptyStateView, ErrorStateView, LoadingView } from '../../../src/components/common/UIStateViews';
 import { OriginSelector } from '../../../src/components/routes/OriginSelector';
-import { RouteStats } from '../../../src/components/routes/RouteStats';
 import { useRouteAlertsQuery, useRouteActorsQuery, useRouteDetailQuery } from '../../../src/hooks/queries';
 import { theme, useAppTheme } from '../../../src/theme/theme';
 
@@ -147,12 +146,6 @@ export default function RouteDetailScreen() {
             onSelectOrigin={(id) => setOriginId(id)}
           />
         )}
-
-        {/* Route Stats */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Informações Práticas</Text>
-          <RouteStats route={route} />
-        </View>
 
         {/* Action Buttons */}
         <View style={styles.actionsRow}>
