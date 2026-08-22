@@ -68,7 +68,11 @@ def verify_supabase_jwt(
             raise JWTValidationError("Algoritmo de assinatura JWT não permitido.")
 
         if algorithm == "HS256":
-            signing_key = settings.SUPABASE_JWT_SECRET.get_secret_value() if hasattr(settings.SUPABASE_JWT_SECRET, "get_secret_value") else str(settings.SUPABASE_JWT_SECRET)
+            signing_key = (
+                settings.SUPABASE_JWT_SECRET.get_secret_value()
+                if hasattr(settings.SUPABASE_JWT_SECRET, "get_secret_value")
+                else str(settings.SUPABASE_JWT_SECRET)
+            )
             if not signing_key:
                 raise JWTValidationError("SUPABASE_JWT_SECRET não configurado no servidor.")
         else:
