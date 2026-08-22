@@ -297,6 +297,8 @@ Data da Catalogação: 11/08/2026
    * Status:
      - Componente implementado no código, mas não utilizado por nenhuma tela atual.
      - Portanto, os itens abaixo não fazem parte da interface visível nesta versão.
+     - Decisão de produto confirmada pelo proprietário em 22/08/2026; contrato e
+       componente são preservados para possível uso futuro.
    * Conteúdos Preparados:
      - "Melhor Época".
      - "Conectividade".

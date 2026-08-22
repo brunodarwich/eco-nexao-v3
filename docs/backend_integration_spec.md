@@ -1,7 +1,7 @@
 # ECOnexão — Especificação de backend e integração das telas
 
-Versão: 1.0  
-Data: 11/08/2026  
+Versão: 1.1
+Data: 22/08/2026
 Status: proposta para implementação
 
 ## 1. Objetivo
@@ -380,13 +380,18 @@ O CSV/JSON será entrada de uma migration de dados ou comando de seed reproduzí
 | Elemento | Comportamento final | Backend |
 |---|---|---|
 | Origem | Atualiza distância, duração, geometria e atores aplicáveis | Geometry/map por `origin_id` |
-| RouteStats | Passa a ser visível com dados reais | `GET /routes/{id}` |
+| Informações práticas (`RouteStats`) | Não são exibidas nesta versão; o componente e os campos permanecem preparados para futuras experiências | `GET /routes/{id}` mantém `best_season`, `connectivity`, `road_access` e `payment_info` |
 | Expandir mapa/overlay | Abre mapa com `originId` | `GET /routes/{id}/map` |
 | Pin do preview | Abre mapa preservando `actorId` | Map payload |
 | Alertas | Lista apenas alertas ativos; tipo visual correto | Alerts |
 | Ver todos/CTA catálogo | Abre catálogo contextual | Actors |
 | Card resumido de ator | Abre detalhe do ator | `GET /actors/{id}` |
 | Tentar novamente | Repete a consulta; voltar fica separado | `GET /routes/{id}` |
+
+Decisão de produto registrada em 22/08/2026: a tela atual de detalhe prioriza origem,
+mapa, catálogo, alertas e atores. A retirada visual de `RouteStats` não remove nem
+deprecia os quatro campos do contrato HTTP, que poderão ser reutilizados em uma
+experiência futura mediante atualização desta matriz e dos critérios de aceite.
 
 ### 11.6 Mapa
 

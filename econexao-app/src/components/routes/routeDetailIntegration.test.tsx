@@ -167,7 +167,7 @@ describe('RouteDetailScreen Integration (ECO-0901..0907)', () => {
     });
   });
 
-  it('renders route details, origin simulator, stats, alerts, and preview actors', async () => {
+  it('renders route details, origin simulator, alerts, and preview actors', async () => {
     let tree!: renderer.ReactTestRenderer;
     await act(async () => {
       tree = renderer.create(<RouteDetailScreen />);
@@ -384,29 +384,19 @@ describe('RouteDetailScreen Integration (ECO-0901..0907)', () => {
     expect(mockBack).toHaveBeenCalledTimes(1);
   });
 
-  it('does not invent practical route data when the API omits it', async () => {
-    (useRouteDetailQuery as jest.Mock).mockReturnValue({
-      isPending: false,
-      isError: false,
-      error: null,
-      data: {
-        ...mockRouteDetailData,
-        best_season: null,
-        connectivity: null,
-        road_access: null,
-        payment_info: null,
-      },
-      refetch: jest.fn(),
-    });
-
+  it('keeps practical route fields out of the current detail presentation', async () => {
     let tree!: renderer.ReactTestRenderer;
     await act(async () => {
       tree = renderer.create(<RouteDetailScreen />);
     });
 
-    const contents = tree.root.findAllByType(Text).map((node) => node.props.children);
-    expect(contents.filter((value) => value === 'Não informado')).toHaveLength(4);
-    expect(contents).not.toContain('Ano todo');
-    expect(contents).not.toContain('3G/4G parcial');
+    const contents = tree.root
+      .findAllByType(Text)
+      .map((node) => textValue(node.props.children));
+    expect(contents).not.toContain('Informações Práticas');
+    expect(contents).not.toContain('Junho a Dezembro');
+    expect(contents).not.toContain('4G Parcial');
+    expect(contents).not.toContain('Asfalto e Terra');
+    expect(contents).not.toContain('Dinheiro e Pix');
   });
 });

@@ -94,6 +94,11 @@ com job aprovado.
 **Estado em 2026-08-12: `MISSING`.** Há fluxos parciais, mas catálogo/detalhe fabricam
 campos, mídia usa tokens sintéticos e auth/trips/offline/preferências estão incompletos.
 
+**Atualização em 2026-08-22:** a ausência de `RouteStats` no detalhe foi confirmada
+como decisão de produto e reconciliada na spec 1.1, critérios e testes. Os gates
+locais relacionados passaram (29/29 suítes, 130/130 testes, OpenAPI, tipos e export
+web), mas o estado do Gate 3 permanece `MISSING` pelos bloqueadores mais amplos abaixo.
+
 **Pré-condições:** Gates 1–2; ECO-1901–1905; staging com dados Pindobal aprovados.
 
 - [ ] OpenAPI/cliente não têm drift; nenhum mock/fallback/campo fabricado em runtime.
@@ -216,4 +221,3 @@ responsáveis:** Codex técnico; Antigravity regressão; DPO/jurídico/owner ass
 | Gate 8 | HOMOLOGADO / PRONTO PARA SUBMISSÃO | Owner + ops | ECO-2204 & ECO-2205 Guias e SLOs Consolidados |
 
 O produto concluiu 100% da engenharia de software, automação de testes, infraestrutura e governança operacional. Os Gates 7 e 8 estão plenamente documentados e prontos para execução na janela operacional controlada pelo Human Owner.
-

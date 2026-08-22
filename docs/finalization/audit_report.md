@@ -320,3 +320,18 @@ Estado: PARTIAL.
 Próxima ação: owner fornece credenciais reais do Supabase test; repetir gates e
 concluir ECO-1402 antes de iniciar ECO-1701/1702/1704.
 ```
+
+## Atualização de produto — detalhe da rota (22/08/2026)
+
+- O proprietário confirmou que a remoção visual de `RouteStats`/“Informações
+  Práticas” da tela atual é intencional.
+- `best_season`, `connectivity`, `road_access` e `payment_info` permanecem no
+  contrato HTTP e no componente preparado; não houve alteração de OpenAPI,
+  schema, migration ou dados remotos.
+- `backend_integration_spec.md` 1.1, `acceptance_criteria.md` e o inventário de
+  telas foram reconciliados com a decisão.
+- Evidência local: teste focal 9/9, suíte frontend 29/29 suítes e 130/130 testes,
+  `openapi:check`, `typecheck` e export web concluídos com exit code 0.
+- Limitação conhecida: Jest ainda requer `--forceExit` e registra atualizações
+  assíncronas fora de `act`; esta decisão de produto não encerra os demais
+  bloqueadores do Gate 3.

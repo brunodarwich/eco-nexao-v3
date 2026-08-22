@@ -58,8 +58,10 @@ Estes cenários complementam as tasks. Cada fluxo deve ser testado em todas as p
 
 ### AC-ROUTE-01 — Pindobal
 
-- Hero, stats, alertas e atores vêm da API.
-- RouteStats exibe melhor época, conectividade, acesso e pagamentos.
+- Hero, alertas e atores vêm da API.
+- A tela atual não exibe a seção `RouteStats` nem placeholders de melhor época,
+  conectividade, acesso ou pagamentos; esses campos permanecem no contrato para
+  possível uso futuro.
 - Retry repete request; Voltar não é usado como retry.
 
 ### AC-ROUTE-02 — Origem
