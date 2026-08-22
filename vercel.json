@@ -2,10 +2,13 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "cd econexao-app && npm install && npm run export:web",
   "outputDirectory": "econexao-app/dist",
-  "rewrites": [
+  "routes": [
     {
-      "source": "/((?!api/|_expo/|assets/|favicon.ico|metadata.json).*)",
-      "destination": "/index.html"
+      "handle": "filesystem"
+    },
+    {
+      "src": "/.*",
+      "dest": "/index.html"
     }
   ]
 }
