@@ -268,7 +268,12 @@ class TerritorialService:
             selected_origin_id = geom.route_origin_id
 
         # Fetch route actors for map pins
-        actors_data, _ = await self.repo.list_route_actors(route_id=route_id, limit=200, offset=0)
+        actors_data, _ = await self.repo.list_route_actors(
+            route_id=route_id,
+            origin_id=selected_origin_id,
+            limit=200,
+            offset=0,
+        )
         pins: list[MapPinSchema] = []
         lats: list[float] = []
         lons: list[float] = []

@@ -239,3 +239,34 @@ async def test_territorial_service_delegation():
     assert envelope.data[0].slug == "santarem"
     assert envelope.data[0].name == "Santarém"
 
+
+@pytest.mark.asyncio
+async def test_route_map_payload_filters_pins_by_selected_origin():
+    """The reusable map payload must keep pins aligned with the selected journey."""
+    route_id = uuid.uuid4()
+    origin_id = uuid.uuid4()
+    actor = Actor(
+        id=uuid.uuid4(),
+        slug="pousada-pindobal",
+        name="Pousada Pindobal",
+        category_id=uuid.uuid4(),
+    )
+
+    service = TerritorialService(AsyncMock())
+    service.repo.get_route_by_id = AsyncMock(return_value=MagicMock(id=route_id))
+    service.repo.get_route_geometry = AsyncMock(return_value=(None, None))
+    service.repo.list_route_actors = AsyncMock(
+        return_value=([(actor, "hospedagem", -2.58, -54.96)], 1)
+    )
+
+    envelope = await service.get_route_map_payload(route_id, origin_id=origin_id)
+
+    assert envelope is not None
+    assert envelope.data.selected_origin_id == origin_id
+    assert [pin.actor_id for pin in envelope.data.pins] == [actor.id]
+    service.repo.list_route_actors.assert_awaited_once_with(
+        route_id=route_id,
+        origin_id=origin_id,
+        limit=200,
+        offset=0,
+    )

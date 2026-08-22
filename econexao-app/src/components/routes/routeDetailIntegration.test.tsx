@@ -1,9 +1,15 @@
 import React from 'react';
 import renderer, { act } from 'react-test-renderer';
-import { Text, TouchableOpacity } from 'react-native';
+import { Image, Text, TouchableOpacity } from 'react-native';
 
 import RouteDetailScreen from '../../../app/route/[routeId]/index';
-import { useRouteDetailQuery, useRouteAlertsQuery, useRouteActorsQuery } from '../../hooks/queries';
+import {
+  useActorCategoriesQuery,
+  useRouteAlertsQuery,
+  useRouteActorsQuery,
+  useRouteDetailQuery,
+  useRouteMapQuery,
+} from '../../hooks/queries';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ApiClientError } from '../../api/client';
 
@@ -16,6 +22,18 @@ const textValue = (value: unknown): string => {
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Ionicons',
 }));
+
+jest.mock('../map/MapAdapter', () => {
+  const { TouchableOpacity: MockTouchableOpacity } = require('react-native');
+  return {
+    MapAdapter: ({ onSelectActor }: { onSelectActor: (actorId: string) => void }) => (
+      <MockTouchableOpacity
+        accessibilityLabel="Selecionar Pousada no mini mapa"
+        onPress={() => onSelectActor('actor-1')}
+      />
+    ),
+  };
+});
 
 jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
@@ -38,6 +56,8 @@ jest.mock('../../hooks/queries', () => ({
   useRouteDetailQuery: jest.fn(),
   useRouteAlertsQuery: jest.fn(),
   useRouteActorsQuery: jest.fn(),
+  useRouteMapQuery: jest.fn(),
+  useActorCategoriesQuery: jest.fn(),
 }));
 
 describe('RouteDetailScreen Integration (ECO-0901..0907)', () => {
@@ -116,6 +136,15 @@ describe('RouteDetailScreen Integration (ECO-0901..0907)', () => {
         green_badge_status: 'verified' as const,
         verification_status: 'verified' as const,
         google_rating: 4.8,
+        cover_media: {
+          id: 'media-1',
+          owner_type: 'actor',
+          owner_id: 'actor-1',
+          url: 'https://cdn.example.com/pousada.webp',
+          derivatives: { card: 'https://cdn.example.com/pousada-card.webp' },
+          alt_text: 'Fachada da Pousada Canto da Floresta',
+          sort_order: 0,
+        },
       },
       {
         id: 'actor-2',
@@ -165,6 +194,26 @@ describe('RouteDetailScreen Integration (ECO-0901..0907)', () => {
       data: mockActorsData,
       refetch: jest.fn(),
     });
+
+    (useRouteMapQuery as jest.Mock).mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: {
+        route_id: 'route-pindobal',
+        selected_origin_id: 'origin-porto',
+        bounds: null,
+        geometry: null,
+        pins: [{ id: 'pin-1', actor_id: 'actor-1', name: 'Pousada', category_slug: 'hospedagem', latitude: -2.6, longitude: -54.9 }],
+      },
+      refetch: jest.fn(),
+    });
+
+    (useActorCategoriesQuery as jest.Mock).mockReturnValue({
+      data: [
+        { id: 'category-1', slug: 'hospedagem', label: 'Hospedagem', sort_order: 1 },
+        { id: 'category-2', slug: 'alimentacao', label: 'Alimentação', sort_order: 2 },
+      ],
+    });
   });
 
   it('renders route details, origin simulator, alerts, and preview actors', async () => {
@@ -197,6 +246,7 @@ describe('RouteDetailScreen Integration (ECO-0901..0907)', () => {
     // Verify initial actors query call with default origin ('origin-porto')
     expect(useRouteActorsQuery).toHaveBeenCalledWith('route-pindobal', {
       origin_id: 'origin-porto',
+      category: undefined,
       limit: 3,
     });
 
@@ -212,6 +262,7 @@ describe('RouteDetailScreen Integration (ECO-0901..0907)', () => {
     // Verify updated actors query call and selected-state semantics.
     expect(useRouteActorsQuery).toHaveBeenLastCalledWith('route-pindobal', {
       origin_id: 'origin-rodoviaria',
+      category: undefined,
       limit: 3,
     });
     expect(originButtons[2].props.accessibilityState).toEqual({ selected: true });
@@ -228,9 +279,8 @@ describe('RouteDetailScreen Integration (ECO-0901..0907)', () => {
 
     const root = tree.root;
 
-    // Find action buttons: "Abrir mapa" and "Ver catálogo"
-    const mapBtn = root.find((node) => node.type === TouchableOpacity && node.props.accessibilityLabel === 'Abrir mapa interativo da rota');
-    const catalogBtn = root.find((node) => node.type === TouchableOpacity && node.props.accessibilityLabel === 'Ver catálogo completo de atores');
+    const mapBtn = root.find((node) => node.type === TouchableOpacity && node.props.accessibilityLabel === 'Expandir mapa da rota');
+    const catalogBtn = root.find((node) => node.type === TouchableOpacity && node.props.accessibilityLabel === 'Ver catálogo completo');
 
     await act(async () => {
       mapBtn.props.onPress();
@@ -257,14 +307,15 @@ describe('RouteDetailScreen Integration (ECO-0901..0907)', () => {
 
     expect(useRouteActorsQuery).toHaveBeenCalledWith('route-pindobal', {
       origin_id: 'origin-aeroporto',
+      category: undefined,
       limit: 3,
     });
 
     const buttons = tree.root.findAllByType(TouchableOpacity);
     await act(async () => {
-      buttons.find((node) => node.props.accessibilityLabel === 'Abrir mapa interativo da rota')!
+      buttons.find((node) => node.props.accessibilityLabel === 'Expandir mapa da rota')!
         .props.onPress();
-      buttons.find((node) => node.props.accessibilityLabel === 'Ver catálogo completo de atores')!
+      buttons.find((node) => node.props.accessibilityLabel === 'Ver catálogo completo')!
         .props.onPress();
     });
 
@@ -285,13 +336,60 @@ describe('RouteDetailScreen Integration (ECO-0901..0907)', () => {
     const actorPreview = tree.root.find(
       (node) =>
         node.type === TouchableOpacity &&
-        node.props.accessibilityLabel === 'Abrir Pousada Canto da Floresta no mapa'
+        node.props.accessibilityLabel === 'Selecionar Pousada no mini mapa'
     );
     await act(async () => actorPreview.props.onPress());
 
     expect(mockPush).toHaveBeenCalledWith(
       '/route/route-pindobal/map?originId=origin-porto&actorId=actor-1'
     );
+  });
+
+  it('recolhe o mapa, preserva semântica expanded e permite mostrar novamente', async () => {
+    let tree!: renderer.ReactTestRenderer;
+    await act(async () => {
+      tree = renderer.create(<RouteDetailScreen />);
+    });
+
+    let toggle = tree.root.find(
+      (node) => node.type === TouchableOpacity && node.props.accessibilityLabel === 'Ocultar mapa da rota'
+    );
+    expect(toggle.props.accessibilityState).toEqual({ expanded: true });
+
+    await act(async () => toggle.props.onPress());
+    toggle = tree.root.find(
+      (node) => node.type === TouchableOpacity && node.props.accessibilityLabel === 'Mostrar mapa da rota'
+    );
+    expect(toggle.props.accessibilityState).toEqual({ expanded: false });
+
+    await act(async () => toggle.props.onPress());
+    expect(
+      tree.root.find(
+        (node) => node.type === TouchableOpacity && node.props.accessibilityLabel === 'Expandir mapa da rota'
+      )
+    ).toBeTruthy();
+  });
+
+  it('exibe foto acessível e filtra o catálogo local sem fabricar contagens', async () => {
+    let tree!: renderer.ReactTestRenderer;
+    await act(async () => {
+      tree = renderer.create(<RouteDetailScreen />);
+    });
+
+    const image = tree.root.findByType(Image);
+    expect(image.props.source).toEqual({ uri: 'https://cdn.example.com/pousada-card.webp' });
+    expect(image.props.accessibilityLabel).toBe('Fachada da Pousada Canto da Floresta');
+
+    const lodgingFilter = tree.root.find(
+      (node) => node.type === TouchableOpacity && node.props.accessibilityLabel === 'Filtro Hospedagem'
+    );
+    await act(async () => lodgingFilter.props.onPress());
+
+    expect(useRouteActorsQuery).toHaveBeenLastCalledWith('route-pindobal', {
+      origin_id: 'origin-porto',
+      category: 'hospedagem',
+      limit: 3,
+    });
   });
 
   it('renders loading state when route detail is pending', async () => {

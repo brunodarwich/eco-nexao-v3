@@ -65,6 +65,13 @@ jest.mock('../../hooks/queries', () => ({
     isPending: false,
     isError: false,
   }),
+  useRouteMapQuery: jest.fn().mockReturnValue({
+    data: undefined,
+    isPending: false,
+    isError: false,
+    refetch: jest.fn(),
+  }),
+  useActorCategoriesQuery: jest.fn().mockReturnValue({ data: [] }),
   useBootstrapQuery: jest.fn().mockReturnValue({ data: null }),
   useMyPreferencesQuery: jest.fn().mockReturnValue({ data: null }),
 }));

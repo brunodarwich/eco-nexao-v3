@@ -30,4 +30,5 @@ export interface MapAdapterProps {
   selectedActorId?: string;
   onSelectActor: (actorId: string) => void;
   height?: DimensionValue;
+  showControls?: boolean;
 }

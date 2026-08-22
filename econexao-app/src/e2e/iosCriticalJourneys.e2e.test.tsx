@@ -3,7 +3,14 @@ import renderer, { act } from 'react-test-renderer';
 import { Text } from 'react-native';
 import RouteDetailScreen from '../../app/route/[routeId]/index';
 import { parseDeepLink } from '../utils/linking';
-import { useRouteDetailQuery, useRouteAlertsQuery, useRouteActorsQuery, useRegionsQuery } from '../hooks/queries';
+import {
+  useActorCategoriesQuery,
+  useRouteAlertsQuery,
+  useRouteActorsQuery,
+  useRouteDetailQuery,
+  useRouteMapQuery,
+  useRegionsQuery,
+} from '../hooks/queries';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
@@ -28,6 +35,8 @@ jest.mock('../hooks/queries', () => ({
   useRouteDetailQuery: jest.fn(),
   useRouteAlertsQuery: jest.fn(),
   useRouteActorsQuery: jest.fn(),
+  useRouteMapQuery: jest.fn(),
+  useActorCategoriesQuery: jest.fn(),
 }));
 
 describe('E2E iOS - Critical Mobile Journeys & Universal Links (ECO-2103)', () => {
@@ -85,6 +94,13 @@ describe('E2E iOS - Critical Mobile Journeys & Universal Links (ECO-2103)', () =
       data: { data: [], meta: { total: 0, limit: 3 } },
       refetch: jest.fn(),
     });
+    (useRouteMapQuery as jest.Mock).mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: undefined,
+      refetch: jest.fn(),
+    });
+    (useActorCategoriesQuery as jest.Mock).mockReturnValue({ data: [] });
   });
 
   test('Jornada 1: Universal Links HTTPS (Cold Start) no iOS', async () => {

@@ -337,3 +337,21 @@ concluir ECO-1402 antes de iniciar ECO-1701/1702/1704.
 - Limitação conhecida: Jest ainda requer `--forceExit` e registra atualizações
   assíncronas fora de `act`; esta decisão de produto não encerra os demais
   bloqueadores do Gate 3.
+
+## Incremento ECO-1703 — preview de mapa e catálogo local (22/08/2026)
+
+- O detalhe de rota passou a renderizar, para qualquer `routeId`, um mapa real
+  recolhível com expansão contextual e um catálogo local com total/filtros da API,
+  cards compactos e foto resolvida/placeholder explícito.
+- Pins do payload do mapa agora respeitam a origem selecionada; origem, ator e
+  categoria são preservados nas navegações aplicáveis.
+- Evidência local: OpenAPI e TypeScript verdes; suíte frontend 29/29 e 132/132;
+  acessibilidade 3/3; testes territoriais focais 11/11; API territorial 14/14;
+  export web concluído. Captura visual do Expo Web foi reproduzida com fixture HTTP
+  contratual local, sem Google, Supabase remoto ou dados de produção.
+- Estado: **PARTIAL** para a integração de fotos Google. A política atual do Places
+  Photos informa que o photo resource name e a URL temporária não devem ser
+  armazenados/cacheados, enquanto o ADR 0008 ainda determina referência persistida e
+  cache de até 30 dias. Conforme as paradas obrigatórias, nenhum conector Google real
+  foi implementado até reconciliação do ADR/contrato; mídia editorial licenciada via
+  `cover_media` continua suportada.

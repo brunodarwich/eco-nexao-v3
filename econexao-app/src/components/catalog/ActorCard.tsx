@@ -22,6 +22,7 @@ export interface ActorCardProps {
   onToggleFavorite?: () => void;
   isFavorite?: boolean;
   focusOnMount?: boolean;
+  variant?: 'default' | 'compact';
 }
 
 export const ActorCard: React.FC<ActorCardProps> = ({
@@ -30,6 +31,7 @@ export const ActorCard: React.FC<ActorCardProps> = ({
   onToggleFavorite,
   isFavorite,
   focusOnMount = false,
+  variant = 'default',
 }) => {
   const pressableRef = useRef<View>(null);
 
@@ -50,21 +52,29 @@ export const ActorCard: React.FC<ActorCardProps> = ({
   const hasGreenSeal = actor.green_badge_status === 'verified';
   const ratingValue = actor.google_rating;
   const imageUrl = actor.cover_media?.derivatives?.card ?? actor.cover_media?.url ?? actor.cover_image_url;
+  const imageAlt = actor.cover_media?.alt_text || `Foto de ${actor.name}`;
+  const isCompact = variant === 'compact';
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, isCompact && styles.compactCard]}>
       <Pressable
         ref={pressableRef}
-        style={styles.cardPressable}
+        style={[styles.cardPressable, isCompact && styles.compactPressable]}
         onPress={onPress}
         {...makeAccessibleButton(
           `Estabelecimento ${actor.name}`,
           `${categoryName}. ${actor.address ? `Endereço: ${actor.address}.` : ''} ${ratingValue ? `Avaliação ${ratingValue}.` : ''} Toque para ver detalhes.`
         )}
       >
-        <View style={styles.imageContainer}>
+        <View style={[styles.imageContainer, isCompact && styles.compactImageContainer]}>
           {imageUrl ? (
-            <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
+            <Image
+              source={{ uri: imageUrl }}
+              style={styles.image}
+              resizeMode="cover"
+              accessible
+              accessibilityLabel={imageAlt}
+            />
           ) : (
             <View style={styles.placeholderImage}>
               <Ionicons name="storefront-outline" size={40} color={theme.colors.brandSage} />
@@ -76,7 +86,7 @@ export const ActorCard: React.FC<ActorCardProps> = ({
           </View>
         </View>
 
-        <View style={styles.content}>
+        <View style={[styles.content, isCompact && styles.compactContent]}>
           <View style={styles.headerRow}>
             <Text style={styles.categoryTag}>{categoryName}</Text>
             {ratingValue != null && (
@@ -133,6 +143,15 @@ const styles = StyleSheet.create({
   cardPressable: {
     width: '100%',
   },
+  compactCard: {
+    borderRadius: theme.radii.lg,
+    marginBottom: 0,
+  },
+  compactPressable: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    minHeight: 104,
+  },
   imageContainer: {
     height: 160,
     width: '100%',
@@ -142,6 +161,12 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
+  },
+  compactImageContainer: {
+    width: 104,
+    height: 'auto',
+    minHeight: 104,
+    flexShrink: 0,
   },
   placeholderImage: {
     width: '100%',
@@ -170,6 +195,11 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: theme.spacing.marginMobile,
+  },
+  compactContent: {
+    flex: 1,
+    padding: 12,
+    justifyContent: 'center',
   },
   headerRow: {
     flexDirection: 'row',

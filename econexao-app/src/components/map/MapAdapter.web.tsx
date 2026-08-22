@@ -64,6 +64,7 @@ export const MapAdapter: React.FC<MapAdapterProps> = ({
   selectedActorId,
   onSelectActor,
   height = 360,
+  showControls = true,
 }) => {
   const mapRef = useRef<LeafletMap | null>(null);
   const [zoomLevel, setZoomLevel] = useState(12);
@@ -141,13 +142,15 @@ export const MapAdapter: React.FC<MapAdapterProps> = ({
         })}
       </MapContainer>
 
-      <MapControls
-        onZoomIn={() => changeZoom(1)}
-        onZoomOut={() => changeZoom(-1)}
-        onRecenter={recenter}
-        canZoomIn={zoomLevel < MAX_ZOOM}
-        canZoomOut={zoomLevel > MIN_ZOOM}
-      />
+      {showControls && (
+        <MapControls
+          onZoomIn={() => changeZoom(1)}
+          onZoomOut={() => changeZoom(-1)}
+          onRecenter={recenter}
+          canZoomIn={zoomLevel < MAX_ZOOM}
+          canZoomOut={zoomLevel > MIN_ZOOM}
+        />
+      )}
     </View>
   );
 };

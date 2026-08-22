@@ -6,8 +6,10 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { AppHeader } from '../../../src/components/common/AppHeader';
 import { EmptyStateView, ErrorStateView, LoadingView } from '../../../src/components/common/UIStateViews';
+import { LocalCatalogPreview } from '../../../src/components/routes/LocalCatalogPreview';
 import { OriginSelector } from '../../../src/components/routes/OriginSelector';
-import { useRouteAlertsQuery, useRouteActorsQuery, useRouteDetailQuery } from '../../../src/hooks/queries';
+import { RouteMapPreview } from '../../../src/components/routes/RouteMapPreview';
+import { useRouteAlertsQuery, useRouteDetailQuery } from '../../../src/hooks/queries';
 import { theme, useAppTheme } from '../../../src/theme/theme';
 
 import { makeAccessibleButton } from '../../../src/utils/accessibility';
@@ -19,11 +21,13 @@ const routePath = (
   routeId: string,
   destination: 'map' | 'catalog',
   originId?: string,
-  actorId?: string
+  actorId?: string,
+  category?: string
 ) => {
   const query = new URLSearchParams();
   if (originId) query.set('originId', originId);
   if (actorId) query.set('actorId', actorId);
+  if (category) query.set('category', category);
   const suffix = query.toString();
   return `/route/${encodeURIComponent(routeId)}/${destination}${suffix ? `?${suffix}` : ''}`;
 };
@@ -58,7 +62,6 @@ export default function RouteDetailScreen() {
   }, [initialOriginId, routeId]);
 
   const alerts = useRouteAlertsQuery(routeId);
-  const actors = useRouteActorsQuery(routeId, { origin_id: effectiveOrigin, limit: 3 });
 
   const handleStartTrip = async () => {
     try {
@@ -147,36 +150,24 @@ export default function RouteDetailScreen() {
           />
         )}
 
-        {/* Action Buttons */}
-        <View style={styles.actionsRow}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.primaryButton]}
-            onPress={() =>
-              router.push(routePath(routeId, 'map', effectiveOrigin, actorId))
-            }
-            {...makeAccessibleButton(
-              'Abrir mapa interativo da rota',
-              'Visualiza o mapa com o traçado da rota e pins dos atores.'
-            )}
-          >
-            <Ionicons name="map-outline" size={18} color={theme.colors.onPrimary} />
-            <Text style={styles.primaryButtonText}>Abrir mapa</Text>
-          </TouchableOpacity>
+        <RouteMapPreview
+          routeId={routeId}
+          originId={effectiveOrigin}
+          onExpand={(selectedActorId) =>
+            router.push(routePath(routeId, 'map', effectiveOrigin, selectedActorId ?? actorId))
+          }
+        />
 
-          <TouchableOpacity
-            style={[styles.actionButton, styles.secondaryButton]}
-            onPress={() =>
-              router.push(routePath(routeId, 'catalog', effectiveOrigin, actorId))
-            }
-            {...makeAccessibleButton(
-              'Ver catálogo completo de atores',
-              'Abre a lista completa de empreendimentos e pontos de apoio.'
-            )}
-          >
-            <Ionicons name="list-outline" size={18} color={theme.colors.brandForest} />
-            <Text style={styles.secondaryButtonText}>Ver catálogo</Text>
-          </TouchableOpacity>
-        </View>
+        <LocalCatalogPreview
+          routeId={routeId}
+          originId={effectiveOrigin}
+          onOpenActor={(selectedActorId) =>
+            router.push(`/actor/${encodeURIComponent(selectedActorId)}`)
+          }
+          onOpenCatalog={(category) =>
+            router.push(routePath(routeId, 'catalog', effectiveOrigin, actorId, category))
+          }
+        />
 
         {/* Start Trip CTA */}
         <TouchableOpacity
@@ -256,56 +247,6 @@ export default function RouteDetailScreen() {
           )}
         </View>
 
-        {/* Actors Preview Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>Atores Próximos</Text>
-            <Text style={styles.sectionSubtitle}>Top 3 nesta origem</Text>
-          </View>
-
-          {actors.isPending ? (
-            <LoadingView message="Carregando atores..." />
-          ) : actors.isError ? (
-            <ErrorStateView
-              message="Erro ao carregar atores."
-              onRetry={() => void actors.refetch()}
-            />
-          ) : actors.data?.data && actors.data.data.length > 0 ? (
-            <View style={styles.actorsContainer}>
-              {actors.data.data.map((actor) => (
-                <TouchableOpacity
-                  key={actor.id}
-                  style={styles.actorPreviewCard}
-                  onPress={() =>
-                    router.push(routePath(routeId, 'map', effectiveOrigin, actor.id))
-                  }
-                  {...makeAccessibleButton(
-                    `Abrir ${actor.name} no mapa`,
-                    `Preserva a origem selecionada e destaca ${actor.name} no mapa.`
-                  )}
-                >
-                  <View style={styles.actorCardHeader}>
-                    <Text style={styles.actorCategoryTag}>{actor.category_label.toUpperCase()}</Text>
-                    {actor.google_rating && (
-                      <View style={styles.ratingBadge}>
-                        <Ionicons name="star" size={12} color={theme.colors.brandSun} />
-                        <Text style={styles.ratingText}>{actor.google_rating.toFixed(1)} Google</Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text style={styles.actorName}>{actor.name}</Text>
-                  {Boolean(actor.address) && (
-                    <Text style={styles.actorAddress} numberOfLines={1}>
-                      <Ionicons name="location-outline" size={12} color={theme.colors.onSurfaceVariant} /> {actor.address}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-          ) : (
-            <Text style={styles.emptyText}>Nenhum ator cadastrado nesta origem.</Text>
-          )}
-        </View>
       </ScrollView>
     </View>
   );
@@ -317,6 +258,9 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surfaceBackground,
   },
   content: {
+    width: '100%',
+    maxWidth: '100%',
+    overflow: 'hidden',
     padding: theme.spacing.marginMobile,
     paddingBottom: 32,
     gap: 16,
@@ -342,33 +286,9 @@ const styles = StyleSheet.create({
   section: {
     gap: 8,
   },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
   sectionTitle: {
     ...theme.typography.headlineSm,
     color: theme.colors.brandForest,
-  },
-  sectionSubtitle: {
-    ...theme.typography.labelSm,
-    color: theme.colors.onSurfaceVariant,
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginVertical: 4,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: theme.radii.full,
-    gap: 8,
-    ...theme.shadows.sm,
   },
   startTripButton: {
     flexDirection: 'row',
@@ -385,24 +305,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  primaryButton: {
-    backgroundColor: theme.colors.brandForest,
-  },
-  primaryButtonText: {
-    ...theme.typography.labelMd,
-    color: theme.colors.onPrimary,
-    fontWeight: '700',
-  },
-  secondaryButton: {
-    backgroundColor: theme.colors.surfaceWhite,
-    borderWidth: 1,
-    borderColor: theme.colors.brandForest,
-  },
-  secondaryButtonText: {
-    ...theme.typography.labelMd,
-    color: theme.colors.brandForest,
-    fontWeight: '700',
-  },
   alertsContainer: {
     gap: 8,
   },
@@ -439,18 +341,6 @@ const styles = StyleSheet.create({
     ...theme.typography.bodySm,
     color: theme.colors.brandForest,
   },
-  actorsContainer: {
-    gap: 10,
-  },
-  actorPreviewCard: {
-    backgroundColor: theme.colors.surfaceWhite,
-    padding: 12,
-    borderRadius: theme.radii.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(117, 155, 113, 0.15)',
-    ...theme.shadows.sm,
-    gap: 4,
-  },
   notFoundBackButton: {
     alignSelf: 'center',
     paddingHorizontal: 20,
@@ -460,42 +350,5 @@ const styles = StyleSheet.create({
     ...theme.typography.labelMd,
     color: theme.colors.brandForest,
     fontWeight: '700',
-  },
-  actorCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  actorCategoryTag: {
-    ...theme.typography.labelSm,
-    color: theme.colors.brandForest,
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  ratingBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  ratingText: {
-    ...theme.typography.labelSm,
-    color: theme.colors.brandDeep,
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  actorName: {
-    ...theme.typography.headlineSm,
-    color: theme.colors.brandDeep,
-    fontSize: 15,
-  },
-  actorAddress: {
-    ...theme.typography.bodySm,
-    color: theme.colors.onSurfaceVariant,
-    fontSize: 12,
-  },
-  emptyText: {
-    ...theme.typography.bodySm,
-    color: theme.colors.onSurfaceVariant,
-    fontStyle: 'italic',
   },
 });

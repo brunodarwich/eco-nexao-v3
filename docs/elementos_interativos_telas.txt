@@ -190,19 +190,25 @@ Data da Catalogação: 11/08/2026
 
 [5.3] PREVIEW DO MAPA INTERATIVO & ALERTAS TERRITORIAIS
    * Elementos Interativos:
-     - Botão / Link "Expandir Tela Cheia →": Navega para o Mapa Interativo (/route/[routeId]/map).
-     - Botão Flutuante de Overlay "Abrir Mapa Interativo em Tela Cheia":
-       • Ação: Abre a experiência de mapa em modo imersivo.
+     - Controle "Ocultar mapa" / "Mostrar mapa": Recolhe ou restaura o preview,
+       expondo o estado expandido para tecnologias assistivas.
+     - Botão Flutuante de Overlay "Expandir mapa":
+       • Ação: Abre a experiência de mapa em modo imersivo, preservando a origem.
      - Pins do Mapa de Preview: Clique para visualizar o ponto no mapa.
-       • Ação atual: Qualquer pin do preview abre o mapa em tela cheia; o ator tocado não é preservado como seleção.
-     - Botão "Ver Todos os Atores ([Quantidade]) →": Direciona para o Catálogo Contextual completo (/route/[routeId]/catalog).
-     - Botão CTA "Explorar Catálogo Completo em Tela Cheia".
+       • Ação atual: Abre o mapa em tela cheia preservando a origem e o ator tocado.
+     - Filtros horizontais do Catálogo Local: Atualizam remotamente os cards resumidos
+       pela categoria selecionada, sem inferir contagens a partir da página parcial.
+     - Cards compactos do Catálogo Local: Exibem foto editorial/URL resolvida quando
+       disponível, placeholder explícito quando ausente, categoria, nome, endereço e
+       avaliação Google somente quando fornecida pela API; abrem o detalhe do ator.
+     - Botão "Ver catálogo completo": Direciona para o Catálogo Contextual completo
+       (/route/[routeId]/catalog), preservando origem e categoria.
    * Indicadores de Status:
      - Card de Alerta Territorial (Borda Amarela / Warning): Exibe avisos de segurança ou condições climáticas com data/hora de atualização.
    * Conteúdos Exibidos:
      - Pré-visualização do mapa da rota com trajetos e pins.
      - Alertas em tempo real (ex: "Trecho com maré alta ou sinal fraco").
-     - Cards resumidos dos primeiros atores comunitários da rota.
+     - Total real e até três cards resumidos dos atores aplicáveis à origem/filtro.
 
 [5.4] ESTADO DE ROTA NÃO ENCONTRADA
    * Condição:

@@ -6,7 +6,14 @@ import RouteDetailScreen from '../../app/route/[routeId]/index';
 import { NetworkStatusBar } from '../components/common/NetworkStatusBar';
 import { EmptyStateView, ErrorStateView } from '../components/common/UIStateViews';
 import { buildDeepLink, parseDeepLink, DeepLinkRoutes } from '../utils/linking';
-import { useRouteDetailQuery, useRouteAlertsQuery, useRouteActorsQuery, useRegionsQuery } from '../hooks/queries';
+import {
+  useActorCategoriesQuery,
+  useRouteAlertsQuery,
+  useRouteActorsQuery,
+  useRouteDetailQuery,
+  useRouteMapQuery,
+  useRegionsQuery,
+} from '../hooks/queries';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
@@ -31,6 +38,8 @@ jest.mock('../hooks/queries', () => ({
   useRouteDetailQuery: jest.fn(),
   useRouteAlertsQuery: jest.fn(),
   useRouteActorsQuery: jest.fn(),
+  useRouteMapQuery: jest.fn(),
+  useActorCategoriesQuery: jest.fn(),
 }));
 
 describe('E2E Android - Critical Mobile Journeys & Degraded Network (ECO-2102)', () => {
@@ -89,6 +98,13 @@ describe('E2E Android - Critical Mobile Journeys & Degraded Network (ECO-2102)',
       data: { data: [], meta: { total: 0, limit: 3 } },
       refetch: jest.fn(),
     });
+    (useRouteMapQuery as jest.Mock).mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: undefined,
+      refetch: jest.fn(),
+    });
+    (useActorCategoriesQuery as jest.Mock).mockReturnValue({ data: [] });
 
     queryClient = new QueryClient({
       defaultOptions: {

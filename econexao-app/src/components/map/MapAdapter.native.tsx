@@ -36,6 +36,7 @@ export const MapAdapter: React.FC<MapAdapterProps> = ({
   selectedActorId,
   onSelectActor,
   height = 360,
+  showControls = true,
 }) => {
   const mapRef = useRef<MapView>(null);
   const [zoomLevel, setZoomLevel] = useState(12);
@@ -117,13 +118,15 @@ export const MapAdapter: React.FC<MapAdapterProps> = ({
         })}
       </MapView>
 
-      <MapControls
-        onZoomIn={() => void changeZoom(1)}
-        onZoomOut={() => void changeZoom(-1)}
-        onRecenter={recenter}
-        canZoomIn={zoomLevel < MAX_ZOOM}
-        canZoomOut={zoomLevel > MIN_ZOOM}
-      />
+      {showControls && (
+        <MapControls
+          onZoomIn={() => void changeZoom(1)}
+          onZoomOut={() => void changeZoom(-1)}
+          onRecenter={recenter}
+          canZoomIn={zoomLevel < MAX_ZOOM}
+          canZoomOut={zoomLevel > MIN_ZOOM}
+        />
+      )}
     </View>
   );
 };

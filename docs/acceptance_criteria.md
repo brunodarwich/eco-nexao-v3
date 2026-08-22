@@ -72,8 +72,14 @@ Estes cenários complementam as tasks. Cada fluxo deve ser testado em todas as p
 
 ### AC-ROUTE-03 — Preview
 
+- O detalhe exibe um preview real do mapa para a origem selecionada e permite
+  ocultar/mostrar o bloco sem perder a seleção.
+- “Expandir mapa” abre a experiência em tela cheia preservando `originId`.
 - Pin abre mapa com `actorId` selecionado.
 - Links/CTAs abrem mapa ou catálogo da mesma rota.
+- O catálogo local exibe total retornado pela API, filtros reais e até três cards
+  compactos; foto ausente usa placeholder explícito, nunca imagem fabricada.
+- Foto disponível usa o derivado `card`/URL resolvida e o `alt_text` editorial.
 
 ## Mapa
 

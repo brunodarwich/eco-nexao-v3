@@ -17,6 +17,7 @@ export const CategoryFilters: React.FC<CategoryFiltersProps> = ({
 }) => {
   return (
     <ScrollView
+      style={styles.scroller}
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.container}
@@ -41,6 +42,10 @@ export const CategoryFilters: React.FC<CategoryFiltersProps> = ({
 };
 
 const styles = StyleSheet.create({
+  scroller: {
+    width: '100%',
+    maxWidth: '100%',
+  },
   container: {
     paddingHorizontal: 16,
     paddingVertical: 8,
