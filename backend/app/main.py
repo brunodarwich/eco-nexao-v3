@@ -105,6 +105,17 @@ async def request_id_middleware(request: Request, call_next: Any) -> Any:
         request_id_ctx_var.reset(token)
 
 
+@app.api_route("/", methods=["GET", "HEAD"], tags=["Root"], include_in_schema=False)
+async def root_ping() -> dict[str, Any]:
+    """Root ping endpoint for platform health checkers."""
+    return {
+        "status": "ok",
+        "app": settings.APP_NAME,
+        "docs": "/docs",
+        "api": "/api/v1",
+    }
+
+
 @app.get("/.well-known/assetlinks.json", tags=["Well-Known"], include_in_schema=False)
 async def get_android_assetlinks() -> list[dict[str, Any]]:
     """Digital Asset Links for Android App Links verification."""

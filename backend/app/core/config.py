@@ -26,6 +26,9 @@ class Settings(BaseSettings):
         "http://localhost:19006",
         "http://localhost:3000",
         "exp://localhost:8081",
+        "https://eco-nexao-v3.vercel.app",
+        "https://econexao.app",
+        "https://staging.econexao.app",
     ]
     LOG_LEVEL: str = "INFO"
     DATABASE_ECHO: bool = False

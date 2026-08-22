@@ -31,4 +31,4 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: CORS_ORIGINS
-        value: '["https://econexao.app","https://staging.econexao.app","http://localhost:8081"]'
+        value: '["https://econexao.app","https://staging.econexao.app","http://localhost:8081","https://eco-nexao-v3.vercel.app"]'
