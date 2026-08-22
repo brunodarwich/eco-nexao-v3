@@ -332,6 +332,8 @@ concluir ECO-1402 antes de iniciar ECO-1701/1702/1704.
   telas foram reconciliados com a decisão.
 - Evidência local: teste focal 9/9, suíte frontend 29/29 suítes e 130/130 testes,
   `openapi:check`, `typecheck` e export web concluídos com exit code 0.
+- O verificador OpenAPI passou a normalizar finais de linha antes da comparação,
+  eliminando o falso drift observado no runner Windows sem alterar o contrato gerado.
 - Limitação conhecida: Jest ainda requer `--forceExit` e registra atualizações
   assíncronas fora de `act`; esta decisão de produto não encerra os demais
   bloqueadores do Gate 3.
