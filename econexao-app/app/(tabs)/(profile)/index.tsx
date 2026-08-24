@@ -1,17 +1,15 @@
 import React, { useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, TouchableOpacity, Modal, Alert, Image, ActivityIndicator, AccessibilityInfo } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, TouchableOpacity, Alert, Image, ActivityIndicator, AccessibilityInfo } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 
 import { AppHeader } from '../../../src/components/common/AppHeader';
-import { Badge } from '../../../src/components/common/Badge';
-import { LoadingView } from '../../../src/components/common/UIStateViews';
 import { AuthModal } from '../../../src/components/profile/AuthModal';
 import { EditProfileModal } from '../../../src/components/profile/EditProfileModal';
 import { AccountDeletionModal } from '../../../src/components/profile/AccountDeletionModal';
 import { apiClient } from '../../../src/api/client';
-import { useMyImpactQuery, useMyProfileQuery } from '../../../src/hooks/queries';
+import { useMyProfileQuery } from '../../../src/hooks/queries';
 import { useAuth } from '../../../src/hooks/useAuth';
 import { queryKeys } from '../../../src/api/queryKeys';
 import { queryClient } from '../../../src/api/queryClient';
@@ -24,12 +22,7 @@ export default function ProfileScreen() {
   const theme = useAppTheme();
   const { user, signOut } = useAuth();
   const profileQuery = useMyProfileQuery(user?.id);
-  const impactQuery = useMyImpactQuery(user?.id);
-
   const profile = profileQuery.data;
-  const impact = impactQuery.data;
-
-  const [isSealModalVisible, setIsSealModalVisible] = useState(false);
   const [isAuthModalVisible, setIsAuthModalVisible] = useState(false);
   const [isEditProfileModalVisible, setIsEditProfileModalVisible] = useState(false);
   const [isAccountDeletionModalVisible, setIsAccountDeletionModalVisible] = useState(false);
@@ -38,7 +31,7 @@ export default function ProfileScreen() {
 
 
   const isAnonymous = user?.is_anonymous ?? true;
-  const userName = profile?.name || (isAnonymous ? 'Visitante Consciente' : 'Usuário ECOnexão');
+  const userName = profile?.name || (isAnonymous ? 'Visitante' : 'Usuário ECOnexão');
 
   const handleAvatarPress = async () => {
     if (avatarBusyRef.current) return;
@@ -149,59 +142,8 @@ export default function ProfileScreen() {
                   <Ionicons name="location-outline" size={12} color={theme.colors.onSurfaceVariant} /> {profile.location}
                 </Text>
               )}
-              
-              <TouchableOpacity
-                onPress={() => setIsSealModalVisible(true)}
-                style={styles.badgeRow}
-                {...makeAccessibleButton('Selo Consciente', 'Toque para ver a verificação do selo')}
-              >
-                <Badge type="greenSeal" label="Selo Consciente" />
-              </TouchableOpacity>
             </View>
           </View>
-        </View>
-
-        {/* Impact Metrics (ECO-1101) */}
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Meu Impacto Ecológico</Text>
-
-          {impactQuery.isPending ? (
-            <LoadingView message="Carregando indicadores..." />
-          ) : (
-            <View style={styles.impactGrid}>
-              <TouchableOpacity
-                style={styles.impactItem}
-                onPress={() => router.push('/(tabs)/(profile)/trips')}
-                {...makeAccessibleButton('Viagens Registradas', 'Ver histórico completo de viagens')}
-              >
-                <Ionicons name="footsteps" size={22} color={theme.colors.brandForest} />
-                <Text style={styles.impactNumber}>
-                  {impact?.completed_trips_count ?? impact?.total_trips_count ?? 0}
-                </Text>
-                <Text style={styles.impactLabel}>Viagens Registradas</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.impactItem}
-                onPress={() => router.push('/(tabs)/(profile)/trips')}
-                {...makeAccessibleButton('CO2 Evitado', 'Ver estimativa de CO2 evitado')}
-              >
-                <Ionicons name="leaf" size={22} color={theme.colors.brandForest} />
-                <Text style={styles.impactNumber}>{impact?.co2_saved_kg ?? 0} kg</Text>
-                <Text style={styles.impactLabel}>CO₂ Evitado Est.</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.impactItem}
-                onPress={() => router.push('/(tabs)/(profile)/favorite-actors')}
-                {...makeAccessibleButton('Atores Visitados', 'Ver atores visitados e favoritos')}
-              >
-                <Ionicons name="business" size={22} color={theme.colors.brandForest} />
-                <Text style={styles.impactNumber}>{impact?.visited_actors_count ?? 0}</Text>
-                <Text style={styles.impactLabel}>Atores Visitados</Text>
-              </TouchableOpacity>
-            </View>
-          )}
         </View>
 
         {/* Functional Menu Links (ECO-1102 .. ECO-1108) */}
@@ -322,34 +264,6 @@ export default function ProfileScreen() {
         visible={isAuthModalVisible}
         onClose={() => setIsAuthModalVisible(false)}
       />
-
-
-      {/* Selo Consciente Explanation Modal */}
-      <Modal
-        visible={isSealModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setIsSealModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Ionicons name="leaf" size={28} color={theme.colors.brandForest} />
-              <Text style={styles.modalTitle}>Selo Verde Consciente</Text>
-            </View>
-            <Text style={styles.modalBody}>
-              O Selo Verde é um reconhecimento concedido pela SEMTUR Belterra aos usuários e parceiros que praticam o turismo sustentável, valorizando os negócios locais e promovendo a conservação ecológica da região Tapajós-Arapiuns.
-            </Text>
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => setIsSealModalVisible(false)}
-              {...makeAccessibleButton('Fechar modal do Selo Consciente')}
-            >
-              <Text style={styles.modalCloseText}>Entendido</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -472,10 +386,6 @@ const styles = StyleSheet.create({
     color: theme.colors.onSurfaceVariant,
     marginBottom: 4,
   },
-  badgeRow: {
-    flexDirection: 'row',
-    alignSelf: 'flex-start',
-  },
   sectionCard: {
     backgroundColor: theme.colors.surfaceWhite,
     padding: theme.spacing.marginMobile,
@@ -490,33 +400,6 @@ const styles = StyleSheet.create({
     ...theme.typography.headlineSm,
     color: theme.colors.brandForest,
     marginBottom: 4,
-  },
-  impactGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  impactItem: {
-    flex: 1,
-    alignItems: 'center',
-    backgroundColor: theme.colors.surfaceContainerLow,
-    padding: 12,
-    borderRadius: theme.radii.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(117, 155, 113, 0.12)',
-  },
-  impactNumber: {
-    ...theme.typography.headlineSm,
-    color: theme.colors.brandDeep,
-    marginTop: 4,
-    fontWeight: '700',
-  },
-  impactLabel: {
-    ...theme.typography.labelSm,
-    color: theme.colors.onSurfaceVariant,
-    fontSize: 10,
-    textAlign: 'center',
-    marginTop: 2,
   },
   menuItem: {
     flexDirection: 'row',
@@ -574,44 +457,4 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  modalCard: {
-    backgroundColor: theme.colors.surfaceWhite,
-    padding: 24,
-    borderRadius: theme.radii.xl,
-    gap: 16,
-    maxWidth: 360,
-    width: '100%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  modalTitle: {
-    ...theme.typography.headlineSm,
-    color: theme.colors.brandForest,
-  },
-  modalBody: {
-    ...theme.typography.bodyMd,
-    color: theme.colors.onSurface,
-    lineHeight: 22,
-  },
-  modalCloseButton: {
-    backgroundColor: theme.colors.brandForest,
-    paddingVertical: 12,
-    borderRadius: theme.radii.lg,
-    alignItems: 'center',
-  },
-  modalCloseText: {
-    ...theme.typography.labelSm,
-    color: theme.colors.surfaceWhite,
-    fontWeight: '700',
-  },
 });

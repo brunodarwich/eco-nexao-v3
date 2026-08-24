@@ -105,7 +105,7 @@ web), mas o estado do Gate 3 permanece `MISSING` pelos bloqueadores mais amplos 
 - [ ] Região, catálogo, detalhe, paginação e favoritos usam dados reais consistentes.
 - [ ] Guest→conta, login/linking/conflito/refresh/deep link funcionam.
 - [ ] Preferências/acessibilidade persistem e se aplicam; offline/retry são explícitos.
-- [ ] Perfil/avatar, trips/visitas/complete/cancel, selos e contatos funcionam.
+- [ ] Perfil/avatar, trips/visitas/complete/cancel e contatos funcionam; impacto/selos pessoais não aparecem.
 - [ ] Loading, vazio, erro, retry e rollback otimista acessível existem em cada consulta.
 - [ ] App identity, package/bundle IDs, permissões, env profiles e UI legal aprovados.
 

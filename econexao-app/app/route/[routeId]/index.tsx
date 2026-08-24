@@ -70,7 +70,6 @@ export default function RouteDetailScreen() {
       if (queryClient && user?.id) {
 
         void queryClient.invalidateQueries({ queryKey: queryKeys.myTrips(user.id) });
-        void queryClient.invalidateQueries({ queryKey: queryKeys.myImpact(user.id) });
       }
 
       AccessibilityInfo.announceForAccessibility('Viagem iniciada com sucesso. Bom passeio sustentável!');
@@ -183,7 +182,7 @@ export default function RouteDetailScreen() {
           disabled={isStartingTrip}
           {...makeAccessibleButton(
             'Registrar início de viagem nesta rota',
-            'Inicia e registra a contagem de visita e impacto ecológico no seu perfil'
+            'Inicia a viagem e registra o passeio no histórico do seu perfil'
           )}
         >
           {isStartingTrip ? (

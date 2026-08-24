@@ -19,11 +19,10 @@ A integração do backend do ECOnexão exige definições formais para o fluxo d
 - O aplicativo oferece suporte completo às plataformas **Android, iOS e Web**, mantendo o Expo SDK 54 como referência técnica normativa conforme o ADR 0001.
 
 ### 3. Comportamento do Selo Consciente
-- O Selo Consciente atuará como um indicador de sustentabilidade e engajamento ecológico.
-- Ao tocar no badge do Selo Consciente em rotas, atores ou no perfil, o aplicativo exibirá uma folha informativa (*bottom sheet* ou modal acessível) com:
-  - Critérios atendidos pelo estabelecimento ou rota (gestão de resíduos, consumo local, preservação ambiental).
-  - Nível de verificação (SEMTUR / comunidade).
-  - Selos ecológicos conquistados pelo usuário em suas viagens.
+
+Substituído pelo ADR 0009. O produto não possui selo pessoal nem impacto ecológico
+calculado para o usuário. Selos territoriais editoriais de atores/rotas permanecem
+separados e preservados.
 
 ### 4. Formato e Navegação do Detalhe do Ator (ECO-1002)
 - O detalhe de um ator turístico terá duas formas de apresentação integradas:

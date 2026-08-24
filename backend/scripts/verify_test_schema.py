@@ -34,7 +34,6 @@ DOMAIN_TABLES = {
     "routes",
     "trip_actor_visits",
     "trips",
-    "user_badges",
     "user_preferences",
 }
 

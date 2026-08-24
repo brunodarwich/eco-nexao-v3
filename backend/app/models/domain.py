@@ -571,9 +571,6 @@ class Profile(Base):
     trips: Mapped[list["Trip"]] = relationship(
         "Trip", back_populates="user", cascade="all, delete-orphan"
     )
-    badges: Mapped[list["UserBadge"]] = relationship(
-        "UserBadge", back_populates="user", cascade="all, delete-orphan"
-    )
 
 
 class DeletedUserTombstone(Base):
@@ -666,7 +663,7 @@ class FavoriteActor(Base):
 
 
 # -----------------------------------------------------------------------------
-# ECO-0206: Viagens, Visitas e Selos
+# ECO-0206: Viagens e Visitas
 # -----------------------------------------------------------------------------
 
 
@@ -727,29 +724,6 @@ class TripActorVisit(Base):
 
     trip: Mapped["Trip"] = relationship("Trip", back_populates="visits")
     actor: Mapped["Actor"] = relationship("Actor")
-
-
-class UserBadge(Base):
-    __tablename__ = "user_badges"
-    __table_args__ = (UniqueConstraint("user_id", "badge_code", name="uq_user_badges_user_badge"),)
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False
-    )
-    badge_code: Mapped[str] = mapped_column(VARCHAR(100), nullable=False)
-    awarded_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.clock_timestamp(), nullable=False
-    )
-    evidence: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.clock_timestamp(), nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.clock_timestamp(), nullable=False
-    )
-
-    user: Mapped["Profile"] = relationship("Profile", back_populates="badges")
 
 
 # -----------------------------------------------------------------------------

@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
 
 interface BadgeProps {
-  type: 'greenSeal' | 'verified' | 'conscious' | 'warning';
+  type: 'greenSeal' | 'verified' | 'warning';
   label?: string;
 }
 
@@ -22,13 +22,6 @@ export const Badge: React.FC<BadgeProps> = ({ type, label }) => {
         <View style={[styles.badgeContainer, styles.verifiedBadge]}>
           <Ionicons name="checkmark-circle" size={14} color={theme.colors.onPrimary} />
           <Text style={styles.verifiedText}>{label || 'Verificada'}</Text>
-        </View>
-      );
-    case 'conscious':
-      return (
-        <View style={[styles.badgeContainer, styles.consciousBadge]}>
-          <Ionicons name="ribbon" size={16} color={theme.colors.brandDeep} />
-          <Text style={styles.consciousText}>{label || 'Viajante Consciente'}</Text>
         </View>
       );
     case 'warning':
@@ -66,14 +59,6 @@ const styles = StyleSheet.create({
   verifiedText: {
     ...theme.typography.labelSm,
     color: theme.colors.onPrimary,
-    fontWeight: '700',
-  },
-  consciousBadge: {
-    backgroundColor: theme.colors.brandSun,
-  },
-  consciousText: {
-    ...theme.typography.labelSm,
-    color: theme.colors.brandDeep,
     fontWeight: '700',
   },
   warningBadge: {

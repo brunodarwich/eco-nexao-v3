@@ -31,7 +31,6 @@ import {
   TripCreate,
   TripEnvelope,
   TripListEnvelope,
-  UserImpactEnvelope,
   UserPreferencesEnvelope,
   UserPreferencesUpdate,
   UserProfileEnvelope,
@@ -416,10 +415,6 @@ export class ApiClient {
 
   public async getMyPreferences(): Promise<UserPreferencesEnvelope> {
     return this.request<UserPreferencesEnvelope>("/me/preferences");
-  }
-
-  public async getMyImpact(): Promise<UserImpactEnvelope> {
-    return this.request<UserImpactEnvelope>("/me/impact");
   }
 
   public async getMyTrips(): Promise<TripListEnvelope> {

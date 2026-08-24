@@ -752,25 +752,25 @@ descobertos com `supabase --help`; production nunca é usada sem aprovação.
   ```
 - **Entrega:** Gate 3 partial.
 
-### ECO-1904 — Perfil, trips, visitas, selos e contatos
+### ECO-1904 — Perfil, trips, visitas e contatos
 
 - **Resultado / prioridade / tamanho / executor:** ciclo público completo; P0; L;
   Google Antigravity.
 - **Dependências/ADRs:** ECO-1701/1703, ECO-1902, ECO-1303/1306.
 - **Contexto/leitura:** spec §§7.3/11.4, AC profile/catalog, current me API.
-- **Arquivos:** backend trip/contact/impact if needed, OpenAPI/types/profile/actor UI.
-- **Permitido/proibido:** start/complete/cancel trip, visits, evidence-based badge,
-  consented events; no invented CO₂/claims/contact data.
+- **Arquivos:** backend trip/contact, OpenAPI/types/profile/actor UI.
+- **Permitido/proibido:** start/complete/cancel trip, visits e consented events;
+  sem impacto/selos pessoais, CO₂ inventado, claims ou contact data fabricados.
 - **Passos:** contract gap first; implement service/repos; UI actions/errors; approved
   support/legal content; avatar display.
-- **Aceite/testes/comandos:** complete trip changes impact; visit ownership; consent
+- **Aceite/testes/comandos:** trips/visitas permanecem factuais; visit ownership; consent
   off=no event; contact validation; backend/frontend full gates/E2E.
 - **Evidência/riscos/rollback/DoD:** audit/events sanitized; greenwashing/PII risk;
   recompute/unpublish; cross-review domain/privacy.
 - **Prompt de execução:**
   ```text
   Execute ECO-1904 contract-first. Complete trips/visits/profile/contact flows and use
-  only approved badge/impact formulas and contacts. Never fabricate ecological claims
+  no personal badge/impact formulas and only approved contacts. Never fabricate ecological claims
   or telemetry consent. Prove ownership and rollback end to end.
   ```
 - **Entrega:** closes profile/public feature gaps.

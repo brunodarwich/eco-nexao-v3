@@ -91,6 +91,16 @@ def test_private_domain_is_deny_by_default() -> None:
     assert "REVOKE ALL ON ALL TABLES IN SCHEMA app_private" in rls_sql
 
 
+def test_personal_badges_are_removed_forward_only() -> None:
+    """The product removal uses a new migration and preserves historical files."""
+    removal_sql = (
+        MIGRATIONS_DIR / "20260824010914_remove_personal_impact_badges.sql"
+    ).read_text(encoding="utf-8")
+    assert "DROP TABLE IF EXISTS app_private.user_badges" in removal_sql
+    assert "trips" not in removal_sql
+    assert "trip_actor_visits" not in removal_sql
+
+
 def test_storage_policy_hardening_is_forward_only_and_owner_scoped() -> None:
     """The corrective migration must close BOLA without rewriting history."""
     original_sql = (

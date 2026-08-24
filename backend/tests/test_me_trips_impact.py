@@ -1,4 +1,4 @@
-"""Tests for user trips, impact metrics, and support content (ECO-0606, ECO-0607)."""
+"""Tests for user trips and support content (ECO-0606, ECO-0607)."""
 
 import uuid
 from collections.abc import Generator
@@ -17,7 +17,6 @@ from app.schemas.envelopes import (
     SupportContentEnvelope,
     TripEnvelope,
     TripListEnvelope,
-    UserImpactEnvelope,
 )
 from app.services.dependencies import get_content_service, get_user_service
 
@@ -38,23 +37,6 @@ def mock_user_service() -> SimpleNamespace:
         "created_at": "2026-08-12T10:00:00Z",
         "updated_at": "2026-08-12T10:00:00Z",
         "route_title": "Rota Pindobal",
-    }
-
-    impact_data = {
-        "user_id": str(user_id),
-        "completed_trips_count": 2,
-        "total_trips_count": 3,
-        "visited_actors_count": 5,
-        "sustainable_impact_score": 200,
-        "co2_saved_kg": 25.0,
-        "badges": [
-            {
-                "id": str(uuid.uuid4()),
-                "badge_code": "eco_explorer",
-                "awarded_at": "2026-08-12T10:00:00Z",
-                "evidence": {},
-            }
-        ],
     }
 
     async def mock_create_trip(user_id: uuid.UUID, route_id: uuid.UUID) -> TripEnvelope:
@@ -78,7 +60,6 @@ def mock_user_service() -> SimpleNamespace:
     service = SimpleNamespace(
         get_trips=AsyncMock(return_value=TripListEnvelope(data=[trip_data])),
         create_trip=AsyncMock(side_effect=mock_create_trip),
-        get_impact=AsyncMock(return_value=UserImpactEnvelope(data=impact_data)),
     )
     return service
 
@@ -138,7 +119,6 @@ def api_client(
     [
         ("GET", "/api/v1/me/trips", None),
         ("POST", "/api/v1/me/trips", {"route_id": str(uuid.uuid4())}),
-        ("GET", "/api/v1/me/impact", None),
     ],
 )
 def test_unauthenticated_endpoints_return_401(
@@ -156,7 +136,7 @@ def test_unauthenticated_endpoints_return_401(
 
 
 # -----------------------------------------------------------------------------
-# 2. Authenticated Trips & Impact Tests (200/201, 404)
+# 2. Authenticated Trips Tests (200/201, 404)
 # -----------------------------------------------------------------------------
 
 
@@ -195,19 +175,6 @@ def test_create_trip_nonexistent_route_404(
     assert response.status_code == 404
     res_json = response.json()
     assert res_json["error"]["code"] == "NOT_FOUND"
-
-
-def test_get_my_impact_success(
-    api_client: tuple[TestClient, SimpleNamespace, SimpleNamespace, AuthUser],
-) -> None:
-    client, _, _, _ = api_client
-    response = client.get("/api/v1/me/impact")
-    assert response.status_code == 200
-    res_json = response.json()
-    assert "data" in res_json
-    assert res_json["data"]["completed_trips_count"] == 2
-    assert res_json["data"]["visited_actors_count"] == 5
-    assert len(res_json["data"]["badges"]) == 1
 
 
 # -----------------------------------------------------------------------------

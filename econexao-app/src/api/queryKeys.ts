@@ -46,11 +46,9 @@ export const queryKeys = {
   actorDetail: (actorId: string) => ['actors', 'detail', actorId] as const,
   favoriteActors: (userId?: string) => ['favorite-actors', normalizeQueryValue(userId)] as const,
   myProfile: (userId?: string) => ['me', 'profile', normalizeQueryValue(userId)] as const,
-  myImpact: (userId?: string) => ['me', 'impact', normalizeQueryValue(userId)] as const,
   myTrips: (userId?: string) => ['me', 'trips', normalizeQueryValue(userId)] as const,
   myFavoriteRoutes: (userId?: string) => ['me', 'favorite-routes', normalizeQueryValue(userId)] as const,
   myPreferences: (userId?: string) => ['me', 'preferences', normalizeQueryValue(userId)] as const,
   supportContent: () => ['content', 'support'] as const,
 };
-
 

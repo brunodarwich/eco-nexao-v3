@@ -537,7 +537,7 @@ class TokenVerifyEnvelope(SchemaBase):
 
 
 # -----------------------------------------------------------------------------
-# Trips, Impact & Support (ECO-0606, ECO-0607)
+# Trips & Support (ECO-0606, ECO-0607)
 # -----------------------------------------------------------------------------
 
 
@@ -563,27 +563,6 @@ class TripCreate(BaseModel):
 
 class TripEnvelope(SchemaBase):
     data: TripSchema
-
-
-class UserBadgeSchema(SchemaBase):
-    id: str
-    badge_code: str
-    awarded_at: str | None = None
-    evidence: dict[str, Any] | None = None
-
-
-class UserImpactData(SchemaBase):
-    user_id: str
-    completed_trips_count: int = 0
-    total_trips_count: int = 0
-    visited_actors_count: int = 0
-    sustainable_impact_score: int = 0
-    co2_saved_kg: float = 0.0
-    badges: list[UserBadgeSchema] = []
-
-
-class UserImpactEnvelope(SchemaBase):
-    data: UserImpactData
 
 
 class FAQItemSchema(SchemaBase):

@@ -16,7 +16,6 @@ from app.schemas.envelopes import (
     TripCreate,
     TripEnvelope,
     TripListEnvelope,
-    UserImpactEnvelope,
     UserPreferencesEnvelope,
     UserPreferencesUpdate,
     UserProfileEnvelope,
@@ -282,16 +281,3 @@ async def create_trip(
     service: UserServiceDep,
 ) -> TripEnvelope:
     return await service.create_trip(user_id=current_user.id, route_id=trip_data.route_id)
-
-
-@router.get(
-    "/impact",
-    response_model=UserImpactEnvelope,
-    summary="Métricas de impacto e selos do usuário",
-    description="Retorna os indicadores de impacto ecológico e selos conquistados pelo usuário.",
-)
-async def get_my_impact(
-    current_user: Annotated[AuthUser, Depends(get_current_user)],
-    service: UserServiceDep,
-) -> UserImpactEnvelope:
-    return await service.get_impact(user_id=current_user.id)

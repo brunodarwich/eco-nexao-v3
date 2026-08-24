@@ -160,13 +160,6 @@ export const userQueries = {
       select: (e) => e.data,
       meta: { authenticated: true },
     }),
-  impact: (userId?: string) =>
-    queryOptions({
-      queryKey: queryKeys.myImpact(userId),
-      queryFn: () => apiClient.getMyImpact(),
-      select: (e) => e.data,
-      meta: { authenticated: true },
-    }),
   trips: (userId?: string) =>
     queryOptions({
       queryKey: queryKeys.myTrips(userId),
@@ -205,7 +198,6 @@ export const userQueries = {
 };
 
 export const useMyProfileQuery = (userId?: string) => useQuery(userQueries.profile(userId));
-export const useMyImpactQuery = (userId?: string) => useQuery(userQueries.impact(userId));
 export const useMyTripsQuery = (userId?: string) => useQuery(userQueries.trips(userId));
 export const useMyFavoriteRoutesQuery = (userId?: string) => useQuery(userQueries.favoriteRoutes(userId));
 export const useMyFavoriteActorsQuery = (userId?: string) => useQuery(userQueries.favoriteActors(userId));

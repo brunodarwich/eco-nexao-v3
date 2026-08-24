@@ -2991,23 +2991,6 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
       security:
       - HTTPBearer: []
-  /api/v1/me/impact:
-    get:
-      tags:
-      - User - Profile & Preferences
-      summary: Métricas de impacto e selos do usuário
-      description: Retorna os indicadores de impacto ecológico e selos conquistados
-        pelo usuário.
-      operationId: get_my_impact_api_v1_me_impact_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserImpactEnvelope'
-      security:
-      - HTTPBearer: []
   /api/v1/content/support:
     get:
       tags:
@@ -6560,73 +6543,6 @@ components:
       - route_id
       - status
       title: TripSchema
-    UserBadgeSchema:
-      properties:
-        id:
-          type: string
-          title: Id
-        badge_code:
-          type: string
-          title: Badge Code
-        awarded_at:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Awarded At
-        evidence:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          title: Evidence
-      type: object
-      required:
-      - id
-      - badge_code
-      title: UserBadgeSchema
-    UserImpactData:
-      properties:
-        user_id:
-          type: string
-          title: User Id
-        completed_trips_count:
-          type: integer
-          title: Completed Trips Count
-          default: 0
-        total_trips_count:
-          type: integer
-          title: Total Trips Count
-          default: 0
-        visited_actors_count:
-          type: integer
-          title: Visited Actors Count
-          default: 0
-        sustainable_impact_score:
-          type: integer
-          title: Sustainable Impact Score
-          default: 0
-        co2_saved_kg:
-          type: number
-          title: Co2 Saved Kg
-          default: 0.0
-        badges:
-          items:
-            $ref: '#/components/schemas/UserBadgeSchema'
-          type: array
-          title: Badges
-          default: []
-      type: object
-      required:
-      - user_id
-      title: UserImpactData
-    UserImpactEnvelope:
-      properties:
-        data:
-          $ref: '#/components/schemas/UserImpactData'
-      type: object
-      required:
-      - data
-      title: UserImpactEnvelope
     UserPreferencesEnvelope:
       properties:
         data:

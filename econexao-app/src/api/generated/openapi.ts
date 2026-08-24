@@ -1082,26 +1082,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/me/impact": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Métricas de impacto e selos do usuário
-         * @description Retorna os indicadores de impacto ecológico e selos conquistados pelo usuário.
-         */
-        get: operations["get_my_impact_api_v1_me_impact_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/content/support": {
         parameters: {
             query?: never;
@@ -3113,58 +3093,6 @@ export interface components {
             updated_at?: string | null;
             /** Route Title */
             route_title?: string | null;
-        };
-        /** UserBadgeSchema */
-        UserBadgeSchema: {
-            /** Id */
-            id: string;
-            /** Badge Code */
-            badge_code: string;
-            /** Awarded At */
-            awarded_at?: string | null;
-            /** Evidence */
-            evidence?: {
-                [key: string]: unknown;
-            } | null;
-        };
-        /** UserImpactData */
-        UserImpactData: {
-            /** User Id */
-            user_id: string;
-            /**
-             * Completed Trips Count
-             * @default 0
-             */
-            completed_trips_count: number;
-            /**
-             * Total Trips Count
-             * @default 0
-             */
-            total_trips_count: number;
-            /**
-             * Visited Actors Count
-             * @default 0
-             */
-            visited_actors_count: number;
-            /**
-             * Sustainable Impact Score
-             * @default 0
-             */
-            sustainable_impact_score: number;
-            /**
-             * Co2 Saved Kg
-             * @default 0
-             */
-            co2_saved_kg: number;
-            /**
-             * Badges
-             * @default []
-             */
-            badges: components["schemas"]["UserBadgeSchema"][];
-        };
-        /** UserImpactEnvelope */
-        UserImpactEnvelope: {
-            data: components["schemas"]["UserImpactData"];
         };
         /** UserPreferencesEnvelope */
         UserPreferencesEnvelope: {
@@ -6591,26 +6519,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_my_impact_api_v1_me_impact_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserImpactEnvelope"];
                 };
             };
         };

@@ -15,7 +15,6 @@ from app.schemas.domain import (
     RouteOriginRead,
     RouteRead,
     TripRead,
-    UserBadgeRead,
     UserPreferenceRead,
 )
 from app.schemas.error import ErrorDetail, ErrorResponse
@@ -40,5 +39,4 @@ __all__ = [
     "FavoriteRouteRead",
     "FavoriteActorRead",
     "TripRead",
-    "UserBadgeRead",
 ]

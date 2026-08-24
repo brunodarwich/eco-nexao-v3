@@ -16,8 +16,6 @@ from app.models.domain import (
     Profile,
     Route,
     Trip,
-    TripActorVisit,
-    UserBadge,
     UserPreference,
 )
 
@@ -208,52 +206,3 @@ class UserRepository:
         stmt = select(Trip).options(joinedload(Trip.route)).where(Trip.id == new_trip.id)
         created = await self.db.scalar(stmt)
         return created or new_trip
-
-    async def get_user_impact(self, user_id: uuid.UUID) -> dict[str, Any]:
-        await self.get_or_create_profile(user_id)
-
-        trips_stmt = select(func.count()).select_from(Trip).where(Trip.user_id == user_id)
-        total_trips = (await self.db.scalar(trips_stmt)) or 0
-
-        completed_stmt = (
-            select(func.count())
-            .select_from(Trip)
-            .where(Trip.user_id == user_id, Trip.status == "completed")
-        )
-        completed_trips = (await self.db.scalar(completed_stmt)) or 0
-
-        visits_stmt = (
-            select(func.count())
-            .select_from(TripActorVisit)
-            .join(Trip, TripActorVisit.trip_id == Trip.id)
-            .where(Trip.user_id == user_id)
-        )
-        visited_actors_count = (await self.db.scalar(visits_stmt)) or 0
-
-        badges_stmt = select(UserBadge).where(UserBadge.user_id == user_id)
-        badges_res = await self.db.scalars(badges_stmt)
-        user_badges = list(badges_res.all())
-
-        badges_list = [
-            {
-                "id": str(b.id),
-                "badge_code": b.badge_code,
-                "awarded_at": b.awarded_at.isoformat() if b.awarded_at else None,
-                "evidence": b.evidence,
-            }
-            for b in user_badges
-        ]
-
-        sustainable_score = (completed_trips * 50) + (visited_actors_count * 20)
-        co2_saved_kg = round(completed_trips * 12.5, 1)
-
-        return {
-            "user_id": str(user_id),
-            "completed_trips_count": completed_trips,
-            "total_trips_count": total_trips,
-            "visited_actors_count": visited_actors_count,
-            "sustainable_impact_score": sustainable_score,
-            "co2_saved_kg": co2_saved_kg,
-            "badges": badges_list,
-        }
-

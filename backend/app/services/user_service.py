@@ -16,8 +16,6 @@ from app.schemas.envelopes import (
     TripEnvelope,
     TripListEnvelope,
     TripSchema,
-    UserImpactData,
-    UserImpactEnvelope,
     UserPreferencesEnvelope,
     UserPreferencesSchema,
     UserPreferencesUpdate,
@@ -232,7 +230,3 @@ class UserService:
             "route_title": trip.route.title if trip.route else None,
         }
         return TripEnvelope(data=TripSchema.model_validate(data))
-
-    async def get_impact(self, user_id: uuid.UUID) -> UserImpactEnvelope:
-        impact_data = await self.repo.get_user_impact(user_id)
-        return UserImpactEnvelope(data=UserImpactData.model_validate(impact_data))

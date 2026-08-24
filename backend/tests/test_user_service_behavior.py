@@ -5,7 +5,6 @@ Focuses on domain business rules:
 - Preference get/create and updates.
 - Favorite routes and actors add/remove/list.
 - Trip creation and history retrieval.
-- Ecological impact calculations (scores, CO2 saved, badges).
 - Exception handling in user services.
 """
 
@@ -154,30 +153,6 @@ async def test_create_and_get_trips():
 
     trips = await repo.get_trips(user_id)
     assert trips == [created_trip]
-
-
-@pytest.mark.asyncio
-async def test_get_user_impact_calculation():
-    """Verify user ecological impact score and CO2 calculation."""
-    mock_db = create_mock_db()
-    user_id = uuid.uuid4()
-    prof = Profile(id=user_id)
-
-    mock_db.scalar.side_effect = [prof, 5, 2, 3]
-    mock_scalars = MagicMock()
-    mock_scalars.all.return_value = []
-    mock_db.scalars.return_value = mock_scalars
-
-    repo = UserRepository(mock_db)
-    impact = await repo.get_user_impact(user_id)
-
-    assert impact["user_id"] == str(user_id)
-    assert impact["completed_trips_count"] == 2
-    assert impact["total_trips_count"] == 5
-    assert impact["visited_actors_count"] == 3
-    assert impact["sustainable_impact_score"] == 160
-    assert impact["co2_saved_kg"] == 25.0
-    assert impact["badges"] == []
 
 
 @pytest.mark.asyncio

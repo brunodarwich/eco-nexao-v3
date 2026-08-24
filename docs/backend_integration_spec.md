@@ -194,7 +194,10 @@ Não armazenar avaliação Google como se fosse avaliação própria. Caso exibi
 | `favorite_actors` | `user_id`, `actor_id`, `created_at`; unique composto |
 | `trips` | `user_id`, `route_id`, `started_at`, `completed_at`, `status` |
 | `trip_actor_visits` | `trip_id`, `actor_id`, `visited_at`, `confirmation_method` |
-| `user_badges` | `user_id`, `badge_code`, `awarded_at`, `evidence JSONB` |
+
+Conforme o ADR 0009, não existem pontuação, CO₂ estimado ou selos pessoais. `trips` e
+`trip_actor_visits` permanecem como histórico factual do usuário; selos territoriais
+editoriais continuam representados por `green_badge_status` nos atores.
 
 ## 7. Contrato HTTP `/api/v1`
 
@@ -245,7 +248,6 @@ Listas usarão paginação por cursor. Respostas terão envelope uniforme com `d
 | `GET/POST` | `/me/trips` | Histórico e início de viagem |
 | `GET/PATCH` | `/me/trips/{trip_id}` | Concluir/cancelar viagem |
 | `POST` | `/me/trips/{trip_id}/visits/{actor_id}` | Registrar visita |
-| `GET` | `/me/impact` | Métricas e selos calculados no servidor |
 | `GET` | `/content/support` | Ajuda, contatos, termos e operação editorial |
 
 Mutations aceitarão `Idempotency-Key` onde houver risco de repetição por rede móvel.
@@ -366,8 +368,6 @@ O CSV/JSON será entrada de uma migration de dados ou comando de seed reproduzí
 |---|---|---|
 | Avatar | Abre edição, seleciona imagem e envia | `POST /me/avatar-upload`, `PATCH /me` |
 | Rotas concluídas | Abre histórico filtrado | `GET /me/trips?status=completed` |
-| Atores visitados | Abre histórico de visitas | `GET /me/trips`/impacto |
-| Selo consciente | Abre explicação e evidências do selo | `GET /me/impact` |
 | Rotas salvas | Navega para rotas com `saved=true` | Favoritos de rota |
 | Atores favoritos | Abre nova tela/lista de atores salvos | Favoritos de atores |
 | Histórico | Abre nova tela de viagens | Trips |

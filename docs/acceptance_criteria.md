@@ -50,8 +50,9 @@ Estes cenários complementam as tasks. Cada fluxo deve ser testado em todas as p
 ### AC-PROFILE-02 — Menu
 
 - Rotas salvas, atores favoritos, histórico, acessibilidade, região e suporte abrem destinos corretos.
-- Métricas vêm de `/me/impact` e cards abrem histórico correspondente.
-- Selo abre explicação/evidência.
+- O perfil não exibe painel de impacto ecológico, estimativa de CO₂ ou selo pessoal.
+- Sem nome cadastrado, a sessão anônima exibe o fallback neutro “Visitante”.
+- Histórico de viagens/visitas continua acessível sem atribuir impacto ambiental.
 - Nenhum item mantém semântica de botão sem ação.
 
 ## Detalhe da rota

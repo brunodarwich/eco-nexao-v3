@@ -46,7 +46,6 @@ SCHEMA_NAMES = {
     "TripListEnvelope": "TripListEnvelope",
     "TripCreate": "TripCreate",
     "TripEnvelope": "TripEnvelope",
-    "UserImpactEnvelope": "UserImpactEnvelope",
     "SupportContentEnvelope": "SupportContentEnvelope",
     "AdminAccessSchema": "AdminAccessSchema",
     "AdminScopeAccessSchema": "AdminScopeAccessSchema",

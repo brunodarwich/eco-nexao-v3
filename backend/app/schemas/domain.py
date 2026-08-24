@@ -242,11 +242,3 @@ class TripRead(DomainBaseSchema):
     status: str = "in_progress"
     created_at: datetime
     updated_at: datetime
-
-
-class UserBadgeRead(DomainBaseSchema):
-    id: uuid.UUID
-    user_id: uuid.UUID
-    badge_code: str
-    awarded_at: datetime
-    evidence: dict[str, Any] = Field(default_factory=dict)

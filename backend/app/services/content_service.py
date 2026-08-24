@@ -14,8 +14,8 @@ class ContentService:
                     "question": "Como funciona o aplicativo ECOconexão?",
                     "answer": (
                         "O ECOconexão permite explorar rotas de turismo sustentável, "
-                        "conhecer iniciativas ecológicas locais e acompanhar o seu impacto "
-                        "positivo nas viagens."
+                        "conhecer iniciativas ecológicas locais e manter um histórico "
+                        "das suas viagens."
                     ),
                     "category": "Geral",
                 },
@@ -33,7 +33,7 @@ class ContentService:
                     "question": "Como registrar minhas viagens e visitas?",
                     "answer": (
                         "Ao iniciar uma rota, toque em 'Iniciar Viagem' no aplicativo. "
-                        "Suas visitas e conquistas serão salvas no seu perfil."
+                        "Suas viagens e visitas serão salvas no histórico do seu perfil."
                     ),
                     "category": "Navegação",
                 },

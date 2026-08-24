@@ -32,6 +32,7 @@ Este diretório é a entrada canônica para produto, arquitetura, dados, execuç
 | `adr/0006-operacao-editorial-rbac.md` | Operação editorial, RBAC, state machine, Publish Guard e audit trail |
 | `adr/0007-identidade-sessao-linking.md` | Identidade, sessão guest, account linking, expurgo 90d e localStorage Web |
 | `adr/0008-politica-de-midia-e-privacidade.md` | Buckets híbridos Storage, EXIF strip, WebP, proxy Google Photos e alt text |
+| `adr/0009-remocao-impacto-ecologico-pessoal.md` | Remove impacto/selos pessoais e preserva selos editoriais territoriais |
 
 ## Programa de finalização
 

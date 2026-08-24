@@ -29,7 +29,6 @@ from app.models.domain import (
     RouteOrigin,
     Trip,
     TripActorVisit,
-    UserBadge,
     UserPreference,
 )
 
@@ -63,5 +62,4 @@ __all__ = [
     "FavoriteActor",
     "Trip",
     "TripActorVisit",
-    "UserBadge",
 ]

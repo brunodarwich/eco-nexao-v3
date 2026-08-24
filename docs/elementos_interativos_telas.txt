@@ -122,27 +122,17 @@ Data da Catalogação: 11/08/2026
 -------------------------------------------------------------------------------
 
 [4.1] CARTÃO DE IDENTIFICAÇÃO DO USUÁRIO
-   * Elementos Visuais (não interativos na implementação atual):
-     - Foto de Perfil / Avatar: Exibe a imagem do usuário, sem ação de toque ou edição.
-   * Indicadores de Status:
-     - Ícone de Checkmark Verde ao lado do nome: Indica conta validada / participante do programa de turismo sustentável.
+   * Elementos Interativos:
+     - Foto de Perfil / Avatar: Abre o seletor e envia a nova imagem do usuário.
+     - Ícone de lápis: Abre a edição das informações do perfil.
    * Conteúdos Exibidos:
-     - Nome do Usuário (mock atual: "Mariana Silva").
-     - Localização (mock atual: "Santarém, PA").
+     - Nome do perfil remoto; na sessão anônima sem nome, exibe "Visitante".
+     - Tipo de sessão ou e-mail e localização quando cadastrada.
      - Foto de Perfil com borda verde temática.
 
-[4.2] PAINEL DE IMPACTO & CONQUISTAS (Bento Box)
-   * Elementos Informativos (não interativos na implementação atual):
-     - Cards de Estatísticas:
-       • Métrica 1: Número de Rotas Concluídas.
-       • Métrica 2: Número de Atores Locais Visitados.
-   * Indicadores de Status & Selos:
-     - Banner "Selo Viajante Consciente":
-       • Badge com ícone de folha destacada em fundo amarelo dourado (brandSun).
-       • Status ativo reconhecendo a participação em compras comunitárias e turismo de baixo impacto.
-   * Conteúdos Exibidos:
-     - Valores numéricos das estatísticas do usuário.
-     - Texto educativo sobre o impacto socioambiental positivo gerado.
+[4.2] IMPACTO E SELOS PESSOAIS
+   * Não exibidos nem registrados, conforme ADR 0009.
+   * Viagens e visitas permanecem disponíveis como histórico factual no menu do perfil.
 
 [4.3] MENU DE PREFERÊNCIAS & ACESSIBILIDADE
    * Elementos com Aparência Interativa:

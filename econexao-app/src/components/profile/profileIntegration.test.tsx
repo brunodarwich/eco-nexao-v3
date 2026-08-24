@@ -13,7 +13,6 @@ import SupportScreen from '../../../app/(tabs)/(profile)/support';
 import { useRouter } from 'expo-router';
 import {
   useMyProfileQuery,
-  useMyImpactQuery,
   useMyFavoriteRoutesQuery,
   useMyFavoriteActorsQuery,
   useMyTripsQuery,
@@ -21,6 +20,7 @@ import {
   useSupportContentQuery,
 } from '../../hooks/queries';
 import { apiClient } from '../../api/client';
+import { useAuth } from '../../hooks/useAuth';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-image-picker', () => ({ launchImageLibraryAsync: jest.fn() }));
@@ -37,17 +37,11 @@ jest.mock('../../hooks/useApp', () => ({
   }),
 }));
 
-jest.mock('../../hooks/useAuth', () => ({
-  useAuth: () => ({
-    user: { id: 'user-1', email: 'test@econexao.org', is_anonymous: false },
-    signOut: jest.fn(),
-  }),
-}));
+jest.mock('../../hooks/useAuth', () => ({ useAuth: jest.fn() }));
 
 jest.mock('../../hooks/queries', () => ({
   useRegionsQuery: jest.fn().mockReturnValue({ data: [] }),
   useMyProfileQuery: jest.fn(),
-  useMyImpactQuery: jest.fn(),
   useMyFavoriteRoutesQuery: jest.fn(),
   useMyFavoriteActorsQuery: jest.fn(),
   useMyTripsQuery: jest.fn(),
@@ -88,6 +82,10 @@ describe('Marco 11 — Integration Tests', () => {
       defaultOptions: { queries: { retry: false, gcTime: Infinity } },
     });
     (useRouter as jest.Mock).mockReturnValue({ push, back });
+    (useAuth as jest.Mock).mockReturnValue({
+      user: { id: 'user-1', email: 'test@econexao.org', is_anonymous: false },
+      signOut: jest.fn(),
+    });
   });
 
   const renderProfile = () => (
@@ -96,33 +94,42 @@ describe('Marco 11 — Integration Tests', () => {
     </QueryClientProvider>
   );
 
-  it('ProfileScreen renders user profile and impact metrics', async () => {
+  it('ProfileScreen renders a conventional profile without personal impact claims', async () => {
     (useMyProfileQuery as jest.Mock).mockReturnValue({
       data: { name: 'Maria Silva' },
       isPending: false,
       isError: false,
     });
-    (useMyImpactQuery as jest.Mock).mockReturnValue({
-      data: {
-        completed_trips_count: 5,
-        co2_saved_kg: 62.5,
-        visited_actors_count: 8,
-      },
-      isPending: false,
-      isError: false,
-    });
-
     let tree!: renderer.ReactTestRenderer;
     await act(async () => {
       tree = renderer.create(renderProfile());
     });
 
     expect(tree.toJSON()).toBeTruthy();
+    const rendered = JSON.stringify(tree.toJSON());
+    expect(rendered).not.toContain('Meu Impacto Ecológico');
+    expect(rendered).not.toContain('Selo Consciente');
+    expect(rendered).not.toContain('CO₂ Evitado');
+  });
+
+  it('usa Visitante como fallback neutro para sessão anônima sem nome', async () => {
+    (useAuth as jest.Mock).mockReturnValue({
+      user: { id: 'guest-1', is_anonymous: true },
+      signOut: jest.fn(),
+    });
+    (useMyProfileQuery as jest.Mock).mockReturnValue({ data: {}, isPending: false });
+
+    let tree!: renderer.ReactTestRenderer;
+    await act(async () => {
+      tree = renderer.create(renderProfile());
+    });
+
+    expect(JSON.stringify(tree.toJSON())).toContain('Visitante');
+    expect(JSON.stringify(tree.toJSON())).not.toContain('Visitante Consciente');
   });
 
   it('cancela o picker sem iniciar upload', async () => {
     (useMyProfileQuery as jest.Mock).mockReturnValue({ data: {}, isPending: false });
-    (useMyImpactQuery as jest.Mock).mockReturnValue({ data: {}, isPending: false });
     (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({ canceled: true });
     const upload = jest.spyOn(apiClient, 'uploadAvatar');
     let tree!: renderer.ReactTestRenderer;
@@ -139,7 +146,6 @@ describe('Marco 11 — Integration Tests', () => {
 
   it('impede seletores concorrentes enquanto o primeiro está aberto', async () => {
     (useMyProfileQuery as jest.Mock).mockReturnValue({ data: {}, isPending: false });
-    (useMyImpactQuery as jest.Mock).mockReturnValue({ data: {}, isPending: false });
     let resolvePicker!: (result: { canceled: true }) => void;
     (ImagePicker.launchImageLibraryAsync as jest.Mock).mockReturnValueOnce(
       new Promise((resolve) => {
@@ -166,7 +172,6 @@ describe('Marco 11 — Integration Tests', () => {
 
   it('envia o arquivo escolhido ao endpoint multipart real', async () => {
     (useMyProfileQuery as jest.Mock).mockReturnValue({ data: {}, isPending: false });
-    (useMyImpactQuery as jest.Mock).mockReturnValue({ data: {}, isPending: false });
     (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({
       canceled: false,
       assets: [{ uri: 'file:///avatar.png', fileName: 'avatar.png', mimeType: 'image/png' }],
