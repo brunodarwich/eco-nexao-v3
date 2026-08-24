@@ -3,7 +3,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
 from app.core.security import AuthenticatedUser, get_optional_current_user
 from app.schemas.envelopes import (
@@ -180,6 +180,7 @@ async def get_route_actors(
 async def get_route_map_payload(
     route_id: uuid.UUID,
     service: TerritorialServiceDep,
+    response: Response,
     origin_id: Annotated[uuid.UUID | None, Query(description="UUID da origem selecionada")] = None,
 ) -> RouteMapPayloadEnvelope:
     payload = await service.get_route_map_payload(route_id, origin_id=origin_id)
@@ -188,4 +189,5 @@ async def get_route_map_payload(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Payload de mapa não encontrado para a rota especificada.",
         )
+    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=30"
     return payload

@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AccessibilityInfo, Switch, TouchableOpacity } from 'react-native';
 
 import { AppContextProvider } from '../../state/AppContext';
-import AccessibilityPreferencesScreen from '../../../app/profile/accessibility';
+import AccessibilityPreferencesScreen from '../../../app/(tabs)/(profile)/accessibility';
 import { NetworkStatusBar } from '../common/NetworkStatusBar';
 import { apiClient } from '../../api/client';
 import { queryKeys } from '../../api/queryKeys';

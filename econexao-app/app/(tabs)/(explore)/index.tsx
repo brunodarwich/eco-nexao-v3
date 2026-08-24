@@ -11,18 +11,18 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-import { AppHeader } from '../../src/components/common/AppHeader';
-import { RegionSelectorModal } from '../../src/components/common/RegionSelectorModal';
-import { EmptyStateView, ErrorStateView, LoadingView } from '../../src/components/common/UIStateViews';
-import { CompactRouteCard } from '../../src/components/routes/CompactRouteCard';
-import { useApp } from '../../src/hooks/useApp';
-import { useAuth } from '../../src/hooks/useAuth';
-import { useRegionsQuery, useRoutesQuery } from '../../src/hooks/queries';
-import { useOptimisticFavoriteRoute } from '../../src/hooks/useOptimisticFavoriteRoute';
-import { theme } from '../../src/theme/theme';
-import { makeAccessibleButton } from '../../src/utils/accessibility';
+import { AppHeader } from '../../../src/components/common/AppHeader';
+import { RegionSelectorModal } from '../../../src/components/common/RegionSelectorModal';
+import { EmptyStateView, ErrorStateView, LoadingView } from '../../../src/components/common/UIStateViews';
+import { CompactRouteCard } from '../../../src/components/routes/CompactRouteCard';
+import { useApp } from '../../../src/hooks/useApp';
+import { useAuth } from '../../../src/hooks/useAuth';
+import { useRegionsQuery, useRoutesQuery } from '../../../src/hooks/queries';
+import { useOptimisticFavoriteRoute } from '../../../src/hooks/useOptimisticFavoriteRoute';
+import { theme } from '../../../src/theme/theme';
+import { makeAccessibleButton } from '../../../src/utils/accessibility';
 
-const HERO_FULL_BG = require('../../assets/images/alter_do_chao_hero.jpg');
+const HERO_FULL_BG = require('../../../assets/images/alter_do_chao_hero.jpg');
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -94,7 +94,7 @@ export default function HomeScreen() {
               {/* Botão de ação primário CTA */}
               <TouchableOpacity
                 style={styles.ctaButton}
-                onPress={() => router.push('/(tabs)/routes')}
+                onPress={() => router.push('/(tabs)/(routes)')}
                 {...makeAccessibleButton('Descobrir rotas', 'Navega para o catálogo de rotas')}
               >
                 <Text style={styles.ctaButtonText}>Descobrir Rotas</Text>
@@ -108,7 +108,7 @@ export default function HomeScreen() {
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.sectionTitleOnImage}>Rotas em Destaque</Text>
               <TouchableOpacity
-                onPress={() => router.push('/(tabs)/routes')}
+                onPress={() => router.push('/(tabs)/(routes)')}
                 style={styles.seeAllLink}
                 {...makeAccessibleButton('Ver todas as rotas em destaque')}
               >
@@ -181,7 +181,7 @@ export default function HomeScreen() {
               <Text style={styles.sectionTitleOnImage}>Rotas Salvas</Text>
               {savedQuery.data?.data?.length ? (
                 <TouchableOpacity
-                  onPress={() => router.push('/(tabs)/routes')}
+                  onPress={() => router.push('/(tabs)/(routes)')}
                   style={styles.seeAllLink}
                   {...makeAccessibleButton('Ver todas as rotas salvas')}
                 >

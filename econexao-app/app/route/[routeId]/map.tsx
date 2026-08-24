@@ -1,13 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  AccessibilityInfo,
-  findNodeHandle,
-  Modal,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -17,7 +9,7 @@ import { MapAdapter } from '../../../src/components/map/MapAdapter';
 import { EmptyStateView, ErrorStateView, LoadingView } from '../../../src/components/common/UIStateViews';
 import { useActorCategoriesQuery, useRouteActorsQuery, useRouteMapQuery } from '../../../src/hooks/queries';
 import { theme } from '../../../src/theme/theme';
-import { makeAccessibleButton } from '../../../src/utils/accessibility';
+import { makeAccessibleButton, setAccessibilityFocusSafely } from '../../../src/utils/accessibility';
 import type { MapPin } from '../../../src/api/types';
 
 export default function MapScreen() {
@@ -34,14 +26,8 @@ export default function MapScreen() {
   const closeSheetButtonRef = useRef<React.ElementRef<typeof TouchableOpacity>>(null);
   const actorSheetWasOpenRef = useRef(false);
 
-  const moveAccessibilityFocus = (
-    target: React.RefObject<React.Component<any, any> | number | null>
-  ) => {
-    if (!target.current) return;
-    const node = findNodeHandle(target.current);
-    if (node) {
-      AccessibilityInfo.setAccessibilityFocus(node);
-    }
+  const moveAccessibilityFocus = (target: any) => {
+    setAccessibilityFocusSafely(target);
   };
 
   const closeActorSheet = () => {

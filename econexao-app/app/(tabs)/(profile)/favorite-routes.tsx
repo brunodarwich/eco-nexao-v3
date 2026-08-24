@@ -2,13 +2,13 @@ import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { AppHeader } from '../../src/components/common/AppHeader';
-import { EmptyStateView, ErrorStateView, LoadingView } from '../../src/components/common/UIStateViews';
-import { RouteCard } from '../../src/components/routes/RouteCard';
-import { useMyFavoriteRoutesQuery } from '../../src/hooks/queries';
-import { useOptimisticFavoriteRoute } from '../../src/hooks/useOptimisticFavoriteRoute';
-import { useAuth } from '../../src/hooks/useAuth';
-import { theme } from '../../src/theme/theme';
+import { AppHeader } from '../../../src/components/common/AppHeader';
+import { EmptyStateView, ErrorStateView, LoadingView } from '../../../src/components/common/UIStateViews';
+import { RouteCard } from '../../../src/components/routes/RouteCard';
+import { useMyFavoriteRoutesQuery } from '../../../src/hooks/queries';
+import { useOptimisticFavoriteRoute } from '../../../src/hooks/useOptimisticFavoriteRoute';
+import { useAuth } from '../../../src/hooks/useAuth';
+import { theme } from '../../../src/theme/theme';
 
 export default function FavoriteRoutesScreen() {
   const router = useRouter();

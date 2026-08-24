@@ -2,13 +2,13 @@ import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { ActorCard } from '../../src/components/catalog/ActorCard';
-import { AppHeader } from '../../src/components/common/AppHeader';
-import { EmptyStateView, ErrorStateView, LoadingView } from '../../src/components/common/UIStateViews';
-import { useMyFavoriteActorsQuery } from '../../src/hooks/queries';
-import { useOptimisticFavoriteActor } from '../../src/hooks/useOptimisticFavoriteActor';
-import { useAuth } from '../../src/hooks/useAuth';
-import { theme } from '../../src/theme/theme';
+import { ActorCard } from '../../../src/components/catalog/ActorCard';
+import { AppHeader } from '../../../src/components/common/AppHeader';
+import { EmptyStateView, ErrorStateView, LoadingView } from '../../../src/components/common/UIStateViews';
+import { useMyFavoriteActorsQuery } from '../../../src/hooks/queries';
+import { useOptimisticFavoriteActor } from '../../../src/hooks/useOptimisticFavoriteActor';
+import { useAuth } from '../../../src/hooks/useAuth';
+import { theme } from '../../../src/theme/theme';
 
 export default function FavoriteActorsScreen() {
   const router = useRouter();

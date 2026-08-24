@@ -3,7 +3,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 
 from app.core.security import AuthenticatedUser, get_current_user
 from app.schemas.envelopes import BootstrapResponseEnvelope, RegionListEnvelope
@@ -21,7 +21,10 @@ CurrentUserDep = Annotated[AuthenticatedUser, Depends(get_current_user)]
     summary="Lista de regiões ativas",
     description="Retorna todas as regiões turísticas ativas disponíveis na plataforma.",
 )
-async def list_regions(service: TerritorialServiceDep) -> RegionListEnvelope:
+async def list_regions(
+    service: TerritorialServiceDep, response: Response
+) -> RegionListEnvelope:
+    response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=60"
     return await service.get_regions()
 
 

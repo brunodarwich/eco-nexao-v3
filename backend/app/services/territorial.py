@@ -1,6 +1,8 @@
 """Service layer for territorial domain logic with async DB access (ECO-0501 to ECO-0506)."""
 
+import time
 import uuid
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -33,6 +35,10 @@ from app.schemas.envelopes import (
 )
 from app.services.media_resolution import MediaResolutionService
 
+# In-memory simple cache dictionaries with TTL
+_REGIONS_CACHE: dict[str, Any] = {"data": None, "expires_at": 0.0}
+_CATEGORIES_CACHE: dict[str, Any] = {"data": None, "expires_at": 0.0}
+
 
 class TerritorialService:
     def __init__(self, db: AsyncSession) -> None:
@@ -44,8 +50,12 @@ class TerritorialService:
     # -------------------------------------------------------------------------
 
     async def get_regions(self) -> RegionListEnvelope:
+        now = time.monotonic()
+        if _REGIONS_CACHE["data"] is not None and _REGIONS_CACHE["expires_at"] > now:
+            return _REGIONS_CACHE["data"]
+
         regions = await self.repo.get_active_regions()
-        return RegionListEnvelope(
+        result = RegionListEnvelope(
             data=[
                 RegionSchema(
                     id=r.id,
@@ -57,6 +67,9 @@ class TerritorialService:
                 for r in regions
             ]
         )
+        _REGIONS_CACHE["data"] = result
+        _REGIONS_CACHE["expires_at"] = now + 300.0
+        return result
 
     async def get_bootstrap(
         self, preferred_region_id: uuid.UUID | None = None
@@ -245,13 +258,18 @@ class TerritorialService:
         return RouteGeometryEnvelope(data=schema)
 
     async def get_route_map_payload(
-        self, route_id: uuid.UUID, origin_id: uuid.UUID | None = None
+        self,
+        route_id: uuid.UUID,
+        origin_id: uuid.UUID | None = None,
+        simplify_tolerance: float | None = 0.0001,
     ) -> RouteMapPayloadEnvelope | None:
         route = await self.repo.get_route_by_id(route_id)
         if not route:
             return None
 
-        geom, geojson_obj = await self.repo.get_route_geometry(route_id, origin_id)
+        geom, geojson_obj = await self.repo.get_route_geometry(
+            route_id, origin_id, simplify_tolerance=simplify_tolerance
+        )
 
         geom_schema: RouteGeometrySchema | None = None
         selected_origin_id = origin_id
@@ -343,6 +361,10 @@ class TerritorialService:
     # -------------------------------------------------------------------------
 
     async def list_actor_categories(self) -> ActorCategoryListEnvelope:
+        now = time.monotonic()
+        if _CATEGORIES_CACHE["data"] is not None and _CATEGORIES_CACHE["expires_at"] > now:
+            return _CATEGORIES_CACHE["data"]
+
         categories = await self.repo.list_actor_categories()
         schemas = [
             ActorCategorySchema(
@@ -355,7 +377,10 @@ class TerritorialService:
             )
             for c in categories
         ]
-        return ActorCategoryListEnvelope(data=schemas)
+        result = ActorCategoryListEnvelope(data=schemas)
+        _CATEGORIES_CACHE["data"] = result
+        _CATEGORIES_CACHE["expires_at"] = now + 300.0
+        return result
 
     async def list_route_actors(
         self,

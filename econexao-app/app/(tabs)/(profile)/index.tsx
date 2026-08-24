@@ -4,20 +4,20 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 
-import { AppHeader } from '../../src/components/common/AppHeader';
-import { Badge } from '../../src/components/common/Badge';
-import { LoadingView } from '../../src/components/common/UIStateViews';
-import { AuthModal } from '../../src/components/profile/AuthModal';
-import { EditProfileModal } from '../../src/components/profile/EditProfileModal';
-import { AccountDeletionModal } from '../../src/components/profile/AccountDeletionModal';
-import { apiClient } from '../../src/api/client';
-import { useMyImpactQuery, useMyProfileQuery } from '../../src/hooks/queries';
-import { useAuth } from '../../src/hooks/useAuth';
-import { queryKeys } from '../../src/api/queryKeys';
-import { queryClient } from '../../src/api/queryClient';
-import { theme, useAppTheme } from '../../src/theme/theme';
+import { AppHeader } from '../../../src/components/common/AppHeader';
+import { Badge } from '../../../src/components/common/Badge';
+import { LoadingView } from '../../../src/components/common/UIStateViews';
+import { AuthModal } from '../../../src/components/profile/AuthModal';
+import { EditProfileModal } from '../../../src/components/profile/EditProfileModal';
+import { AccountDeletionModal } from '../../../src/components/profile/AccountDeletionModal';
+import { apiClient } from '../../../src/api/client';
+import { useMyImpactQuery, useMyProfileQuery } from '../../../src/hooks/queries';
+import { useAuth } from '../../../src/hooks/useAuth';
+import { queryKeys } from '../../../src/api/queryKeys';
+import { queryClient } from '../../../src/api/queryClient';
+import { theme, useAppTheme } from '../../../src/theme/theme';
 
-import { makeAccessibleButton } from '../../src/utils/accessibility';
+import { makeAccessibleButton } from '../../../src/utils/accessibility';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -171,7 +171,7 @@ export default function ProfileScreen() {
             <View style={styles.impactGrid}>
               <TouchableOpacity
                 style={styles.impactItem}
-                onPress={() => router.push('/profile/trips')}
+                onPress={() => router.push('/(tabs)/(profile)/trips')}
                 {...makeAccessibleButton('Viagens Registradas', 'Ver histórico completo de viagens')}
               >
                 <Ionicons name="footsteps" size={22} color={theme.colors.brandForest} />
@@ -183,7 +183,7 @@ export default function ProfileScreen() {
 
               <TouchableOpacity
                 style={styles.impactItem}
-                onPress={() => router.push('/profile/trips')}
+                onPress={() => router.push('/(tabs)/(profile)/trips')}
                 {...makeAccessibleButton('CO2 Evitado', 'Ver estimativa de CO2 evitado')}
               >
                 <Ionicons name="leaf" size={22} color={theme.colors.brandForest} />
@@ -193,7 +193,7 @@ export default function ProfileScreen() {
 
               <TouchableOpacity
                 style={styles.impactItem}
-                onPress={() => router.push('/profile/favorite-actors')}
+                onPress={() => router.push('/(tabs)/(profile)/favorite-actors')}
                 {...makeAccessibleButton('Atores Visitados', 'Ver atores visitados e favoritos')}
               >
                 <Ionicons name="business" size={22} color={theme.colors.brandForest} />
@@ -210,7 +210,7 @@ export default function ProfileScreen() {
 
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => router.push('/profile/favorite-routes')}
+            onPress={() => router.push('/(tabs)/(profile)/favorite-routes')}
             {...makeAccessibleButton('Rotas Salvas', 'Visualizar suas rotas favoritadas')}
           >
             <View style={styles.menuLeft}>
@@ -222,7 +222,7 @@ export default function ProfileScreen() {
 
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => router.push('/profile/favorite-actors')}
+            onPress={() => router.push('/(tabs)/(profile)/favorite-actors')}
             {...makeAccessibleButton('Atores Favoritos', 'Visualizar estabelecimentos salvos')}
           >
             <View style={styles.menuLeft}>
@@ -234,7 +234,7 @@ export default function ProfileScreen() {
 
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => router.push('/profile/trips')}
+            onPress={() => router.push('/(tabs)/(profile)/trips')}
             {...makeAccessibleButton('Histórico de Viagens', 'Ver passeios e trajetos realizados')}
           >
             <View style={styles.menuLeft}>
@@ -246,7 +246,7 @@ export default function ProfileScreen() {
 
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => router.push('/profile/accessibility')}
+            onPress={() => router.push('/(tabs)/(profile)/accessibility')}
             {...makeAccessibleButton('Acessibilidade', 'Ajustar opções visuais e de contraste')}
           >
             <View style={styles.menuLeft}>
@@ -258,7 +258,7 @@ export default function ProfileScreen() {
 
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => router.push('/profile/support')}
+            onPress={() => router.push('/(tabs)/(profile)/support')}
             {...makeAccessibleButton('Ajuda & Suporte', 'Acessar documentação e contatos')}
           >
             <View style={styles.menuLeft}>
@@ -270,7 +270,7 @@ export default function ProfileScreen() {
 
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => router.push('/profile/legal')}
+            onPress={() => router.push('/(tabs)/(profile)/legal')}
             {...makeAccessibleButton('Termos & Privacidade LGPD', 'Acessar termos de uso e política de privacidade')}
           >
             <View style={styles.menuLeft}>

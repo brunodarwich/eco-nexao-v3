@@ -2,17 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { AppHeader } from '../../src/components/common/AppHeader';
-import { EmptyStateView, ErrorStateView, LoadingView } from '../../src/components/common/UIStateViews';
-import { FilterChip } from '../../src/components/common/FilterChip';
-import { SearchInput } from '../../src/components/common/SearchInput';
-import { RouteCard } from '../../src/components/routes/RouteCard';
-import { useApp } from '../../src/hooks/useApp';
-import { useAuth } from '../../src/hooks/useAuth';
-import { useInfiniteRoutesQuery, useRegionsQuery, useRoutesQuery } from '../../src/hooks/queries';
-import { useOptimisticFavoriteRoute } from '../../src/hooks/useOptimisticFavoriteRoute';
-import { theme } from '../../src/theme/theme';
-import type { RouteSummary } from '../../src/api/types';
+import { AppHeader } from '../../../src/components/common/AppHeader';
+import { EmptyStateView, ErrorStateView, LoadingView } from '../../../src/components/common/UIStateViews';
+import { FilterChip } from '../../../src/components/common/FilterChip';
+import { SearchInput } from '../../../src/components/common/SearchInput';
+import { RouteCard } from '../../../src/components/routes/RouteCard';
+import { useApp } from '../../../src/hooks/useApp';
+import { useAuth } from '../../../src/hooks/useAuth';
+import { useInfiniteRoutesQuery, useRegionsQuery, useRoutesQuery } from '../../../src/hooks/queries';
+import { useOptimisticFavoriteRoute } from '../../../src/hooks/useOptimisticFavoriteRoute';
+import { theme } from '../../../src/theme/theme';
+import type { RouteSummary } from '../../../src/api/types';
 
 type FilterType = 'all' | 'saved' | 'verified';
 

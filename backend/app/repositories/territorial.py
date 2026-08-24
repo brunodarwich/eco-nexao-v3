@@ -124,11 +124,19 @@ class TerritorialRepository:
     # -------------------------------------------------------------------------
 
     async def get_route_geometry(
-        self, route_id: uuid.UUID, origin_id: uuid.UUID | None = None
+        self,
+        route_id: uuid.UUID,
+        origin_id: uuid.UUID | None = None,
+        simplify_tolerance: float | None = None,
     ) -> tuple[RouteGeometry | None, dict[str, Any] | None]:
         """Fetch route geometry and GeoJSON representation for a given origin or default origin."""
+        geom_col = (
+            func.ST_SimplifyPreserveTopology(RouteGeometry.geometry, simplify_tolerance)
+            if simplify_tolerance is not None and simplify_tolerance > 0
+            else RouteGeometry.geometry
+        )
         stmt = (
-            select(RouteGeometry, ST_AsGeoJSON(RouteGeometry.geometry).label("geojson_str"))
+            select(RouteGeometry, ST_AsGeoJSON(geom_col).label("geojson_str"))
             .join(RouteOrigin, RouteGeometry.route_origin_id == RouteOrigin.id)
             .where(RouteOrigin.route_id == route_id)
         )

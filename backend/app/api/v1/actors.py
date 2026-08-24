@@ -3,7 +3,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from app.schemas.envelopes import ActorCategoryListEnvelope, ActorDetailEnvelope
 from app.services.dependencies import get_territorial_service
@@ -19,7 +19,10 @@ TerritorialServiceDep = Annotated[TerritorialService, Depends(get_territorial_se
     summary="Categorias de atores",
     description="Retorna a taxonomia oficial de categorias de estabelecimentos e atrações.",
 )
-async def list_actor_categories(service: TerritorialServiceDep) -> ActorCategoryListEnvelope:
+async def list_actor_categories(
+    service: TerritorialServiceDep, response: Response
+) -> ActorCategoryListEnvelope:
+    response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=60"
     return await service.list_actor_categories()
 
 

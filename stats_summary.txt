@@ -1,0 +1,81 @@
+==================================================
+   ECO-NEXAO-V3 - RELATORIO DE LINHAS DE CODIGO   
+==================================================
+
+📁 FRONTEND APP (ECONEXAO-APP): 131 arquivos, 75,455 linhas
+   .jpg        :   8 arqs | 47,618 linhas
+   .tsx        :  65 arqs | 13,816 linhas
+   .ts         :  39 arqs |  9,605 linhas
+   .png        :   6 arqs |  4,156 linhas
+   .json       :   5 arqs |    125 linhas
+   .gitignore  :   1 arqs |     41 linhas
+   .js         :   1 arqs |     34 linhas
+   LICENSE     :   1 arqs |     21 linhas
+   .mjs        :   1 arqs |     19 linhas
+   .md         :   2 arqs |      8 linhas
+   .example    :   1 arqs |      6 linhas
+   .local      :   1 arqs |      6 linhas
+
+   Maiores arquivos:
+     - econexao-app\assets\images\pousada_canto_floresta.jpg (7,156 linhas)
+     - econexao-app\assets\images\artesanato_local.jpg (6,881 linhas)
+     - econexao-app\src\api\generated\openapi.ts (6,638 linhas)
+     - econexao-app\assets\images\alter_do_chao_hero.jpg (6,418 linhas)
+     - econexao-app\assets\images\pindobal_route_hero.jpg (6,107 linhas)
+--------------------------------------------------
+📁 BACKEND API (BACKEND): 153 arquivos, 26,638 linhas
+   .py         : 145 arqs | 26,280 linhas
+   .coverage   :   1 arqs |    176 linhas
+   .toml       :   1 arqs |     51 linhas
+   .example    :   2 arqs |     47 linhas
+   .md         :   1 arqs |     34 linhas
+   .env        :   1 arqs |     21 linhas
+   .test       :   1 arqs |     19 linhas
+   .txt        :   1 arqs |     10 linhas
+
+   Maiores arquivos:
+     - backend\tests\test_admin_workflow.py (1,126 linhas)
+     - backend\tests\test_admin_actors.py (1,045 linhas)
+     - backend\tests\test_admin_territorial.py (1,006 linhas)
+     - backend\app\services\territorial_admin.py (841 linhas)
+     - backend\app\models\domain.py (840 linhas)
+--------------------------------------------------
+📁 SUPABASE MIGRATIONS & CONFIG (SUPABASE): 19 arquivos, 3,011 linhas
+   .sql        :  18 arqs |  2,597 linhas
+   .toml       :   1 arqs |    414 linhas
+
+   Maiores arquivos:
+     - supabase\all_migrations_consolidated.sql (1,297 linhas)
+     - supabase\migrations\20260811010000_domain_tables.sql (497 linhas)
+     - supabase\config.toml (414 linhas)
+     - supabase\migrations\20260813091542_editorial_rbac_and_audit_trail.sql (165 linhas)
+     - supabase\migrations\20260812120000_storage_buckets_and_policies.sql (93 linhas)
+--------------------------------------------------
+📁 DOCUMENTAÇÃO & SPECS (DOCS): 64 arquivos, 39,125 linhas
+   .png        :   7 arqs | 23,256 linhas
+   .md         :  45 arqs |  7,447 linhas
+   .yaml       :   1 arqs |  6,809 linhas
+   .html       :   6 arqs |    954 linhas
+   .txt        :   2 arqs |    406 linhas
+   .json       :   1 arqs |    227 linhas
+   .sql        :   1 arqs |     25 linhas
+   .sha256     :   1 arqs |      1 linhas
+
+   Maiores arquivos:
+     - docs\openapi.yaml (6,809 linhas)
+     - docs\stitch-screens\01-home\screen.png (5,946 linhas)
+     - docs\stitch-screens\06-accessibility-concept\screen.png (4,260 linhas)
+     - docs\assets\brand\logo-econexao.png (3,719 linhas)
+     - docs\stitch-screens\04-user-profile\screen.png (3,303 linhas)
+--------------------------------------------------
+📁 RAIZ & CONFIGS GERAIS: 9 arquivos, 975 linhas
+   .md         :   2 arqs |    445 linhas
+   .txt        :   2 arqs |    275 linhas
+   .coverage   :   1 arqs |    160 linhas
+   .gitignore  :   1 arqs |     37 linhas
+   .yaml       :   1 arqs |     34 linhas
+   .json       :   1 arqs |     14 linhas
+   .py         :   1 arqs |     10 linhas
+--------------------------------------------------
+
+TOTAL GERAL DO PROJETO: 376 arquivos | 145,204 linhas de código e documentação

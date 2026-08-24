@@ -3,12 +3,12 @@ import { ScrollView, StyleSheet, Text, View, TouchableOpacity } from 'react-nati
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-import { AppHeader } from '../../src/components/common/AppHeader';
-import { EmptyStateView, ErrorStateView, LoadingView } from '../../src/components/common/UIStateViews';
-import { useMyTripsQuery } from '../../src/hooks/queries';
-import { useAuth } from '../../src/hooks/useAuth';
-import { useAppTheme } from '../../src/theme/theme';
-import { makeAccessibleButton } from '../../src/utils/accessibility';
+import { AppHeader } from '../../../src/components/common/AppHeader';
+import { EmptyStateView, ErrorStateView, LoadingView } from '../../../src/components/common/UIStateViews';
+import { useMyTripsQuery } from '../../../src/hooks/queries';
+import { useAuth } from '../../../src/hooks/useAuth';
+import { useAppTheme } from '../../../src/theme/theme';
+import { makeAccessibleButton } from '../../../src/utils/accessibility';
 
 export default function TripsHistoryScreen() {
   const router = useRouter();

@@ -4,12 +4,12 @@ import { TouchableOpacity } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import ProfileScreen from '../../../app/(tabs)/profile';
-import FavoriteRoutesScreen from '../../../app/profile/favorite-routes';
-import FavoriteActorsScreen from '../../../app/profile/favorite-actors';
-import TripsHistoryScreen from '../../../app/profile/trips';
-import AccessibilityPreferencesScreen from '../../../app/profile/accessibility';
-import SupportScreen from '../../../app/profile/support';
+import ProfileScreen from '../../../app/(tabs)/(profile)/index';
+import FavoriteRoutesScreen from '../../../app/(tabs)/(profile)/favorite-routes';
+import FavoriteActorsScreen from '../../../app/(tabs)/(profile)/favorite-actors';
+import TripsHistoryScreen from '../../../app/(tabs)/(profile)/trips';
+import AccessibilityPreferencesScreen from '../../../app/(tabs)/(profile)/accessibility';
+import SupportScreen from '../../../app/(tabs)/(profile)/support';
 import { useRouter } from 'expo-router';
 import {
   useMyProfileQuery,

@@ -2,12 +2,12 @@ import React from 'react';
 import { ScrollView, StyleSheet, Text, View, Switch, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { AppHeader } from '../../src/components/common/AppHeader';
-import { useMyPreferencesQuery } from '../../src/hooks/queries';
-import { useAuth } from '../../src/hooks/useAuth';
-import { useAppTheme } from '../../src/theme/theme';
-import { useOptimisticPreferences } from '../../src/hooks/useOptimisticPreferences';
-import { makeAccessibleButton, makeAccessibleHeader } from '../../src/utils/accessibility';
+import { AppHeader } from '../../../src/components/common/AppHeader';
+import { useMyPreferencesQuery } from '../../../src/hooks/queries';
+import { useAuth } from '../../../src/hooks/useAuth';
+import { useAppTheme } from '../../../src/theme/theme';
+import { useOptimisticPreferences } from '../../../src/hooks/useOptimisticPreferences';
+import { makeAccessibleButton, makeAccessibleHeader } from '../../../src/utils/accessibility';
 
 const TEXT_SCALE_OPTIONS = [
   { label: 'Pequeno', value: 0.9 },

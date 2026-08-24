@@ -3,11 +3,11 @@ import { ScrollView, StyleSheet, Text, View, TouchableOpacity, Linking, Alert } 
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-import { AppHeader } from '../../src/components/common/AppHeader';
-import { EmptyStateView, ErrorStateView, LoadingView } from '../../src/components/common/UIStateViews';
-import { useSupportContentQuery } from '../../src/hooks/queries';
-import { theme } from '../../src/theme/theme';
-import { makeAccessibleButton } from '../../src/utils/accessibility';
+import { AppHeader } from '../../../src/components/common/AppHeader';
+import { EmptyStateView, ErrorStateView, LoadingView } from '../../../src/components/common/UIStateViews';
+import { useSupportContentQuery } from '../../../src/hooks/queries';
+import { theme } from '../../../src/theme/theme';
+import { makeAccessibleButton } from '../../../src/utils/accessibility';
 
 export default function SupportScreen() {
   const router = useRouter();

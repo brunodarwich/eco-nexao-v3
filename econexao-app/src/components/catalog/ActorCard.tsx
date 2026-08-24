@@ -1,20 +1,17 @@
 import React, { useEffect, useRef } from 'react';
 import {
-  AccessibilityInfo,
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   Pressable,
   Image,
-  Platform,
-  findNodeHandle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
 import type { ActorSummary } from '../../api/types';
 import { Badge } from '../common/Badge';
-import { makeAccessibleButton } from '../../utils/accessibility';
+import { makeAccessibleButton, setAccessibilityFocusSafely } from '../../utils/accessibility';
 
 export interface ActorCardProps {
   actor: ActorSummary;
@@ -37,14 +34,7 @@ export const ActorCard: React.FC<ActorCardProps> = ({
 
   useEffect(() => {
     if (!focusOnMount || !pressableRef.current) return;
-
-    if (Platform.OS === 'web') {
-      (pressableRef.current as unknown as { focus?: () => void }).focus?.();
-      return;
-    }
-
-    const reactTag = findNodeHandle(pressableRef.current);
-    if (reactTag != null) AccessibilityInfo.setAccessibilityFocus(reactTag);
+    setAccessibilityFocusSafely(pressableRef);
   }, [focusOnMount]);
 
   const effectiveIsFavorite = isFavorite ?? false;

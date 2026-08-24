@@ -30,6 +30,8 @@ export const territorialQueries = {
       queryKey: queryKeys.regions(),
       queryFn: () => apiClient.getRegions(),
       select: (envelope) => envelope.data,
+      staleTime: 1000 * 60 * 10, // 10 minutes
+      gcTime: 1000 * 60 * 60, // 1 hour
     }),
   routes: (regionId: string | undefined, params: ListRoutesQuery = {}, userId?: string) => {
     const request = {
@@ -43,10 +45,17 @@ export const territorialQueries = {
       queryFn: ({ signal }) => (signal ? apiClient.getRoutes(request, { signal }) : apiClient.getRoutes(request)),
       enabled: Boolean(regionId) && (!params.saved || Boolean(userId)),
       meta: { authenticated: params.saved === true },
+      staleTime: 1000 * 60 * 2, // 2 minutes
     });
   },
   routeDetail: (routeId: string) =>
-    queryOptions({ queryKey: queryKeys.routes.detail(routeId), queryFn: () => apiClient.getRouteDetail(routeId), select: (e) => e.data, enabled: Boolean(routeId) }),
+    queryOptions({
+      queryKey: queryKeys.routes.detail(routeId),
+      queryFn: () => apiClient.getRouteDetail(routeId),
+      select: (e) => e.data,
+      enabled: Boolean(routeId),
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    }),
   routeOrigins: (routeId: string) =>
     queryOptions({ queryKey: queryKeys.routes.origins(routeId), queryFn: () => apiClient.getRouteOrigins(routeId), select: (e) => e.data, enabled: Boolean(routeId) }),
   routeGeometry: (routeId: string, originId: string) =>
@@ -61,12 +70,29 @@ export const territorialQueries = {
       origin_id: normalizeQueryValue(params.origin_id),
       cursor: normalizeQueryValue(params.cursor),
     };
-    return queryOptions({ queryKey: queryKeys.routes.actors(routeId, request), queryFn: ({ signal }) => (signal ? apiClient.getRouteActors(routeId, request, { signal }) : apiClient.getRouteActors(routeId, request)), enabled: Boolean(routeId) });
+    return queryOptions({
+      queryKey: queryKeys.routes.actors(routeId, request),
+      queryFn: ({ signal }) => (signal ? apiClient.getRouteActors(routeId, request, { signal }) : apiClient.getRouteActors(routeId, request)),
+      enabled: Boolean(routeId),
+      staleTime: 1000 * 60 * 3,
+    });
   },
   routeMap: (routeId: string, originId?: string) =>
-    queryOptions({ queryKey: queryKeys.routes.map(routeId, originId), queryFn: () => apiClient.getRouteMapPayload(routeId, originId), select: (e) => e.data, enabled: Boolean(routeId) }),
+    queryOptions({
+      queryKey: queryKeys.routes.map(routeId, originId),
+      queryFn: () => apiClient.getRouteMapPayload(routeId, originId),
+      select: (e) => e.data,
+      enabled: Boolean(routeId),
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    }),
   actorCategories: () =>
-    queryOptions({ queryKey: queryKeys.actorCategories(), queryFn: () => apiClient.getActorCategories(), select: (e) => e.data }),
+    queryOptions({
+      queryKey: queryKeys.actorCategories(),
+      queryFn: () => apiClient.getActorCategories(),
+      select: (e) => e.data,
+      staleTime: 1000 * 60 * 15, // 15 minutes
+      gcTime: 1000 * 60 * 60, // 1 hour
+    }),
   actorDetail: (actorId: string) =>
     queryOptions({ queryKey: queryKeys.actorDetail(actorId), queryFn: () => apiClient.getActorDetail(actorId), select: (e) => e.data, enabled: Boolean(actorId) }),
 };

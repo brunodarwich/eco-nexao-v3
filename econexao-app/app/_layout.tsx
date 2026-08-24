@@ -16,6 +16,7 @@ import { theme } from '../src/theme/theme';
 import { AuthContext, AuthProvider } from '../src/auth/AuthProvider';
 import { ServerStateProvider } from '../src/api/ServerStateProvider';
 import { NetworkStatusBar } from '../src/components/common/NetworkStatusBar';
+import { ErrorBoundary } from '../src/components/common/ErrorBoundary';
 
 function LayoutContent() {
   return (
@@ -29,18 +30,6 @@ function LayoutContent() {
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="route/[routeId]/index"
-          options={{ headerShown: false, title: 'Detalhes da Rota' }}
-        />
-        <Stack.Screen
-          name="route/[routeId]/map"
-          options={{ headerShown: false, title: 'Mapa em Tela Cheia' }}
-        />
-        <Stack.Screen
-          name="route/[routeId]/catalog"
-          options={{ headerShown: false, title: 'Catálogo Contextual' }}
-        />
         <Stack.Screen
           name="admin/index"
           options={{ headerShown: false, title: 'Painel Editorial' }}
@@ -85,15 +74,17 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <ServerStateProvider>
-          <AuthGate>
-            <AppContextProvider>
-              <LayoutContent />
-            </AppContextProvider>
-          </AuthGate>
-        </ServerStateProvider>
-      </AuthProvider>
+      <ErrorBoundary>
+        <AuthProvider>
+          <ServerStateProvider>
+            <AuthGate>
+              <AppContextProvider>
+                <LayoutContent />
+              </AppContextProvider>
+            </AuthGate>
+          </ServerStateProvider>
+        </AuthProvider>
+      </ErrorBoundary>
     </SafeAreaProvider>
   );
 }

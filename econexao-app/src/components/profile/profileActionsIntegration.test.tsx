@@ -6,7 +6,7 @@ import { AccessibilityInfo, Modal, TextInput, TouchableOpacity } from 'react-nat
 import { AppContextProvider } from '../../state/AppContext';
 import { EditProfileModal } from './EditProfileModal';
 import { AccountDeletionModal } from './AccountDeletionModal';
-import LegalAndPrivacyScreen from '../../../app/profile/legal';
+import LegalAndPrivacyScreen from '../../../app/(tabs)/(profile)/legal';
 import RouteDetailScreen from '../../../app/route/[routeId]/index';
 import { apiClient } from '../../api/client';
 import { useAuth } from '../../hooks/useAuth';

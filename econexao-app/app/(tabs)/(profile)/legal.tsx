@@ -2,9 +2,9 @@ import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { AppHeader } from '../../src/components/common/AppHeader';
-import { useAppTheme } from '../../src/theme/theme';
-import { makeAccessibleHeader } from '../../src/utils/accessibility';
+import { AppHeader } from '../../../src/components/common/AppHeader';
+import { useAppTheme } from '../../../src/theme/theme';
+import { makeAccessibleHeader } from '../../../src/utils/accessibility';
 
 export default function LegalAndPrivacyScreen() {
   const router = useRouter();

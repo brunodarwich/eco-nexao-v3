@@ -25,7 +25,7 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="(explore)"
         options={{
           title: 'Inicial',
           tabBarLabel: 'Inicial',
@@ -35,7 +35,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="routes"
+        name="(routes)"
         options={{
           title: 'Rotas',
           tabBarLabel: 'Rotas',
@@ -45,7 +45,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="(profile)"
         options={{
           title: 'Perfil',
           tabBarLabel: 'Perfil',
