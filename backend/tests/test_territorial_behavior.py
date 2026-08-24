@@ -253,7 +253,7 @@ async def test_route_map_payload_filters_pins_by_selected_origin():
     )
 
     service = TerritorialService(AsyncMock())
-    service.repo.get_route_by_id = AsyncMock(return_value=MagicMock(id=route_id))
+    service.repo.get_route_by_id = AsyncMock(return_value=MagicMock(id=route_id, origins=[]))
     service.repo.get_route_geometry = AsyncMock(return_value=(None, None))
     service.repo.list_route_actors = AsyncMock(
         return_value=([(actor, "hospedagem", -2.58, -54.96)], 1)
@@ -270,3 +270,65 @@ async def test_route_map_payload_filters_pins_by_selected_origin():
         limit=200,
         offset=0,
     )
+
+
+@pytest.mark.asyncio
+async def test_get_route_geometry_sql_compiles_with_geometry_cast():
+    """Verify that get_route_geometry uses cast(geometry, Geometry) with ST_SimplifyPreserveTopology."""
+    mock_db = AsyncMock()
+    route_id = uuid.uuid4()
+    geom = RouteGeometry(id=uuid.uuid4(), route_origin_id=uuid.uuid4())
+    geojson_str = '{"type": "LineString", "coordinates": [[-54.9, -2.5], [-54.8, -2.4]]}'
+    mock_exec = MagicMock()
+    mock_exec.first.return_value = (geom, geojson_str)
+    mock_db.execute.return_value = mock_exec
+
+    repo = TerritorialRepository(mock_db)
+    geom_res, geojson_res = await repo.get_route_geometry(
+        route_id=route_id, simplify_tolerance=0.0001
+    )
+
+    assert geom_res == geom
+    assert geojson_res == {"type": "LineString", "coordinates": [[-54.9, -2.5], [-54.8, -2.4]]}
+
+    # Verify executed SQL statement has ST_SimplifyPreserveTopology and Geometry cast
+    mock_db.execute.assert_called_once()
+    stmt = mock_db.execute.call_args[0][0]
+    stmt_str = str(stmt.compile(compile_kwargs={"literal_binds": False}))
+    assert "ST_SimplifyPreserveTopology" in stmt_str
+    assert "geometry" in stmt_str.lower()
+    assert "cast(" in stmt_str.lower() or "::geometry" in stmt_str.lower()
+
+
+@pytest.mark.asyncio
+async def test_route_map_payload_fallback_origin_and_bounds():
+    """Verify fallback to route.origins and geom.bounds when pins have no coordinates."""
+    route_id = uuid.uuid4()
+    origin_1_id = uuid.uuid4()
+    origin_mock = MagicMock(id=origin_1_id)
+    route_mock = MagicMock(id=route_id, origins=[origin_mock])
+
+    custom_bounds = {"min_lat": -2.6, "max_lat": -2.4, "min_lng": -55.0, "max_lng": -54.8}
+    geom_mock = MagicMock(
+        id=uuid.uuid4(),
+        route_origin_id=origin_1_id,
+        provider="osrm",
+        encoded_polyline="abcd",
+        distance_m=1000,
+        duration_s=200,
+        bounds=custom_bounds,
+    )
+
+    service = TerritorialService(AsyncMock())
+    service.repo.get_route_by_id = AsyncMock(return_value=route_mock)
+    service.repo.get_route_geometry = AsyncMock(return_value=(geom_mock, None))
+    # No actors with coords
+    service.repo.list_route_actors = AsyncMock(return_value=([], 0))
+
+    envelope = await service.get_route_map_payload(route_id, origin_id=None)
+
+    assert envelope is not None
+    assert envelope.data.selected_origin_id == origin_1_id
+    assert envelope.data.bounds == custom_bounds
+    assert envelope.data.geometry is not None
+

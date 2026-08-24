@@ -284,6 +284,9 @@ class TerritorialService:
                 duration_s=geom.duration_s,
             )
             selected_origin_id = geom.route_origin_id
+        elif selected_origin_id is None and route.origins:
+            # Fallback to first origin if geometry is missing
+            selected_origin_id = route.origins[0].id
 
         # Fetch route actors for map pins
         actors_data, _ = await self.repo.list_route_actors(
@@ -319,6 +322,8 @@ class TerritorialService:
                 "min_lng": min(lons),
                 "max_lng": max(lons),
             }
+        elif geom and geom.bounds:
+            bounds = geom.bounds
 
         payload = RouteMapPayloadSchema(
             route_id=route_id,

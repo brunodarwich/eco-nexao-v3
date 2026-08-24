@@ -130,10 +130,11 @@ class TerritorialRepository:
         simplify_tolerance: float | None = None,
     ) -> tuple[RouteGeometry | None, dict[str, Any] | None]:
         """Fetch route geometry and GeoJSON representation for a given origin or default origin."""
+        geom_as_geometry = cast(RouteGeometry.geometry, Geometry)
         geom_col = (
-            func.ST_SimplifyPreserveTopology(RouteGeometry.geometry, simplify_tolerance)
+            func.ST_SimplifyPreserveTopology(geom_as_geometry, simplify_tolerance)
             if simplify_tolerance is not None and simplify_tolerance > 0
-            else RouteGeometry.geometry
+            else geom_as_geometry
         )
         stmt = (
             select(RouteGeometry, ST_AsGeoJSON(geom_col).label("geojson_str"))
@@ -152,7 +153,12 @@ class TerritorialRepository:
             return None, None
 
         geom, geojson_str = first_row[0], first_row[1]
-        geojson_obj = json.loads(geojson_str) if geojson_str else None
+        geojson_obj = None
+        if geojson_str:
+            try:
+                geojson_obj = json.loads(geojson_str)
+            except (json.JSONDecodeError, TypeError):
+                geojson_obj = None
         return geom, geojson_obj
 
     # -------------------------------------------------------------------------
