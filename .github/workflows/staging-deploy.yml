@@ -95,14 +95,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Verify No Production Secrets in Codebase
-        run: |
-          echo "Scanning for accidental secret leaks..."
-          # Fail if private keys, supabase service_role, or production DSNs are committed
-          if grep -rnw --exclude-dir={.git,node_modules,.venv} --exclude="*.test.ts*" --exclude="*.test.tsx" -e "sb_secret_" -e "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" .; then
-            echo "::error::Potential secret leak detected in repository files!"
-            exit 1
-          fi
-          echo "Secret scan passed cleanly."
+        run: python backend/scripts/scan_secrets.py --root .
 
   deploy-staging:
     name: Deploy to Render Staging
