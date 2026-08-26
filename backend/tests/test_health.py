@@ -56,9 +56,13 @@ def test_health_ready_success() -> None:
         data = response.json()
         assert data["status"] == "ok"
         assert "timestamp" in data
+        assert data["version"] == "1.0.0"
+        assert data["database"] == {"status": "ok", "postgis": True}
         assert "X-Request-ID" in response.headers
+        assert "X-App-Version" in response.headers
     finally:
         app.dependency_overrides.pop(check_database_readiness, None)
+
 
 
 def test_health_ready_returns_safe_503_when_database_is_unavailable() -> None:

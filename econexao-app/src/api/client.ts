@@ -316,11 +316,15 @@ export class ApiClient {
     const controller = new AbortController();
     let didTimeout = false;
     const abortFromCaller = () => controller.abort();
-    options?.signal?.addEventListener('abort', abortFromCaller, { once: true });
+    if (options?.signal?.aborted) {
+      controller.abort();
+    } else {
+      options?.signal?.addEventListener('abort', abortFromCaller, { once: true });
+    }
     const timeout = setTimeout(() => {
       didTimeout = true;
       controller.abort();
-    }, options?.timeoutMs ?? 10_000);
+    }, options?.timeoutMs ?? 60_000);
 
     try {
       return await this.request<RouteMapPayloadEnvelope>(

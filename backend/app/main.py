@@ -78,6 +78,11 @@ async def security_headers_middleware(request: Request, call_next: Any) -> Any:
         # Prevent caching on dynamic API routes if not explicitly configured
         if request.url.path.startswith("/api/v1") and "Cache-Control" not in response.headers:
             response.headers["Cache-Control"] = "no-store, max-age=0"
+
+        response.headers["X-App-Version"] = settings.APP_VERSION
+        commit_sha = settings.GIT_COMMIT_SHA or settings.RENDER_GIT_COMMIT
+        if commit_sha:
+            response.headers["X-Commit-SHA"] = commit_sha
     return response
 
 
@@ -108,11 +113,14 @@ async def request_id_middleware(request: Request, call_next: Any) -> Any:
 @app.api_route("/", methods=["GET", "HEAD"], tags=["Root"], include_in_schema=False)
 async def root_ping() -> dict[str, Any]:
     """Root ping endpoint for platform health checkers."""
+    commit_sha = settings.GIT_COMMIT_SHA or settings.RENDER_GIT_COMMIT
     return {
         "status": "ok",
         "app": settings.APP_NAME,
         "docs": "/docs",
         "api": "/api/v1",
+        "version": settings.APP_VERSION,
+        "commit_sha": commit_sha,
     }
 
 

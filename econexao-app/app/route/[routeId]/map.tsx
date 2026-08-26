@@ -201,11 +201,27 @@ export default function MapScreen() {
     }
   };
 
+  const [isProlongedLoading, setIsProlongedLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (mapQuery.isPending && !ephemeralData?.previewData) {
+      const timer = setTimeout(() => {
+        setIsProlongedLoading(true);
+      }, 4000);
+      return () => clearTimeout(timer);
+    } else if (isProlongedLoading) {
+      setIsProlongedLoading(false);
+    }
+  }, [mapQuery.isPending, ephemeralData?.previewData, isProlongedLoading]);
+
   if (mapQuery.isPending && !ephemeralData?.previewData) {
+    const loadingMessage = isProlongedLoading
+      ? 'Servidor de staging iniciando; isso pode levar alguns segundos.'
+      : 'Carregando mapa da rota...';
     return (
       <View style={styles.container}>
         <AppHeader showBack onBackPress={() => router.back()} title="Mapa da Rota" />
-        <LoadingView message="Carregando mapa da rota..." />
+        <LoadingView message={loadingMessage} />
       </View>
     );
   }
@@ -220,7 +236,7 @@ export default function MapScreen() {
       : errorCode === 'TIMEOUT'
       ? {
           title: 'O mapa demorou para responder',
-          message: 'A conexão pode estar instável. Tente carregar novamente.',
+          message: 'A conexão pode estar instável ou o servidor demorou para responder. Tente carregar novamente.',
         }
       : {
           title: 'Erro ao carregar mapa',

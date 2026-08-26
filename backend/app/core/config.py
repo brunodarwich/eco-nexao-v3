@@ -19,6 +19,9 @@ class Settings(BaseSettings):
 
     APP_ENV: Literal["development", "test", "staging", "production"] = "development"
     APP_NAME: str = "ECOnexão API"
+    APP_VERSION: str = "1.0.0"
+    GIT_COMMIT_SHA: str | None = None
+    RENDER_GIT_COMMIT: str | None = None
     PORT: int = 8000
     HOST: str = "0.0.0.0"
     CORS_ORIGINS: list[str] = [

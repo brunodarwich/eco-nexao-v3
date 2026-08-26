@@ -2352,6 +2352,11 @@ export interface components {
              */
             request_id: string;
         };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
         /** FAQItemSchema */
         FAQItemSchema: {
             /** Id */
@@ -2366,10 +2371,23 @@ export interface components {
              */
             category: string;
         };
-        /** HTTPValidationError */
-        HTTPValidationError: {
-            /** Detail */
-            detail?: components["schemas"]["ValidationError"][];
+        /**
+         * HealthDatabaseStatus
+         * @description Database and PostGIS readiness status model.
+         */
+        HealthDatabaseStatus: {
+            /**
+             * Status
+             * @default ok
+             * @example ok
+             */
+            status: string;
+            /**
+             * Postgis
+             * @default true
+             * @example true
+             */
+            postgis: boolean;
         };
         /**
          * HealthStatus

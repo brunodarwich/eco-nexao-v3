@@ -107,6 +107,19 @@ jest.mock('./MapAdapter', () => {
 
 describe('MapScreen actor sheet (ECO-0905)', () => {
   const push = jest.fn();
+  let currentRenderer: TestRenderer.ReactTestRenderer | null = null;
+
+  afterEach(async () => {
+    if (currentRenderer) {
+      await act(async () => {
+        try {
+          currentRenderer?.unmount();
+        } catch {}
+      });
+      currentRenderer = null;
+    }
+    jest.clearAllTimers();
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -180,7 +193,7 @@ describe('MapScreen actor sheet (ECO-0905)', () => {
   it('abre como modal acessível e fecha pelo backdrop sem acionar o mapa', async () => {
     let renderer!: TestRenderer.ReactTestRenderer;
     await act(async () => {
-      renderer = TestRenderer.create(<MapScreen />);
+      currentRenderer = renderer = TestRenderer.create(<MapScreen />);
     });
 
     const root = renderer.root;
@@ -210,7 +223,7 @@ describe('MapScreen actor sheet (ECO-0905)', () => {
   it('renderiza a legenda contratual com contagem sem consultar categorias globais', async () => {
     let renderer!: TestRenderer.ReactTestRenderer;
     await act(async () => {
-      renderer = TestRenderer.create(<MapScreen />);
+      currentRenderer = renderer = TestRenderer.create(<MapScreen />);
     });
 
     const labels = renderer.root.findAllByType(require('react-native').Text)
@@ -222,16 +235,18 @@ describe('MapScreen actor sheet (ECO-0905)', () => {
   it('mostra loading, erro com retry e vazio sem pins', async () => {
     (useRouteMapQuery as jest.Mock).mockReturnValueOnce({ isPending: true });
     let renderer!: TestRenderer.ReactTestRenderer;
-    await act(async () => { renderer = TestRenderer.create(<MapScreen />); });
+    await act(async () => { currentRenderer = renderer = TestRenderer.create(<MapScreen />); });
     expect(renderer.root.findAllByType(require('react-native').Text)
       .some((node) => node.props.children === 'Carregando mapa da rota...')).toBe(true);
+    await act(async () => { renderer.unmount(); });
 
     const refetch = jest.fn();
     (useRouteMapQuery as jest.Mock).mockReturnValueOnce({ isPending: false, isError: true, refetch });
-    await act(async () => { renderer = TestRenderer.create(<MapScreen />); });
+    await act(async () => { currentRenderer = renderer = TestRenderer.create(<MapScreen />); });
     const retry = renderer.root.find((node) => node.props.accessibilityLabel === 'Tentar Novamente');
     await act(async () => retry.props.onPress());
     expect(refetch).toHaveBeenCalledTimes(1);
+    await act(async () => { renderer.unmount(); });
 
     (useRouteMapQuery as jest.Mock).mockReturnValueOnce({
       isPending: false,
@@ -239,9 +254,83 @@ describe('MapScreen actor sheet (ECO-0905)', () => {
       data: { route_id: 'route-pindobal', origin_id: 'origin-porto', geometry: null, bounds: { min_lat: -2.7, max_lat: -2.5, min_lng: -55, max_lng: -54.8 }, pins: [], legend: [] },
       refetch,
     });
-    await act(async () => { renderer = TestRenderer.create(<MapScreen />); });
+    await act(async () => { currentRenderer = renderer = TestRenderer.create(<MapScreen />); });
     expect(renderer.root.findAllByType(require('react-native').Text)
       .some((node) => node.props.children === 'Nenhum ponto nesta rota')).toBe(true);
+  });
+
+  it('apresenta estado de carregamento prolongado acessível durante cold start do Render', async () => {
+    jest.useFakeTimers();
+    let renderer: TestRenderer.ReactTestRenderer | null = null;
+    try {
+      (useRouteMapQuery as jest.Mock).mockReturnValue({ isPending: true });
+      await act(async () => {
+        renderer = TestRenderer.create(<MapScreen />);
+      });
+
+      expect(renderer!.root.findAllByType(require('react-native').Text)
+        .some((node) => node.props.children === 'Carregando mapa da rota...')).toBe(true);
+
+      await act(async () => {
+        jest.advanceTimersByTime(4500);
+      });
+
+      expect(renderer!.root.findAllByType(require('react-native').Text)
+        .some((node) => node.props.children === 'Servidor de staging iniciando; isso pode levar alguns segundos.')).toBe(true);
+    } finally {
+      if (renderer) {
+        await act(async () => {
+          (renderer as TestRenderer.ReactTestRenderer).unmount();
+        });
+      }
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    }
+  });
+
+  it('suporta 175 pins preservando limite de 200, legenda e contagens consistentes', async () => {
+    const pins175 = Array.from({ length: 175 }, (_, i) => ({
+      id: `pin-${i + 1}`,
+      actor_id: `actor-${i + 1}`,
+      name: `Ponto ${i + 1}`,
+      category_slug: i < 100 ? 'hospedagem' : 'alimentacao',
+      category_label: i < 100 ? 'Hospedagem' : 'Alimentação',
+      color: i < 100 ? '#2563EB' : '#D97706',
+      icon: i < 100 ? 'bed' : 'utensils',
+      latitude: -2.5 + (i * 0.001),
+      longitude: -54.9 + (i * 0.001),
+      layer: 'route_corridor',
+    }));
+
+    (useRouteMapQuery as jest.Mock).mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: {
+        route_id: 'route-pindobal',
+        origin_id: 'origin-porto',
+        geometry: null,
+        bounds: { min_lat: -2.7, max_lat: -2.3, min_lng: -55, max_lng: -54.7 },
+        city_bounds: { min_lat: -2.8, max_lat: -2.2, min_lng: -55.2, max_lng: -54.5 },
+        pins: pins175,
+        legend: [
+          { category_slug: 'hospedagem', label: 'Hospedagem', color: '#2563EB', icon: 'bed', count: 100, sort_order: 1 },
+          { category_slug: 'alimentacao', label: 'Alimentação', color: '#D97706', icon: 'utensils', count: 75, sort_order: 2 },
+        ],
+      },
+      refetch: jest.fn(),
+    });
+
+    let renderer!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      currentRenderer = renderer = TestRenderer.create(<MapScreen />);
+    });
+
+    const labels = renderer.root.findAllByType(require('react-native').Text)
+      .map((node) => node.props.children);
+    expect(labels).toContain('Hospedagem (100)');
+    expect(labels).toContain('Alimentação (75)');
+    expect(renderer.root.findAllByType(require('react-native').Text)
+      .some((node) => node.props.children === 'Mapa temporariamente indisponível')).toBe(false);
   });
 
   it.each([
@@ -256,7 +345,7 @@ describe('MapScreen actor sheet (ECO-0905)', () => {
       refetch,
     });
     let renderer!: TestRenderer.ReactTestRenderer;
-    await act(async () => { renderer = TestRenderer.create(<MapScreen />); });
+    await act(async () => { currentRenderer = renderer = TestRenderer.create(<MapScreen />); });
     expect(renderer.root.findAllByType(require('react-native').Text)
       .some((node) => node.props.children === expectedTitle)).toBe(true);
     const retry = renderer.root.find((node) => node.props.accessibilityLabel === 'Tentar Novamente');
@@ -266,7 +355,7 @@ describe('MapScreen actor sheet (ECO-0905)', () => {
 
   it('desabilita modo cidade sem city_bounds em vez de reutilizar bounds da rota', async () => {
     let renderer!: TestRenderer.ReactTestRenderer;
-    await act(async () => { renderer = TestRenderer.create(<MapScreen />); });
+    await act(async () => { currentRenderer = renderer = TestRenderer.create(<MapScreen />); });
     const cityButton = renderer.root.find(
       (node) => node.props.accessibilityLabel === 'Modo de visualização da cidade'
     );
@@ -288,7 +377,7 @@ describe('MapScreen actor sheet (ECO-0905)', () => {
       refetch,
     });
     let renderer!: TestRenderer.ReactTestRenderer;
-    await act(async () => { renderer = TestRenderer.create(<MapScreen />); });
+    await act(async () => { currentRenderer = renderer = TestRenderer.create(<MapScreen />); });
     expect(renderer.root.findAllByType(require('react-native').Text)
       .some((node) => node.props.children === 'Mapa temporariamente indisponível')).toBe(true);
     expect(renderer.root.findAll((node) => node.props.accessibilityLabel === 'Selecionar pin Pousada Pindobal')).toHaveLength(0);
@@ -297,7 +386,7 @@ describe('MapScreen actor sheet (ECO-0905)', () => {
   it('abre o catálogo preservando routeId, originId e actorId', async () => {
     let renderer!: TestRenderer.ReactTestRenderer;
     await act(async () => {
-      renderer = TestRenderer.create(<MapScreen />);
+      currentRenderer = renderer = TestRenderer.create(<MapScreen />);
     });
 
     const root = renderer.root;
@@ -360,7 +449,7 @@ describe('MapScreen actor sheet (ECO-0905)', () => {
 
     let renderer!: TestRenderer.ReactTestRenderer;
     await act(async () => {
-      renderer = TestRenderer.create(<MapScreen />);
+      currentRenderer = renderer = TestRenderer.create(<MapScreen />);
     });
 
     const root = renderer.root;
@@ -422,7 +511,7 @@ describe('MapScreen actor sheet (ECO-0905)', () => {
 
     let renderer!: TestRenderer.ReactTestRenderer;
     await act(async () => {
-      renderer = TestRenderer.create(<MapScreen />);
+      currentRenderer = renderer = TestRenderer.create(<MapScreen />);
     });
 
     const root = renderer.root;
@@ -472,7 +561,7 @@ describe('MapScreen actor sheet (ECO-0905)', () => {
 
     let renderer!: TestRenderer.ReactTestRenderer;
     await act(async () => {
-      renderer = TestRenderer.create(<MapScreen />);
+      currentRenderer = renderer = TestRenderer.create(<MapScreen />);
     });
 
     const root = renderer.root;
@@ -568,7 +657,7 @@ describe('MapScreen actor sheet (ECO-0905)', () => {
 
     let renderer!: TestRenderer.ReactTestRenderer;
     await act(async () => {
-      renderer = TestRenderer.create(<MapScreen />);
+      currentRenderer = renderer = TestRenderer.create(<MapScreen />);
     });
 
     const root = renderer.root;

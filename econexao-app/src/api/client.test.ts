@@ -158,6 +158,10 @@ describe('ApiClient auth', () => {
 
   it('aborta e classifica timeout do mapa', async () => {
     global.fetch = jest.fn((_url, options) => new Promise((_resolve, reject) => {
+      if (options?.signal?.aborted) {
+        reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+        return;
+      }
       options?.signal?.addEventListener('abort', () =>
         reject(Object.assign(new Error('aborted'), { name: 'AbortError' }))
       );
@@ -166,6 +170,45 @@ describe('ApiClient auth', () => {
     await expect(
       client.getRouteMapPayload('route-id', {}, { timeoutMs: 1 })
     ).rejects.toMatchObject({ status: 0, code: 'TIMEOUT' });
+  });
+
+  it('suporta resposta imediata sem abortar', async () => {
+    const payload = { data: { pins: [], legend: [] } };
+    global.fetch = jest.fn().mockResolvedValue(
+      new Response(JSON.stringify(payload), { status: 200 })
+    );
+    const client = new ApiClient('https://api.example/api/v1');
+    const result = await client.getRouteMapPayload('route-id');
+    expect(result).toEqual(payload);
+  });
+
+  it('suporta cold start simulado quando o servidor responde antes do timeout', async () => {
+    const payload = { data: { pins: [], legend: [] } };
+    global.fetch = jest.fn((_url, _options) => new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(new Response(JSON.stringify(payload), { status: 200 }));
+      }, 50);
+    })) as jest.Mock;
+    const client = new ApiClient('https://api.example/api/v1');
+    const result = await client.getRouteMapPayload('route-id', {}, { timeoutMs: 500 });
+    expect(result).toEqual(payload);
+  });
+
+  it('cancela a requisição de mapa quando o caller aborta o signal', async () => {
+    const controller = new AbortController();
+    global.fetch = jest.fn((_url, options) => new Promise((_resolve, reject) => {
+      if (options?.signal?.aborted) {
+        reject(Object.assign(new Error('user cancelled'), { name: 'AbortError' }));
+        return;
+      }
+      options?.signal?.addEventListener('abort', () =>
+        reject(Object.assign(new Error('user cancelled'), { name: 'AbortError' }))
+      );
+    })) as jest.Mock;
+    const client = new ApiClient('https://api.example/api/v1');
+    const promise = client.getRouteMapPayload('route-id', {}, { signal: controller.signal });
+    controller.abort();
+    await expect(promise).rejects.toMatchObject({ status: 0, code: 'NETWORK_ERROR' });
   });
 
   it('coordena refresh concorrente e repete cada request uma vez', async () => {

@@ -5969,6 +5969,15 @@ components:
       - request_id
       title: ErrorResponse
       description: Standard error response envelope.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
     FAQItemSchema:
       properties:
         id:
@@ -5990,15 +5999,21 @@ components:
       - question
       - answer
       title: FAQItemSchema
-    HTTPValidationError:
+    HealthDatabaseStatus:
       properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
+        status:
+          type: string
+          title: Status
+          default: ok
+          example: ok
+        postgis:
+          type: boolean
+          title: Postgis
+          default: true
+          example: true
       type: object
-      title: HTTPValidationError
+      title: HealthDatabaseStatus
+      description: Database and PostGIS readiness status model.
     HealthStatus:
       properties:
         status:

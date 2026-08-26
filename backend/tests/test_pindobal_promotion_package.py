@@ -27,4 +27,5 @@ def test_committed_manifest_checksum_matches() -> None:
     expected, filename = CHECKSUM_PATH.read_text(encoding="ascii").strip().split("  ", 1)
 
     assert filename == MANIFEST_PATH.name
-    assert hashlib.sha256(MANIFEST_PATH.read_bytes()).hexdigest() == expected
+    content = MANIFEST_PATH.read_bytes().replace(b"\r\n", b"\n")
+    assert hashlib.sha256(content).hexdigest() == expected

@@ -1,0 +1,8 @@
+.tmp
+.git
+.github
+backend
+docs
+landing-page
+supabase
+*.tmp

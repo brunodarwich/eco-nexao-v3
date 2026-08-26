@@ -89,6 +89,12 @@ export const territorialQueries = {
       select: (e) => e.data,
       enabled: Boolean(routeId),
       staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: (failureCount, error) => {
+        if (error && typeof error === 'object' && 'code' in error && error.code === 'OFFLINE') {
+          return false;
+        }
+        return failureCount < 1;
+      },
     });
   },
   actorCategories: () =>

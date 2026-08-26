@@ -17,18 +17,16 @@ CHECKSUM_PATH = ARTIFACT_DIR / "promotion_manifest.sha256"
 
 
 def sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+    content = path.read_bytes().replace(b"\r\n", b"\n")
+    return hashlib.sha256(content).hexdigest()
 
 
 def relative_file(path: Path) -> dict[str, Any]:
+    content = path.read_bytes().replace(b"\r\n", b"\n")
     return {
         "path": path.relative_to(ROOT).as_posix(),
-        "bytes": path.stat().st_size,
-        "sha256": sha256(path),
+        "bytes": len(content),
+        "sha256": hashlib.sha256(content).hexdigest(),
     }
 
 

@@ -28,12 +28,12 @@
     {
       "bytes": 9795,
       "path": "backend/app/ingestion/seed_pindobal.py",
-      "sha256": "b38ecad1cfa4dac5742008a52b78c46473b9d3006e8e1ddb0098b8e801e7db26"
+      "sha256": "589f1c4c2110a85ec30819c9da45e0ef57467b5bc59fa8a27344d490b1a9fb83"
     },
     {
-      "bytes": 21353,
+      "bytes": 21989,
       "path": "backend/app/ingestion/pindobal_repository.py",
-      "sha256": "50413e4e8d31f547eba9296bc195187bc37be236337c2a2e82c946fcf701b554"
+      "sha256": "1a941b8909e20840745a99c72685c4736a2d8c9ad9611870627e329a2cb78230"
     },
     {
       "bytes": 7063,
@@ -51,9 +51,9 @@
       "sha256": "91cf01254fd168207b5df51660e56da81112831e7742ba8e7f6fdfb1c27de614"
     },
     {
-      "bytes": 9040,
+      "bytes": 9687,
       "path": "docs/data/pindobal_data_contract.md",
-      "sha256": "24c1c513e52b8f3971119f270c065ca550df4e9e94069bd1a88de5aeb3c2ef9e"
+      "sha256": "128a8ae0ab5b9d629ad5a5379dd003a72f70cc6be5ebf6252e2380d9ffc842fb"
     }
   ],
   "migrations": [
@@ -101,6 +101,76 @@
       "bytes": 1720,
       "path": "supabase/migrations/20260813102503_pindobal_spatial_integrity.sql",
       "sha256": "9a16e480e969d60a7992ab40cc8c82cbc6409c1fb987ab5f83b8ba8cec68c778"
+    },
+    {
+      "bytes": 2399,
+      "path": "supabase/migrations/20260813141416_add_editorial_media_lifecycle.sql",
+      "sha256": "2306310d16ff13e63110d5f9496b1c991efdf44cebbb8ffb8e4499e6b238866f"
+    },
+    {
+      "bytes": 2732,
+      "path": "supabase/migrations/20260813142059_harden_editorial_media_lifecycle.sql",
+      "sha256": "dc5ba7b4c76ddedb244905b277215ecdcd26b7ba36d5e94fb1104bcecafc3bd4"
+    },
+    {
+      "bytes": 3043,
+      "path": "supabase/migrations/20260813142447_finalize_media_kind_invariants.sql",
+      "sha256": "f62dc12af603e738fab5d8bb09f90e4780cde71631610d4ff2645081a797da80"
+    },
+    {
+      "bytes": 2057,
+      "path": "supabase/migrations/20260813142802_close_derivative_metadata_null_gap.sql",
+      "sha256": "b6ee119d3b005330b61eb55bcdef3e62401fd98bdc28295b897cd85fab4c2b9b"
+    },
+    {
+      "bytes": 1456,
+      "path": "supabase/migrations/20260813152038_allow_media_processing_without_storage_key.sql",
+      "sha256": "fdea3e09b32934dec025592ba7e0e140c650a0fe3865c2a01db197aee94e1cc9"
+    },
+    {
+      "bytes": 1149,
+      "path": "supabase/migrations/20260813175721_archive_duplicate_route_actor_links.sql",
+      "sha256": "1fb8e233e7fe818b60cf9c24b459cc100addd9627642b09a9c87a377aebc9e88"
+    },
+    {
+      "bytes": 1067,
+      "path": "supabase/migrations/20260814002232_add_deleted_user_tombstones.sql",
+      "sha256": "26495913e43ebe4c4b9c1802543f3cef636bd83a4efd7a1a4a8c089de5da9630"
+    },
+    {
+      "bytes": 193,
+      "path": "supabase/migrations/20260824010914_remove_personal_impact_badges.sql",
+      "sha256": "d9a8023625a02ef6c2456cd55357d243e6e5178977288db5f192434a4d3df3b0"
+    },
+    {
+      "bytes": 2965,
+      "path": "supabase/migrations/20260824025254_canonical_taxonomy_adr0010.sql",
+      "sha256": "183865419e1a1eec0651a51fcebe50378bb944d737cbb55c5dca335175d8d53b"
+    },
+    {
+      "bytes": 891,
+      "path": "supabase/migrations/20260824040000_actor_region_layers_adr0011.sql",
+      "sha256": "bfe1f74314a4f32ecd545a0817cb60a1b748c1fe818e7846e115150da43224a3"
+    },
+    {
+      "bytes": 4195,
+      "path": "supabase/migrations/20260824194405_remediate_canonical_taxonomy_adr0010.sql",
+      "sha256": "2bfe8d18aae594964965d46002dbcd8d914d5dde375ff77f9ad293dda55d5dbc"
+    },
+    {
+      "bytes": 4588,
+      "path": "supabase/migrations/20260824211947_remediate_emergency_taxonomy_classification_adr0010.sql",
+      "sha256": "b8bc0ed09252716a0d0e8f69d818941f8be7650ed3f9498eb9af02aee4573108"
+    },
+    {
+      "bytes": 1840,
+      "path": "supabase/migrations/20260825003236_remediate_actor_region_layers_adr0011.sql",
+      "sha256": "9f50a740aeb9ab2f22401225e030beb71af5a766e212bd037852cd54a16b864d"
+    },
+    {
+      "bytes": 851,
+      "path": "supabase/migrations/20260826074500_routing_monthly_usage.sql",
+      "sha256": "61f4237c59ef75f92ce2018b5117c81cb0d120e2463bf9667aada286ab0abbfb"
     }
   ],
   "package": {
