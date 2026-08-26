@@ -26,7 +26,7 @@ describe('runtime architecture', () => {
     const source = fs.readFileSync(path.resolve('src/state/appReducer.ts'), 'utf8');
     const body = source.match(/export interface AppState\s*{([\s\S]*?)}/)?.[1] ?? '';
     const properties = [...body.matchAll(/^\s*(\w+)\??:/gm)].map((match) => match[1]).sort();
-    expect(properties).toEqual(['accessibility', 'activeRegionId']);
+    expect(properties).toEqual(['accessibility', 'activeRegionId', 'featureFlags']);
   });
 
   it('não possui fallbacks silenciosos para MOCK em requisições de produção', () => {

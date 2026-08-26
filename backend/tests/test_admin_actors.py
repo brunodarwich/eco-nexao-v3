@@ -270,6 +270,24 @@ async def test_service_categories_edge_cases() -> None:
         )
     assert exc.value.status_code == 404
 
+    # 422 before persistence when canonical metadata would drift
+    service.repo.get_category_by_id.return_value = ActorCategory(
+        id=cat_id,
+        slug="hospedagem",
+        label="Hospedagem",
+        icon="bed",
+        color="#2563EB",
+        sort_order=3,
+        is_public=True,
+        spatial_scope="route_corridor",
+    )
+    with pytest.raises(HTTPException) as exc:
+        await service.update_category(
+            ctx, cat_id, AdminCategoryUpdateSchema(label="Label divergente")
+        )
+    assert exc.value.status_code == 422
+    service.repo.update_category.assert_not_awaited()
+
 
 @pytest.mark.asyncio
 async def test_service_accessibility_features_edge_cases() -> None:
@@ -552,8 +570,8 @@ def test_admin_create_category_duplicate_slug_conflict() -> None:
                 "slug": "hospedagem",
                 "label": "Hospedagem",
                 "icon": "bed",
-                "color": "#000",
-                "sort_order": 1,
+                "color": "#2563EB",
+                "sort_order": 3,
             },
             headers={"Authorization": "Bearer token"},
         )

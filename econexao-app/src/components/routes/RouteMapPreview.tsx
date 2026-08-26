@@ -7,20 +7,39 @@ import { theme } from '../../theme/theme';
 import { makeAccessibleButton } from '../../utils/accessibility';
 import { ErrorStateView, LoadingView } from '../common/UIStateViews';
 import { MapAdapter } from '../map/MapAdapter';
+import type { RouteGeometry, MapBounds, MapPin, MapLegendItem } from '../../api/types';
 
 interface RouteMapPreviewProps {
   routeId: string;
   originId?: string;
   onExpand: (actorId?: string) => void;
+  customGeometry?: RouteGeometry | null;
+  customBounds?: MapBounds | null;
+  customPins?: MapPin[];
+  customLegend?: MapLegendItem[];
+  customCityBounds?: MapBounds | null;
+  isCustomLocation?: boolean;
 }
 
 export const RouteMapPreview: React.FC<RouteMapPreviewProps> = ({
   routeId,
   originId,
   onExpand,
+  customGeometry,
+  customBounds,
+  customPins,
+  customLegend,
+  customCityBounds,
+  isCustomLocation = false,
 }) => {
   const [isVisible, setIsVisible] = useState(true);
-  const mapQuery = useRouteMapQuery(routeId, originId);
+  const mapQuery = useRouteMapQuery(routeId, {
+    origin_id: isCustomLocation ? undefined : originId,
+  });
+
+  const effectiveGeometry = (isCustomLocation && customGeometry) ? customGeometry : mapQuery.data?.geometry;
+  const effectiveBounds = (isCustomLocation && customBounds) ? customBounds : mapQuery.data?.bounds;
+  const effectivePins = (isCustomLocation && customPins) ? customPins : (mapQuery.data?.pins ?? []);
 
   return (
     <View style={styles.section}>
@@ -44,23 +63,23 @@ export const RouteMapPreview: React.FC<RouteMapPreviewProps> = ({
 
       {isVisible && (
         <View style={styles.mapCard}>
-          {mapQuery.isPending ? (
+          {mapQuery.isPending && !isCustomLocation ? (
             <View style={styles.stateContainer}>
               <LoadingView message="Carregando mapa da rota..." />
             </View>
-          ) : mapQuery.isError ? (
+          ) : mapQuery.isError && !isCustomLocation ? (
             <View style={styles.stateContainer}>
               <ErrorStateView
                 message="Não foi possível carregar o mapa desta origem."
                 onRetry={() => void mapQuery.refetch()}
               />
             </View>
-          ) : mapQuery.data ? (
+          ) : mapQuery.data || (isCustomLocation && customGeometry) ? (
             <>
               <MapAdapter
-                pins={mapQuery.data.pins}
-                geometry={mapQuery.data.geometry}
-                bounds={mapQuery.data.bounds}
+                pins={effectivePins}
+                geometry={effectiveGeometry}
+                bounds={effectiveBounds}
                 onSelectActor={(actorId) => onExpand(actorId)}
                 height={236}
                 showControls={false}
@@ -101,7 +120,8 @@ const styles = StyleSheet.create({
     color: theme.colors.brandDeep,
   },
   visibilityButton: {
-    minHeight: 40,
+    minHeight: 44,
+    minWidth: 44,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

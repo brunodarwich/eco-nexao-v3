@@ -47,6 +47,7 @@ class Region(Base):
     )
 
     routes: Mapped[list["Route"]] = relationship("Route", back_populates="region")
+    actors: Mapped[list["Actor"]] = relationship("Actor", back_populates="region")
 
 
 class Route(Base):
@@ -166,9 +167,11 @@ class ActorCategory(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     slug: Mapped[str] = mapped_column(VARCHAR(100), unique=True, nullable=False)
     label: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
-    icon: Mapped[str | None] = mapped_column(VARCHAR(100), nullable=True)
-    color: Mapped[str | None] = mapped_column(VARCHAR(50), nullable=True)
+    icon: Mapped[str] = mapped_column(VARCHAR(100), nullable=False)
+    color: Mapped[str] = mapped_column(VARCHAR(50), nullable=False)
     sort_order: Mapped[int] = mapped_column(INTEGER, default=0, nullable=False)
+    is_public: Mapped[bool] = mapped_column(BOOLEAN, default=True, nullable=False)
+    spatial_scope: Mapped[str] = mapped_column(VARCHAR(32), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.clock_timestamp(), nullable=False
     )
@@ -188,6 +191,9 @@ class Actor(Base):
     description: Mapped[str | None] = mapped_column(TEXT, nullable=True)
     category_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("actor_categories.id", ondelete="RESTRICT"), nullable=False
+    )
+    region_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("regions.id", ondelete="SET NULL"), nullable=True
     )
     sub_category: Mapped[str | None] = mapped_column(VARCHAR(100), nullable=True)
     address: Mapped[str | None] = mapped_column(TEXT, nullable=True)
@@ -220,6 +226,7 @@ class Actor(Base):
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     category: Mapped["ActorCategory"] = relationship("ActorCategory", back_populates="actors")
+    region: Mapped["Region | None"] = relationship("Region", back_populates="actors")
     route_actors: Mapped[list["RouteActor"]] = relationship(
         "RouteActor", back_populates="actor", cascade="all, delete-orphan"
     )
@@ -585,6 +592,22 @@ class DeletedUserTombstone(Base):
         DateTime(timezone=True), server_default=func.clock_timestamp(), nullable=False
     )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class RoutingMonthlyUsage(Base):
+    """Shared atomic monthly usage counter across workers/instances (ADR 0013)."""
+
+    __tablename__ = "routing_monthly_usage"
+    __table_args__ = {"schema": "app_private"}
+
+    year_month: Mapped[str] = mapped_column(VARCHAR(7), primary_key=True)
+    call_count: Mapped[int] = mapped_column(INTEGER, default=0, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.clock_timestamp(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.clock_timestamp(), nullable=False
+    )
 
 
 class UserPreference(Base):

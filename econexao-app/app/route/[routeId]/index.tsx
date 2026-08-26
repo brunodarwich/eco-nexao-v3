@@ -7,7 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { AppHeader } from '../../../src/components/common/AppHeader';
 import { EmptyStateView, ErrorStateView, LoadingView } from '../../../src/components/common/UIStateViews';
 import { LocalCatalogPreview } from '../../../src/components/routes/LocalCatalogPreview';
-import { OriginSelector } from '../../../src/components/routes/OriginSelector';
+import { OriginSelector, MY_LOCATION_ORIGIN_ID, CHOOSE_ON_MAP_ORIGIN_ID } from '../../../src/components/routes/OriginSelector';
 import { RouteMapPreview } from '../../../src/components/routes/RouteMapPreview';
 import { useRouteAlertsQuery, useRouteDetailQuery } from '../../../src/hooks/queries';
 import { theme, useAppTheme } from '../../../src/theme/theme';
@@ -16,18 +16,26 @@ import { makeAccessibleButton } from '../../../src/utils/accessibility';
 import { apiClient, ApiClientError } from '../../../src/api/client';
 import { queryKeys } from '../../../src/api/queryKeys';
 import { AuthContext } from '../../../src/auth/AuthProvider';
+import { useAppContext } from '../../../src/state/useAppContext';
+import type { RoutePreviewData, RouteGeometry, MapBounds } from '../../../src/api/types';
+import type { MapCoordinate } from '../../../src/components/map/MapAdapter.types';
+import type { LocationCoordinates } from '../../../src/hooks/useCurrentLocation';
 
 const routePath = (
   routeId: string,
   destination: 'map' | 'catalog',
   originId?: string,
   actorId?: string,
-  category?: string
+  category?: string,
+  mode?: string
 ) => {
   const query = new URLSearchParams();
-  if (originId) query.set('originId', originId);
+  if (originId && originId !== MY_LOCATION_ORIGIN_ID && originId !== CHOOSE_ON_MAP_ORIGIN_ID) {
+    query.set('originId', originId);
+  }
   if (actorId) query.set('actorId', actorId);
   if (category) query.set('category', category);
+  if (mode) query.set('mode', mode);
   const suffix = query.toString();
   return `/route/${encodeURIComponent(routeId)}/${destination}${suffix ? `?${suffix}` : ''}`;
 };
@@ -35,6 +43,8 @@ const routePath = (
 export default function RouteDetailScreen() {
   const router = useRouter();
   const theme = useAppTheme();
+  const { state: appState } = useAppContext();
+  const isDynamicRoutingEnabled = Boolean(appState?.featureFlags?.dynamicRouting);
   let queryClient: ReturnType<typeof useQueryClient> | undefined;
   try {
     queryClient = useQueryClient();
@@ -49,26 +59,99 @@ export default function RouteDetailScreen() {
     actorId?: string;
   }>();
 
-
   const [isStartingTrip, setIsStartingTrip] = useState(false);
   const detail = useRouteDetailQuery(routeId);
 
   const [originId, setOriginId] = useState<string | undefined>(initialOriginId);
+  const [previewData, setPreviewData] = useState<RoutePreviewData | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const lastValidOriginIdRef = React.useRef<string | undefined>(initialOriginId);
+
+  const isCustomLocation = isDynamicRoutingEnabled && (originId === MY_LOCATION_ORIGIN_ID || originId === CHOOSE_ON_MAP_ORIGIN_ID || Boolean(previewData));
   const requestedOriginExists = detail.data?.origins.some((origin) => origin.id === originId);
-  const effectiveOrigin = requestedOriginExists ? originId : detail.data?.origins[0]?.id;
+  const effectiveOrigin = isCustomLocation ? originId : (requestedOriginExists ? originId : detail.data?.origins[0]?.id);
 
   useEffect(() => {
     setOriginId(initialOriginId);
+    setPreviewData(null);
+    if (initialOriginId && initialOriginId !== MY_LOCATION_ORIGIN_ID && initialOriginId !== CHOOSE_ON_MAP_ORIGIN_ID) {
+      lastValidOriginIdRef.current = initialOriginId;
+    }
   }, [initialOriginId, routeId]);
 
+  // Read ephemeral preview transferred from map screen via memory cache
+  useEffect(() => {
+    if (!isDynamicRoutingEnabled || !queryClient || !routeId) return;
+    const ephemeralKey = queryKeys.routes.ephemeralPreview(routeId);
+    const cachedData = queryClient.getQueryData<{
+      previewData: RoutePreviewData;
+      originType: string;
+    }>(ephemeralKey);
+
+    if (cachedData?.previewData) {
+      setPreviewData(cachedData.previewData);
+      setOriginId(cachedData.originType || CHOOSE_ON_MAP_ORIGIN_ID);
+      AccessibilityInfo.announceForAccessibility('Trajeto sugerido a partir do ponto escolhido no mapa carregado.');
+      // Consume/clear ephemeral preview so subsequent back/focus operations don't re-trigger
+      queryClient.removeQueries({ queryKey: ephemeralKey });
+    }
+  }, [queryClient, routeId, isDynamicRoutingEnabled]);
+
   const alerts = useRouteAlertsQuery(routeId);
+
+  const handleSelectOrigin = (newOriginId: string) => {
+    setOriginId(newOriginId);
+    if (newOriginId !== MY_LOCATION_ORIGIN_ID && newOriginId !== CHOOSE_ON_MAP_ORIGIN_ID) {
+      lastValidOriginIdRef.current = newOriginId;
+      setPreviewData(null);
+      if (queryClient) {
+        queryClient.removeQueries({ queryKey: queryKeys.routes.ephemeralPreview(routeId) });
+      }
+    }
+  };
+
+  const handleSelectCoordinate = async (coords: MapCoordinate, originType: string = CHOOSE_ON_MAP_ORIGIN_ID) => {
+    if (isPreviewLoading || !isDynamicRoutingEnabled) return;
+    setIsPreviewLoading(true);
+    try {
+      const response = await apiClient.previewRoute(routeId, {
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        travel_mode: 'DRIVE',
+      });
+      setPreviewData(response.data);
+      setOriginId(originType);
+      AccessibilityInfo.announceForAccessibility('Trajeto sugerido a partir do ponto escolhido carregado com sucesso.');
+    } catch {
+      // Fallback to previous valid origin or first origin
+      const fallbackOrigin = lastValidOriginIdRef.current || detail.data?.origins[0]?.id;
+      setOriginId(fallbackOrigin);
+      setPreviewData(null);
+      AccessibilityInfo.announceForAccessibility('Não foi possível calcular o trajeto sugerido.');
+      Alert.alert(
+        'Trajeto Sugerido Indisponível',
+        'Não conseguimos calcular o trajeto sugerido a partir deste ponto. Exibindo rota pela origem padrão.'
+      );
+    } finally {
+      setIsPreviewLoading(false);
+    }
+  };
+
+  const handleSelectCurrentLocation = async (coords: LocationCoordinates) => {
+    if (!isDynamicRoutingEnabled) return;
+    await handleSelectCoordinate(coords, MY_LOCATION_ORIGIN_ID);
+  };
+
+  const handleStartSelectOnMap = () => {
+    if (!isDynamicRoutingEnabled) return;
+    router.push(routePath(routeId, 'map', isCustomLocation ? undefined : effectiveOrigin, actorId, undefined, 'select-origin'));
+  };
 
   const handleStartTrip = async () => {
     try {
       setIsStartingTrip(true);
       await apiClient.createTrip(routeId);
       if (queryClient && user?.id) {
-
         void queryClient.invalidateQueries({ queryKey: queryKeys.myTrips(user.id) });
       }
 
@@ -81,7 +164,6 @@ export default function RouteDetailScreen() {
       setIsStartingTrip(false);
     }
   };
-
 
   if (detail.isPending) {
     return <LoadingView message="Carregando detalhes da rota..." />;
@@ -125,6 +207,20 @@ export default function RouteDetailScreen() {
 
   const route = detail.data;
 
+  const customGeometry: RouteGeometry | null = previewData
+    ? {
+        id: originId || MY_LOCATION_ORIGIN_ID,
+        route_origin_id: originId || MY_LOCATION_ORIGIN_ID,
+        provider: previewData.provider || 'dynamic_preview',
+        geojson: previewData.geojson,
+        encoded_polyline: previewData.encoded_polyline ?? null,
+        distance_m: previewData.distance_m,
+        duration_s: previewData.duration_s,
+      }
+    : null;
+
+  const customBounds: MapBounds | null = previewData?.bounds ?? null;
+
   return (
     <View style={styles.container}>
       <AppHeader showBack onBackPress={() => router.back()} title={route.title} />
@@ -145,26 +241,59 @@ export default function RouteDetailScreen() {
           <OriginSelector
             origins={route.origins}
             selectedOriginId={effectiveOrigin}
-            onSelectOrigin={(id) => setOriginId(id)}
+            onSelectOrigin={handleSelectOrigin}
+            onSelectCurrentLocation={handleSelectCurrentLocation}
+            onStartSelectOnMap={handleStartSelectOnMap}
+            isLoadingLocation={isPreviewLoading}
+            enableDynamicRouting={isDynamicRoutingEnabled}
           />
+        )}
+
+        {/* Dynamic preview notice banner */}
+        {isCustomLocation && (
+          <View style={styles.previewNoticeBanner} accessibilityRole="alert" accessibilityLiveRegion="polite">
+            <Ionicons name="sparkles-outline" size={16} color={theme.colors.brandForest} />
+            <View style={styles.previewNoticeContent}>
+              <Text style={styles.previewNoticeText}>
+                Trajeto sugerido a partir do seu ponto de partida
+              </Text>
+              {previewData && (
+                <Text style={styles.previewNoticeSubtext}>
+                  Distância estimada: {(previewData.distance_m / 1000).toFixed(1)} km • Tempo: ~{Math.round(previewData.duration_s / 60)} min
+                </Text>
+              )}
+            </View>
+          </View>
         )}
 
         <RouteMapPreview
           routeId={routeId}
-          originId={effectiveOrigin}
-          onExpand={(selectedActorId) =>
-            router.push(routePath(routeId, 'map', effectiveOrigin, selectedActorId ?? actorId))
-          }
+          originId={isCustomLocation ? undefined : effectiveOrigin}
+          customGeometry={customGeometry}
+          customBounds={customBounds}
+          customPins={isCustomLocation ? previewData?.pins : undefined}
+          customLegend={isCustomLocation ? previewData?.legend : undefined}
+          customCityBounds={isCustomLocation ? previewData?.city_bounds : undefined}
+          isCustomLocation={isCustomLocation}
+          onExpand={(selectedActorId) => {
+            if (isCustomLocation && previewData && queryClient) {
+              queryClient.setQueryData(queryKeys.routes.ephemeralPreview(routeId), {
+                previewData,
+                originType: originId || MY_LOCATION_ORIGIN_ID,
+              });
+            }
+            router.push(routePath(routeId, 'map', isCustomLocation ? undefined : effectiveOrigin, selectedActorId ?? actorId));
+          }}
         />
 
         <LocalCatalogPreview
           routeId={routeId}
-          originId={effectiveOrigin}
+          originId={isCustomLocation ? undefined : effectiveOrigin}
           onOpenActor={(selectedActorId) =>
             router.push(`/actor/${encodeURIComponent(selectedActorId)}`)
           }
           onOpenCatalog={(category) =>
-            router.push(routePath(routeId, 'catalog', effectiveOrigin, actorId, category))
+            router.push(routePath(routeId, 'catalog', isCustomLocation ? undefined : effectiveOrigin, actorId, category))
           }
         />
 
@@ -196,7 +325,6 @@ export default function RouteDetailScreen() {
             </>
           )}
         </TouchableOpacity>
-
 
         {/* Route Alerts Section */}
         <View style={styles.section}>
@@ -282,6 +410,32 @@ const styles = StyleSheet.create({
     marginTop: 4,
     lineHeight: 22,
   },
+  previewNoticeBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(51, 96, 30, 0.08)',
+    borderLeftWidth: 3,
+    borderLeftColor: theme.colors.brandForest,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: theme.radii.md,
+  },
+  previewNoticeContent: {
+    flex: 1,
+  },
+  previewNoticeText: {
+    ...theme.typography.labelSm,
+    color: theme.colors.brandForest,
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  previewNoticeSubtext: {
+    ...theme.typography.bodySm,
+    color: theme.colors.onSurfaceVariant,
+    fontSize: 11,
+    marginTop: 2,
+  },
   section: {
     gap: 8,
   },
@@ -303,7 +457,6 @@ const styles = StyleSheet.create({
     ...theme.typography.labelMd,
     fontWeight: '700',
   },
-
   alertsContainer: {
     gap: 8,
   },

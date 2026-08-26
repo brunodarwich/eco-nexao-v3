@@ -1,5 +1,6 @@
 """Unit tests for Pindobal Cutout, Google Snapshot, Reconciler and Seed Runner (ECO-0304..0308)."""
 
+from app.core.taxonomy import CANONICAL_CATEGORY_SLUGS
 from app.ingestion.google_snapshot_importer import process_google_snapshot
 from app.ingestion.pindobal_cutout_importer import process_pindobal_cutout
 from app.ingestion.reconciler import reconcile_semtur_and_google
@@ -15,6 +16,7 @@ def test_pindobal_cutout_real_snapshot() -> None:
     assert stats["total_read"] == 303
     assert stats["valid_records"] == 303
     assert stats["coord_status_ok_count"] == 303
+    assert {record.categoria_normalizada for record in records} <= CANONICAL_CATEGORY_SLUGS
 
 
 def test_google_snapshot_real_snapshot() -> None:
@@ -26,6 +28,7 @@ def test_google_snapshot_real_snapshot() -> None:
     assert stats["support_poi_count"] == 593
     assert stats["emergency_poi_count"] == 144
     assert stats["external_id_missing_count"] == 737
+    assert {record.categoria_slug for record in records} <= CANONICAL_CATEGORY_SLUGS
 
     # Check contract rule: place_id MUST NOT be invented
     for rec in records:

@@ -2,7 +2,7 @@ import { infiniteQueryOptions, queryOptions, useInfiniteQuery, useQuery } from '
 
 import { apiClient } from '../api/client';
 import { normalizeQueryValue, queryKeys } from '../api/queryKeys';
-import type { GetRouteActorsQuery, ListRoutesQuery } from '../api/types';
+import type { GetRouteActorsQuery, GetRouteMapQuery, ListRoutesQuery } from '../api/types';
 
 export const adminQueries = {
   context: (isAuthenticated = true) =>
@@ -31,7 +31,7 @@ export const territorialQueries = {
       queryFn: () => apiClient.getRegions(),
       select: (envelope) => envelope.data,
       staleTime: 1000 * 60 * 10, // 10 minutes
-      gcTime: 1000 * 60 * 60, // 1 hour
+      gcTime: process.env.NODE_ENV === 'test' ? Infinity : 1000 * 60 * 60, // 1 hour
     }),
   routes: (regionId: string | undefined, params: ListRoutesQuery = {}, userId?: string) => {
     const request = {
@@ -77,21 +77,27 @@ export const territorialQueries = {
       staleTime: 1000 * 60 * 3,
     });
   },
-  routeMap: (routeId: string, originId?: string) =>
-    queryOptions({
-      queryKey: queryKeys.routes.map(routeId, originId),
-      queryFn: () => apiClient.getRouteMapPayload(routeId, originId),
+  routeMap: (routeId: string, params: GetRouteMapQuery = {}) => {
+    const request: GetRouteMapQuery = {
+      origin_id: normalizeQueryValue(params.origin_id),
+      layer: params.layer ?? undefined,
+      category: normalizeQueryValue(params.category),
+    };
+    return queryOptions({
+      queryKey: queryKeys.routes.map(routeId, request),
+      queryFn: ({ signal }) => apiClient.getRouteMapPayload(routeId, request, { signal }),
       select: (e) => e.data,
       enabled: Boolean(routeId),
       staleTime: 1000 * 60 * 5, // 5 minutes
-    }),
+    });
+  },
   actorCategories: () =>
     queryOptions({
       queryKey: queryKeys.actorCategories(),
       queryFn: () => apiClient.getActorCategories(),
       select: (e) => e.data,
       staleTime: 1000 * 60 * 15, // 15 minutes
-      gcTime: 1000 * 60 * 60, // 1 hour
+      gcTime: process.env.NODE_ENV === 'test' ? Infinity : 1000 * 60 * 60, // 1 hour
     }),
   actorDetail: (actorId: string) =>
     queryOptions({ queryKey: queryKeys.actorDetail(actorId), queryFn: () => apiClient.getActorDetail(actorId), select: (e) => e.data, enabled: Boolean(actorId) }),
@@ -106,7 +112,8 @@ export const useRouteOriginsQuery = (routeId: string) => useQuery(territorialQue
 export const useRouteGeometryQuery = (routeId: string, originId: string) => useQuery(territorialQueries.routeGeometry(routeId, originId));
 export const useRouteAlertsQuery = (routeId: string) => useQuery(territorialQueries.routeAlerts(routeId));
 export const useRouteActorsQuery = (routeId: string, params?: GetRouteActorsQuery) => useQuery(territorialQueries.routeActors(routeId, params));
-export const useRouteMapQuery = (routeId: string, originId?: string) => useQuery(territorialQueries.routeMap(routeId, originId));
+export const useRouteMapQuery = (routeId: string, params?: GetRouteMapQuery) =>
+  useQuery(territorialQueries.routeMap(routeId, params));
 export const useActorCategoriesQuery = () => useQuery(territorialQueries.actorCategories());
 export const useActorDetailQuery = (actorId: string) => useQuery(territorialQueries.actorDetail(actorId));
 export const useBootstrapQuery = (userId: string) => useQuery(territorialQueries.bootstrap(userId));

@@ -253,28 +253,39 @@ async def test_route_map_payload_filters_pins_by_selected_origin():
     )
 
     service = TerritorialService(AsyncMock())
-    service.repo.get_route_by_id = AsyncMock(return_value=MagicMock(id=route_id, origins=[]))
-    service.repo.get_route_geometry = AsyncMock(return_value=(None, None))
-    service.repo.list_route_actors = AsyncMock(
-        return_value=([(actor, "hospedagem", -2.58, -54.96)], 1)
+    service.repo.get_route_by_id = AsyncMock(
+        return_value=MagicMock(id=route_id, region_id=uuid.uuid4(), origins=[])
     )
+    geojson = {"type": "LineString", "coordinates": [[-54.96, -2.58], [-54.95, -2.57]]}
+    service.repo.get_route_geometry = AsyncMock(return_value=(None, geojson))
+    service.repo.find_route_corridor_actors = AsyncMock(
+        return_value=[(actor, "hospedagem", -2.58, -54.96, False, 0)]
+    )
+    service.repo.list_region_essential_actors = AsyncMock(return_value=[])
+    service.repo.get_region_bounds = AsyncMock(return_value=None)
+    service.repo.get_buffered_route_bounds = AsyncMock(return_value=None)
 
     envelope = await service.get_route_map_payload(route_id, origin_id=origin_id)
 
     assert envelope is not None
     assert envelope.data.selected_origin_id == origin_id
     assert [pin.actor_id for pin in envelope.data.pins] == [actor.id]
-    service.repo.list_route_actors.assert_awaited_once_with(
+    service.repo.find_route_corridor_actors.assert_awaited_once_with(
+        geojson_geom=geojson,
+        region_id=service.repo.get_route_by_id.return_value.region_id,
         route_id=route_id,
         origin_id=origin_id,
+        category_slug=None,
+        buffer_m=1000.0,
         limit=200,
-        offset=0,
     )
 
 
 @pytest.mark.asyncio
 async def test_get_route_geometry_sql_compiles_with_geometry_cast():
-    """Verify that get_route_geometry uses cast(geometry, Geometry) with ST_SimplifyPreserveTopology."""
+    """Verify that get_route_geometry uses cast(geometry, Geometry) with
+    ST_SimplifyPreserveTopology.
+    """
     mock_db = AsyncMock()
     route_id = uuid.uuid4()
     geom = RouteGeometry(id=uuid.uuid4(), route_origin_id=uuid.uuid4())
@@ -306,7 +317,7 @@ async def test_route_map_payload_fallback_origin_and_bounds():
     route_id = uuid.uuid4()
     origin_1_id = uuid.uuid4()
     origin_mock = MagicMock(id=origin_1_id)
-    route_mock = MagicMock(id=route_id, origins=[origin_mock])
+    route_mock = MagicMock(id=route_id, region_id=uuid.uuid4(), origins=[origin_mock])
 
     custom_bounds = {"min_lat": -2.6, "max_lat": -2.4, "min_lng": -55.0, "max_lng": -54.8}
     geom_mock = MagicMock(
@@ -324,11 +335,202 @@ async def test_route_map_payload_fallback_origin_and_bounds():
     service.repo.get_route_geometry = AsyncMock(return_value=(geom_mock, None))
     # No actors with coords
     service.repo.list_route_actors = AsyncMock(return_value=([], 0))
+    service.repo.list_region_essential_actors = AsyncMock(return_value=[])
+    service.repo.get_region_bounds = AsyncMock(return_value=None)
 
     envelope = await service.get_route_map_payload(route_id, origin_id=None)
 
     assert envelope is not None
     assert envelope.data.selected_origin_id == origin_1_id
-    assert envelope.data.bounds == custom_bounds
+    assert envelope.data.bounds is not None
+    assert envelope.data.bounds.model_dump() == custom_bounds
     assert envelope.data.geometry is not None
 
+
+@pytest.mark.asyncio
+async def test_route_map_payload_pins_and_legend_visual_metadata_and_ordering():
+    """Verify MapPinSchema visual metadata, legend counts/ordering and consistency with taxonomy."""
+    route_id = uuid.uuid4()
+    origin_id = uuid.uuid4()
+
+    actor_hosp1 = Actor(
+        id=uuid.uuid4(), slug="pousada-sol", name="Pousada Sol", category_id=uuid.uuid4()
+    )
+    actor_hosp2 = Actor(
+        id=uuid.uuid4(), slug="hotel-lua", name="Hotel Lua", category_id=uuid.uuid4()
+    )
+    actor_alim = Actor(
+        id=uuid.uuid4(), slug="restaurante-mar", name="Restaurante Mar", category_id=uuid.uuid4()
+    )
+    actor_unknown = Actor(
+        id=uuid.uuid4(), slug="outro-local", name="Outro Local", category_id=uuid.uuid4()
+    )
+
+    service = TerritorialService(AsyncMock())
+    service.repo.get_route_by_id = AsyncMock(
+        return_value=MagicMock(id=route_id, region_id=uuid.uuid4(), origins=[])
+    )
+    geojson = {"type": "LineString", "coordinates": [[-54.97, -2.59], [-54.90, -2.50]]}
+    service.repo.get_route_geometry = AsyncMock(return_value=(None, geojson))
+    service.repo.find_route_corridor_actors = AsyncMock(
+        return_value=[
+            (actor_hosp1, "hospedagem", -2.58, -54.96, False, 0),
+            (actor_alim, "alimentacao", -2.55, -54.94, False, 0),
+            (actor_hosp2, "hospedagem", -2.59, -54.97, False, 0),
+            (actor_unknown, "categoria-desconhecida", -2.50, -54.90, False, 0),
+        ]
+    )
+    service.repo.list_region_essential_actors = AsyncMock(return_value=[])
+    service.repo.get_region_bounds = AsyncMock(return_value=None)
+    service.repo.get_buffered_route_bounds = AsyncMock(return_value=None)
+
+    envelope = await service.get_route_map_payload(route_id, origin_id=origin_id)
+
+    assert envelope is not None
+    payload = envelope.data
+    assert len(payload.pins) == 4
+
+    # a) MapPinSchema com category_label, color, icon preenchidos
+    pin_alim = next(p for p in payload.pins if p.actor_id == actor_alim.id)
+    assert pin_alim.category_slug == "alimentacao"
+    assert pin_alim.category_label == "Alimentação"
+    assert pin_alim.color == "#D97706"
+    assert pin_alim.icon == "utensils"
+
+    pin_hosp = next(p for p in payload.pins if p.actor_id == actor_hosp1.id)
+    assert pin_hosp.category_slug == "hospedagem"
+    assert pin_hosp.category_label == "Hospedagem"
+    assert pin_hosp.color == "#2563EB"
+    assert pin_hosp.icon == "bed"
+
+    # c) fallback determinístico para categoria desconhecida/não cadastrada (usando 'outros')
+    pin_unk = next(p for p in payload.pins if p.actor_id == actor_unknown.id)
+    assert pin_unk.category_slug == "outros"
+    assert pin_unk.category_label == "Outros"
+    assert pin_unk.color == "#6B7280"
+    assert pin_unk.icon == "help-circle"
+
+    # b) legend com metadados idênticos aos pins e contagens exatas (soma igual a len(pins))
+    assert sum(item.count for item in payload.legend) == len(payload.pins)
+    assert len(payload.legend) == 3
+
+    # d) ordenação da legenda por sort_order ascendente e depois label
+    # alimentacao (sort_order=1), hospedagem (sort_order=3), outros (sort_order=99)
+    assert [item.category_slug for item in payload.legend] == [
+        "alimentacao",
+        "hospedagem",
+        "outros",
+    ]
+    assert payload.legend[0].category_slug == "alimentacao"
+    assert payload.legend[0].count == 1
+    assert payload.legend[0].sort_order == 1
+    assert payload.legend[0].label == "Alimentação"
+
+    assert payload.legend[1].category_slug == "hospedagem"
+    assert payload.legend[1].count == 2
+    assert payload.legend[1].sort_order == 3
+    assert payload.legend[1].label == "Hospedagem"
+
+    assert payload.legend[2].category_slug == "outros"
+    assert payload.legend[2].count == 1
+    assert payload.legend[2].sort_order == 99
+    assert payload.legend[2].label == "Outros"
+
+
+@pytest.mark.asyncio
+async def test_route_map_payload_dual_layers_and_city_bounds():
+    """Verify canonical ADR 0011 layers and independent route/city bounds."""
+    route_id = uuid.uuid4()
+    region_id = uuid.uuid4()
+    origin_id = uuid.uuid4()
+
+    # Actor in corridor only
+    actor_corridor = Actor(
+        id=uuid.uuid4(),
+        slug="restaurante-praia",
+        name="Restaurante da Praia",
+        category_id=uuid.uuid4(),
+        region_id=region_id,
+        green_badge_status="none",
+    )
+    # Actor essential in region AND on route -> layer: both
+    actor_both = Actor(
+        id=uuid.uuid4(),
+        slug="posto-saude-central",
+        name="Posto de Saúde Central",
+        category_id=uuid.uuid4(),
+        region_id=region_id,
+        green_badge_status="verified",
+    )
+    # Actor essential in region ONLY -> layer: city
+    actor_city = Actor(
+        id=uuid.uuid4(),
+        slug="delegacia-policia",
+        name="Delegacia de Polícia",
+        category_id=uuid.uuid4(),
+        region_id=region_id,
+        green_badge_status="none",
+    )
+
+    route_mock = MagicMock(id=route_id, region_id=region_id, origins=[])
+    region_bounds = {
+        "min_lat": -2.60,
+        "max_lat": -2.40,
+        "min_lng": -55.00,
+        "max_lng": -54.70,
+    }
+
+    service = TerritorialService(AsyncMock())
+    service.repo.get_route_by_id = AsyncMock(return_value=route_mock)
+    geojson = {"type": "LineString", "coordinates": [[-54.95, -2.55], [-54.90, -2.50]]}
+    service.repo.get_route_geometry = AsyncMock(return_value=(None, geojson))
+    service.repo.find_route_corridor_actors = AsyncMock(
+        return_value=[
+            (actor_corridor, "alimentacao", -2.55, -54.95, False, 10),
+            (actor_both, "transporte", -2.50, -54.90, True, 20),
+        ]
+    )
+    service.repo.list_region_essential_actors = AsyncMock(
+        return_value=[
+            (actor_both, "transporte", -2.50, -54.90),
+            (actor_city, "seguranca", -2.45, -54.75),
+        ]
+    )
+    service.repo.get_region_bounds = AsyncMock(return_value=region_bounds)
+    service.repo.get_buffered_route_bounds = AsyncMock(
+        return_value={
+            "min_lat": -2.55,
+            "max_lat": -2.50,
+            "min_lng": -54.95,
+            "max_lng": -54.90,
+        }
+    )
+
+    envelope = await service.get_route_map_payload(route_id, origin_id=origin_id)
+
+    assert envelope is not None
+    payload = envelope.data
+    assert len(payload.pins) == 3
+
+    pin_corridor = next(p for p in payload.pins if p.actor_id == actor_corridor.id)
+    assert pin_corridor.layer == "route_corridor"
+
+    pin_both = next(p for p in payload.pins if p.actor_id == actor_both.id)
+    assert pin_both.layer == "both"
+
+    pin_city = next(p for p in payload.pins if p.actor_id == actor_city.id)
+    assert pin_city.layer == "citywide_essential"
+
+    # Route bounds isolate corridor/both pins only (exclude city-only pin at -2.45, -54.75)
+    assert payload.bounds is not None
+    assert payload.bounds.min_lat == -2.55
+    assert payload.bounds.max_lat == -2.50
+    assert payload.bounds.min_lng == -54.95
+    assert payload.bounds.max_lng == -54.90
+
+    # City bounds encompasses the whole region
+    assert payload.city_bounds is not None
+    assert payload.city_bounds.model_dump() == region_bounds
+
+    # Check prioritization: actor_both has verified green badge (comes before corridor/city)
+    assert payload.pins[0].actor_id == actor_both.id

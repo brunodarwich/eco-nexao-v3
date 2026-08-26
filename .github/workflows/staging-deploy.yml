@@ -84,7 +84,7 @@ jobs:
         run: npm run typecheck
 
       - name: Jest Test Suite
-        run: npm test -- --watch=false --forceExit
+        run: npm test -- --watch=false
 
   migration-and-security-gate:
     name: Staging Migration & Secret Scan Gate

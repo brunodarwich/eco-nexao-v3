@@ -11,7 +11,10 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from app.core.config import Settings
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
+
+# Reconciled canonical table set for app_private schema across all 22 applied migrations:
 DOMAIN_TABLES = {
+    # 20260811010000_domain_tables.sql (Marco 1 / ECO-0103)
     "accessibility_features",
     "actor_accessibility_features",
     "actor_categories",
@@ -35,6 +38,17 @@ DOMAIN_TABLES = {
     "trip_actor_visits",
     "trips",
     "user_preferences",
+    # 20260813091542_editorial_rbac_and_audit_trail.sql (Marco 14 / ECO-1403 / ADR 0006)
+    "audit_logs",
+    "editorial_invitations",
+    "editorial_memberships",
+    "editorial_resource_states",
+    "editorial_role_capabilities",
+    # 20260814002232_add_deleted_user_tombstones.sql (Marco 19 / ECO-1902 / ADR 0007)
+    "deleted_user_tombstones",
+    # 20260824211947_remediate_emergency_taxonomy_classification_adr0010.sql
+    # (Marco 23 / ECO-2302 / ADR 0010)
+    "eco_2302_taxonomy_remediation_events",
 }
 
 
@@ -57,22 +71,31 @@ async def verify() -> int:
                 ).scalars()
             )
             if tables != DOMAIN_TABLES:
-                failures.append("DOMAIN_TABLE_SET_MISMATCH")
+                missing = DOMAIN_TABLES - tables
+                unexpected = tables - DOMAIN_TABLES
+                details = []
+                if missing:
+                    details.append(f"missing={sorted(missing)}")
+                if unexpected:
+                    details.append(f"unexpected={sorted(unexpected)}")
+                failures.append(f"DOMAIN_TABLE_SET_MISMATCH ({'; '.join(details)})")
 
-            rls_count = int(
+            tables_without_rls = set(
                 (
                     await connection.execute(
                         text(
-                            "select count(*) from pg_class c "
+                            "select c.relname from pg_class c "
                             "join pg_namespace n on n.oid = c.relnamespace "
                             "where n.nspname = 'app_private' and c.relkind = 'r' "
-                            "and c.relrowsecurity"
+                            "and not c.relrowsecurity"
                         )
                     )
-                ).scalar_one()
+                ).scalars()
             )
-            if rls_count != len(DOMAIN_TABLES):
-                failures.append("RLS_NOT_ENABLED_ON_ALL_TABLES")
+            if tables_without_rls:
+                failures.append(
+                    f"RLS_NOT_ENABLED_ON_ALL_TABLES ({', '.join(sorted(tables_without_rls))})"
+                )
 
             exposed_privileges = int(
                 (
@@ -148,8 +171,8 @@ async def verify() -> int:
             print(f"- categoria: {failure}")
         return 1
     print("TEST_SCHEMA=OK")
-    print("- 24 tabelas privadas encontradas")
-    print("- RLS habilitado em 24/24")
+    print(f"- {len(DOMAIN_TABLES)} tabelas privadas encontradas")
+    print(f"- RLS habilitado em {len(DOMAIN_TABLES)}/{len(DOMAIN_TABLES)}")
     print("- anon/authenticated sem acesso ao schema ou tabelas")
     print("- Point, LineString e trigger RLS verificados com rollback")
     return 0

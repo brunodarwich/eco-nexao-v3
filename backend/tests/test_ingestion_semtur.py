@@ -21,8 +21,13 @@ def test_parse_coordinates() -> None:
 def test_normalize_category() -> None:
     assert normalize_category("Pousada e Hotel") == "hospedagem"
     assert normalize_category("Restaurante e Lanchonete") == "alimentacao"
-    assert normalize_category("Polícia Federal") == "emergencia"
+    assert normalize_category("Praia e Mirante") == "atrativos"
+    assert normalize_category("Artesanato e Biojoias") == "artesanato"
+    assert normalize_category("Locadora e Taxi") == "transporte"
+    assert normalize_category("Hospital Municipal e UBS") == "saude"
+    assert normalize_category("Polícia Federal e Delegacia") == "seguranca"
     assert normalize_category("Desconhecido XYZ") == "outros"
+    assert normalize_category("") == "outros"
 
 
 def test_process_semtur_inventory_real_snapshot() -> None:

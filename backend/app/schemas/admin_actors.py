@@ -2,10 +2,11 @@
 
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
+from app.core.taxonomy import CANONICAL_CATEGORIES
 from app.schemas.envelopes import PaginationMeta, SchemaBase
 
 # -----------------------------------------------------------------------------
@@ -14,11 +15,34 @@ from app.schemas.envelopes import PaginationMeta, SchemaBase
 
 
 class AdminCategoryCreateSchema(BaseModel):
-    slug: str = Field(..., min_length=2, max_length=100, pattern=r"^[a-z0-9-]+$")
+    slug: Literal[
+        "alimentacao",
+        "atrativos",
+        "hospedagem",
+        "artesanato",
+        "transporte",
+        "saude",
+        "seguranca",
+        "outros",
+    ]
     label: str = Field(..., min_length=2, max_length=255)
-    icon: str | None = Field(None, max_length=100)
-    color: str | None = Field(None, max_length=50)
+    icon: str = Field(..., min_length=1, max_length=100)
+    color: str = Field(..., pattern=r"^#[0-9A-F]{6}$")
     sort_order: int = Field(0, ge=0)
+
+    @model_validator(mode="after")
+    def metadata_must_match_accepted_taxonomy(self) -> "AdminCategoryCreateSchema":
+        canonical = CANONICAL_CATEGORIES[self.slug]
+        supplied = (self.label, self.icon, self.color, self.sort_order)
+        expected = (
+            canonical["label"],
+            canonical["icon"],
+            canonical["color"],
+            canonical["sort_order"],
+        )
+        if supplied != expected:
+            raise ValueError("category metadata must match the accepted taxonomy")
+        return self
 
 
 class AdminCategoryUpdateSchema(BaseModel):

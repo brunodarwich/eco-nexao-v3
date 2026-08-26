@@ -33,8 +33,15 @@ SCHEMA_NAMES = {
     "ActorDetail": "ActorDetailSchema",
     "ActorDetailEnvelope": "ActorDetailEnvelope",
     "MapPin": "MapPinSchema",
+    "MapLegendItem": "MapLegendItemSchema",
     "RouteMapPayload": "RouteMapPayloadSchema",
     "RouteMapPayloadEnvelope": "RouteMapPayloadEnvelope",
+    "RouteBounds": "RouteBoundsSchema",
+    "RouteBoundsSchema": "RouteBoundsSchema",
+    "RoutePreviewRequest": "RoutePreviewRequest",
+    "RoutePreviewData": "RoutePreviewDataSchema",
+    "RoutePreviewDataSchema": "RoutePreviewDataSchema",
+    "RoutePreviewEnvelope": "RoutePreviewEnvelope",
     "AvatarUploadRequest": "AvatarUploadRequest",
     "AvatarUploadResponseData": "AvatarUploadResponseData",
     "AvatarUploadResponseEnvelope": "AvatarUploadResponseEnvelope",
@@ -179,6 +186,60 @@ def test_canonical_routes_declares_optional_authentication() -> None:
     assert "security" in operation and len(operation["security"]) > 0
     sec_item = operation["security"][0]
     assert "HTTPBearer" in sec_item or "BearerAuth" in sec_item
+
+
+def test_route_map_contract_uses_canonical_layers_bounds_and_error_envelopes() -> None:
+    """Map v2 semantics must not drift inside otherwise shape-compatible schemas."""
+    runtime = app.openapi()
+    canonical_operation = CANONICAL["paths"]["/api/v1/routes/{route_id}/map"]["get"]
+    runtime_operation = runtime["paths"]["/api/v1/routes/{route_id}/map"]["get"]
+
+    for operation in (canonical_operation, runtime_operation):
+        parameters = {parameter["name"]: parameter for parameter in operation["parameters"]}
+        assert {"origin_id", "layer", "category"}.issubset(parameters)
+        layer_schema = parameters["layer"]["schema"]["anyOf"][0]
+        assert layer_schema["enum"] == ["route_corridor", "citywide_essential", "both"]
+
+    expected_errors = {"404", "422", "500"}
+    assert expected_errors.issubset(canonical_operation["responses"])
+    assert expected_errors.issubset(runtime_operation["responses"])
+    for status_code in expected_errors:
+        canonical_schema = canonical_operation["responses"][status_code]["content"][
+            "application/json"
+        ]["schema"]
+        runtime_schema = runtime_operation["responses"][status_code]["content"][
+            "application/json"
+        ]["schema"]
+        assert _ref_name(canonical_schema) == "ErrorResponse"
+        assert _ref_name(runtime_schema) == "ErrorResponse"
+
+    expected_layers = ["route_corridor", "citywide_essential", "both"]
+    for document in (CANONICAL, runtime):
+        schemas = document["components"]["schemas"]
+        layer = schemas["MapPinSchema"]["properties"]["layer"]
+        assert layer["enum"] == expected_layers
+        assert layer["default"] == "route_corridor"
+        payload = schemas["RouteMapPayloadSchema"]["properties"]
+        for field in ("bounds", "city_bounds"):
+            assert payload[field]["anyOf"][0]["$ref"].endswith("/RouteBoundsSchema")
+
+
+def test_routing_preview_contract_is_drive_only_with_typed_errors() -> None:
+    runtime = app.openapi()
+    path = "/api/v1/routes/{route_id}/preview"
+    expected_errors = {"404", "422", "429", "503", "504"}
+    for document in (CANONICAL, runtime):
+        operation = document["paths"][path]["post"]
+        assert expected_errors.issubset(operation["responses"])
+        for status_code in expected_errors:
+            schema = operation["responses"][status_code]["content"]["application/json"][
+                "schema"
+            ]
+            assert _ref_name(schema) == "ErrorResponse"
+        travel_mode = document["components"]["schemas"]["RoutePreviewRequest"]["properties"][
+            "travel_mode"
+        ]
+        assert travel_mode["const"] == "DRIVE"
 
 
 def test_admin_boundary_contract_declares_auth_and_safe_errors() -> None:

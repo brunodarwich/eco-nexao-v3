@@ -13,6 +13,7 @@ from geoalchemy2.elements import WKTElement
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.taxonomy import get_canonical_category
 from app.ingestion.google_snapshot_importer import GooglePOIRecord
 from app.ingestion.osrm_importer import OSRMRouteResult
 from app.ingestion.pindobal_cutout_importer import PindobalCutoutRecord
@@ -291,11 +292,16 @@ class PindobalPersistenceRepository:
                 if category is None:
                     category = await self._one(ActorCategory, slug=record.categoria_slug)
                     if category is None:
+                        canon = get_canonical_category(record.categoria_slug)
                         category = ActorCategory(
                             id=uuid.uuid4(),
                             slug=record.categoria_slug,
-                            label=record.categoria_slug.replace("-", " ").title(),
-                            sort_order=0,
+                            label=canon["label"],
+                            color=canon.get("color"),
+                            icon=canon.get("icon"),
+                            sort_order=canon.get("sort_order", 0),
+                            is_public=canon["is_public"],
+                            spatial_scope=canon["spatial_scope"],
                         )
                         self.session.add(category)
                         await self.session.flush()
@@ -312,6 +318,7 @@ class PindobalPersistenceRepository:
                     "address": record.endereco,
                     "city": "Santarém",
                     "state_code": "PA",
+                    "region_id": region.id,
                     "phone": record.telefone,
                     "email": record.email,
                     "instagram": record.instagram,

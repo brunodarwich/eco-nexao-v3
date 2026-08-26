@@ -6,34 +6,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from app.core.taxonomy import CATEGORY_ALIASES, normalize_category_slug
+
 DEFAULT_SNAPSHOT_DIR = Path(r"C:\Users\Bruno\Downloads\teste-rota")
 
 SEMTUR_CATEGORY_MAP: dict[str, str] = {
-    "hospedagem": "hospedagem",
-    "hotel": "hospedagem",
-    "pousada": "hospedagem",
-    "casa de temporada": "hospedagem",
-    "alimentacao": "alimentacao",
-    "restaurante": "alimentacao",
-    "bar": "alimentacao",
-    "lanchonete": "alimentacao",
-    "transporte": "transporte",
-    "locadora": "transporte",
-    "artesanato": "artesanato",
-    "biojoia": "artesanato",
-    "atrativo": "atrativos",
-    "atrativos": "atrativos",
-    "centro turistico": "atrativos",
-    "religioso": "atrativos",
-    "seguranca": "emergencia",
-    "saude": "emergencia",
-    "emergencia": "emergencia",
-    "hospital": "emergencia",
-    "upa": "emergencia",
-    "ubs": "emergencia",
-    "farmacia": "emergencia",
-    "policia": "emergencia",
-    "bombeiros": "emergencia",
+    alias: slug for slug, aliases in CATEGORY_ALIASES.items() for alias in aliases
 }
 
 
@@ -114,26 +92,7 @@ def normalize_url(url_str: str | None) -> str | None:
 
 def normalize_category(raw_cat: str) -> str:
     """Map raw SEMTUR category string to internal taxonomy slug."""
-    import unicodedata
-
-    cat_normalized = (
-        unicodedata.normalize("NFD", raw_cat)
-        .encode("ascii", "ignore")
-        .decode("utf-8")
-        .lower()
-        .strip()
-    )
-    for key, val in SEMTUR_CATEGORY_MAP.items():
-        key_norm = (
-            unicodedata.normalize("NFD", key)
-            .encode("ascii", "ignore")
-            .decode("utf-8")
-            .lower()
-            .strip()
-        )
-        if key_norm in cat_normalized:
-            return val
-    return "outros"
+    return normalize_category_slug(raw_cat)
 
 
 def process_semtur_inventory(

@@ -1,20 +1,30 @@
 openapi: 3.1.0
 info:
   title: ECOnexão API
-  description: API de domínio do aplicativo ECOnexão para turismo sustentável e rotas
-    ecológicas.
+  description: API de domínio do aplicativo ECOnexão para turismo sustentável e rotas ecológicas.
   version: 1.0.0
 paths:
   /api/v1/admin/context:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin
       summary: Obter contexto administrativo
-      description: Expose only current editorial access; ordinary/anonymous users
-        are denied.
+      description: Expose only current editorial access; ordinary/anonymous users are denied.
       operationId: get_admin_context_api_v1_admin_context_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       responses:
         '200':
           description: Successful Response
@@ -34,16 +44,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      security:
-      - HTTPBearer: []
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/categories:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Actors
       summary: Listar categorias administrativas de atores
       operationId: list_categories_api_v1_admin_categories_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       responses:
         '200':
           description: Successful Response
@@ -63,19 +89,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      security:
-      - HTTPBearer: []
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
     post:
       tags:
       - Admin Actors
       summary: Criar categoria administrativa de atores
       operationId: create_category_api_v1_admin_categories_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/AdminCategoryCreateSchema'
-        required: true
       responses:
         '201':
           description: Successful Response
@@ -107,11 +151,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-      security:
-      - HTTPBearer: []
   /api/v1/admin/categories/{category_id}:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Actors
@@ -127,6 +167,17 @@ paths:
           type: string
           format: uuid
           title: Category Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       responses:
         '200':
           description: Successful Response
@@ -173,6 +224,17 @@ paths:
           type: string
           format: uuid
           title: Category Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
         required: true
         content:
@@ -211,13 +273,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/accessibility-features:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Actors
       summary: Listar funcionalidades de acessibilidade
       operationId: list_accessibility_features_api_v1_admin_accessibility_features_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       responses:
         '200':
           description: Successful Response
@@ -237,19 +311,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      security:
-      - HTTPBearer: []
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
     post:
       tags:
       - Admin Actors
       summary: Criar funcionalidade de acessibilidade
       operationId: create_accessibility_feature_api_v1_admin_accessibility_features_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/AdminAccessibilityFeatureCreateSchema'
-        required: true
       responses:
         '201':
           description: Successful Response
@@ -281,11 +373,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-      security:
-      - HTTPBearer: []
   /api/v1/admin/accessibility-features/{feature_id}:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Actors
@@ -301,6 +389,17 @@ paths:
           type: string
           format: uuid
           title: Feature Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       responses:
         '200':
           description: Successful Response
@@ -347,6 +446,17 @@ paths:
           type: string
           format: uuid
           title: Feature Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
         required: true
         content:
@@ -385,8 +495,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/actors:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Actors
@@ -442,6 +550,17 @@ paths:
           minimum: 0
           default: 0
           title: Offset
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       responses:
         '200':
           description: Successful Response
@@ -474,6 +593,18 @@ paths:
       operationId: create_actor_api_v1_admin_actors_post
       security:
       - HTTPBearer: []
+      parameters:
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
         required: true
         content:
@@ -518,8 +649,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/actors/{actor_id}:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Actors
@@ -535,6 +664,17 @@ paths:
           type: string
           format: uuid
           title: Actor Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       responses:
         '200':
           description: Successful Response
@@ -581,6 +721,17 @@ paths:
           type: string
           format: uuid
           title: Actor Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
         required: true
         content:
@@ -639,6 +790,17 @@ paths:
           type: string
           format: uuid
           title: Actor Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       responses:
         '200':
           description: Successful Response
@@ -671,8 +833,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/actors/{actor_id}/route-links:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Actors
@@ -688,6 +848,17 @@ paths:
           type: string
           format: uuid
           title: Actor Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       responses:
         '200':
           description: Successful Response
@@ -734,6 +905,17 @@ paths:
           type: string
           format: uuid
           title: Actor Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
         required: true
         content:
@@ -778,8 +960,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
   /api/v1/admin/actors/route-links/{link_id}:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     patch:
       tags:
       - Admin Actors
@@ -795,6 +975,17 @@ paths:
           type: string
           format: uuid
           title: Link Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
         required: true
         content:
@@ -847,6 +1038,17 @@ paths:
           type: string
           format: uuid
           title: Link Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       responses:
         '200':
           description: Successful Response
@@ -856,8 +1058,7 @@ paths:
                 type: object
                 additionalProperties:
                   type: string
-                title: Response Delete Route Link Api V1 Admin Actors Route Links  Link
-                  Id  Delete
+                title: Response Delete Route Link Api V1 Admin Actors Route Links  Link Id  Delete
         '401':
           description: JWT ausente ou inválido.
           content:
@@ -883,8 +1084,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/territory/regions:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Territorial
@@ -902,6 +1101,17 @@ paths:
           default: true
           title: Include Inactive
         description: Incluir regiões inativas
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       responses:
         '200':
           description: Successful Response
@@ -934,6 +1144,18 @@ paths:
       operationId: create_region_api_v1_admin_territory_regions_post
       security:
       - HTTPBearer: []
+      parameters:
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
         required: true
         content:
@@ -972,8 +1194,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/territory/regions/{region_id}:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Territorial
@@ -989,6 +1209,17 @@ paths:
           type: string
           format: uuid
           title: Region Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       responses:
         '200':
           description: Successful Response
@@ -1035,6 +1266,17 @@ paths:
           type: string
           format: uuid
           title: Region Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
         required: true
         content:
@@ -1073,8 +1315,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/territory/routes:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Territorial
@@ -1131,6 +1371,17 @@ paths:
           minimum: 0
           default: 0
           title: Offset
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       responses:
         '200':
           description: Successful Response
@@ -1163,6 +1414,18 @@ paths:
       operationId: create_route_api_v1_admin_territory_routes_post
       security:
       - HTTPBearer: []
+      parameters:
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
         required: true
         content:
@@ -1201,8 +1464,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/territory/routes/{route_id}:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Territorial
@@ -1218,6 +1479,17 @@ paths:
           type: string
           format: uuid
           title: Route Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       responses:
         '200':
           description: Successful Response
@@ -1264,6 +1536,17 @@ paths:
           type: string
           format: uuid
           title: Route Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
         required: true
         content:
@@ -1322,6 +1605,17 @@ paths:
           type: string
           format: uuid
           title: Route Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       responses:
         '200':
           description: Successful Response
@@ -1354,8 +1648,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/territory/routes/{route_id}/origins:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Territorial
@@ -1371,6 +1663,17 @@ paths:
           type: string
           format: uuid
           title: Route Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       responses:
         '200':
           description: Successful Response
@@ -1417,6 +1720,17 @@ paths:
           type: string
           format: uuid
           title: Route Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
         required: true
         content:
@@ -1461,8 +1775,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/territory/routes/{route_id}/origins/{origin_id}:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     put:
       tags:
       - Admin Territorial
@@ -1485,6 +1797,17 @@ paths:
           type: string
           format: uuid
           title: Origin Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
         required: true
         content:
@@ -1544,6 +1867,17 @@ paths:
           type: string
           format: uuid
           title: Origin Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       responses:
         '204':
           description: Successful Response
@@ -1572,8 +1906,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/territory/routes/{route_id}/origins/{origin_id}/geometries:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     post:
       tags:
       - Admin Territorial
@@ -1596,6 +1928,17 @@ paths:
           type: string
           format: uuid
           title: Origin Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
         required: true
         content:
@@ -1640,8 +1983,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
   /api/v1/admin/territory/routes/{route_id}/geometries/{geometry_id}:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     put:
       tags:
       - Admin Territorial
@@ -1664,6 +2005,17 @@ paths:
           type: string
           format: uuid
           title: Geometry Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
         required: true
         content:
@@ -1702,14 +2054,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/workflow/{resource_type}/{resource_id}/transition:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     post:
       tags:
       - Admin Workflow
       summary: Transicionar estado editorial
-      description: Transicionar o estado de um recurso na máquina de estados editorial
-        com validação de publish guard e concorrência.
+      description: Transicionar o estado de um recurso na máquina de estados editorial com validação de publish guard e concorrência.
       operationId: transition_resource_status_api_v1_admin_workflow__resource_type___resource_id__transition_post
       security:
       - HTTPBearer: []
@@ -1727,6 +2076,17 @@ paths:
           type: string
           format: uuid
           title: Resource Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
         required: true
         content:
@@ -1747,14 +2107,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/workflow/{resource_type}/{resource_id}/publish-guard:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Workflow
       summary: Consultar Publish Guard
-      description: Consultar os critérios e elegibilidade do Publish Guard para um
-        recurso.
+      description: Consultar os critérios e elegibilidade do Publish Guard para um recurso.
       operationId: get_publish_guard_status_api_v1_admin_workflow__resource_type___resource_id__publish_guard_get
       security:
       - HTTPBearer: []
@@ -1772,6 +2129,17 @@ paths:
           type: string
           format: uuid
           title: Resource Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       responses:
         '200':
           description: Successful Response
@@ -1786,14 +2154,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/alerts:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Workflow
       summary: Listar alertas editoriais
-      description: Listar alertas editoriais ativos ou resolvidos com suporte a filtros
-        de rota e severidade.
+      description: Listar alertas editoriais ativos ou resolvidos com suporte a filtros de rota e severidade.
       operationId: list_editorial_alerts_api_v1_admin_alerts_get
       security:
       - HTTPBearer: []
@@ -1846,6 +2211,17 @@ paths:
           minimum: 0
           default: 0
           title: Offset
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       responses:
         '200':
           description: Successful Response
@@ -1866,6 +2242,18 @@ paths:
       operationId: create_editorial_alert_api_v1_admin_alerts_post
       security:
       - HTTPBearer: []
+      parameters:
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
         required: true
         content:
@@ -1886,14 +2274,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/alerts/{alert_id}/resolve:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     post:
       tags:
       - Admin Workflow
       summary: Resolver alerta editorial
-      description: Resolver um alerta editorial ativo fornecendo uma nota explicativa
-        de resolução.
+      description: Resolver um alerta editorial ativo fornecendo uma nota explicativa de resolução.
       operationId: resolve_editorial_alert_api_v1_admin_alerts__alert_id__resolve_post
       security:
       - HTTPBearer: []
@@ -1905,6 +2290,17 @@ paths:
           type: string
           format: uuid
           title: Alert Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
         required: true
         content:
@@ -1925,14 +2321,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/reconciliation/candidates:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     get:
       tags:
       - Admin Workflow
       summary: Listar candidatos de reconciliação
-      description: Listar candidatos a duplicata para revisão humana e reconciliação
-        editorial.
+      description: Listar candidatos a duplicata para revisão humana e reconciliação editorial.
       operationId: list_reconciliation_candidates_api_v1_admin_reconciliation_candidates_get
       security:
       - HTTPBearer: []
@@ -1962,6 +2355,17 @@ paths:
           minimum: 0
           default: 0
           title: Offset
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       responses:
         '200':
           description: Successful Response
@@ -1976,14 +2380,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/reconciliation/{candidate_id}/decision:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     post:
       tags:
       - Admin Workflow
       summary: Decidir reconciliação
-      description: Registrar decisão editorial (accept, reject, merge) sobre candidato
-        de reconciliação com justificativa auditada.
+      description: Registrar decisão editorial (accept, reject, merge) sobre candidato de reconciliação com justificativa auditada.
       operationId: decide_reconciliation_candidate_api_v1_admin_reconciliation__candidate_id__decision_post
       security:
       - HTTPBearer: []
@@ -1995,6 +2396,17 @@ paths:
           type: string
           format: uuid
           title: Candidate Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
         required: true
         content:
@@ -2015,8 +2427,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/reconciliation/{candidate_id}/compensate:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     post:
       tags:
       - Admin Workflow
@@ -2032,6 +2442,17 @@ paths:
           type: string
           format: uuid
           title: Candidate Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
         required: true
         content:
@@ -2052,8 +2473,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/alerts/{alert_id}:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     put:
       tags:
       - Admin Workflow
@@ -2069,6 +2488,17 @@ paths:
           type: string
           format: uuid
           title: Alert Id
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
         required: true
         content:
@@ -2089,19 +2519,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/media/process:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     post:
       tags:
       - Admin Media
       summary: Process Editorial Media
       operationId: process_editorial_media_api_v1_admin_media_process_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
+        required: true
         content:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/Body_process_editorial_media_api_v1_admin_media_process_post'
-        required: true
       responses:
         '201':
           description: Successful Response
@@ -2115,22 +2557,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-      security:
-      - HTTPBearer: []
   /api/v1/admin/media/cleanup/recover:
-    parameters:
-    - $ref: '#/components/parameters/AdminRegionScope'
     post:
       tags:
       - Admin Media
       summary: Recover Media Cleanup
       operationId: recover_media_cleanup_api_v1_admin_media_cleanup_recover_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: X-Region-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Escopo regional explícito da operação editorial.
+          title: X-Region-Id
+        description: Escopo regional explícito da operação editorial.
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CleanupRecoveryRequest'
-        required: true
       responses:
         '200':
           description: Successful Response
@@ -2144,8 +2596,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-      security:
-      - HTTPBearer: []
   /api/v1/health/live:
     get:
       tags:
@@ -2165,8 +2615,7 @@ paths:
       tags:
       - Health
       summary: Readiness check
-      description: Retorna status HTTP 200 se dependências de banco de dados e Supabase
-        estiverem prontas.
+      description: Retorna status HTTP 200 se dependências de banco de dados e Supabase estiverem prontas.
       operationId: healthReady
       responses:
         '200':
@@ -2202,8 +2651,7 @@ paths:
       tags:
       - Auth
       summary: Validar token JWT Supabase
-      description: Verifica a validade, emissor, audiência e assinatura assimétrica
-        do token informado.
+      description: Verifica a validade, emissor, audiência e assinatura assimétrica do token informado.
       operationId: verify_auth_token_api_v1_auth_verify_post
       requestBody:
         content:
@@ -2243,8 +2691,7 @@ paths:
       tags:
       - Territorial - Regions
       summary: Bootstrap do aplicativo
-      description: Retorna informações de inicialização do aplicativo, incluindo região
-        ativa e feature flags.
+      description: Retorna informações de inicialização do aplicativo, incluindo região ativa e feature flags.
       operationId: get_bootstrap_api_v1_bootstrap_get
       security:
       - HTTPBearer: []
@@ -2278,8 +2725,7 @@ paths:
       tags:
       - Territorial - Routes
       summary: Listar rotas
-      description: Retorna lista paginada de rotas turísticas ativas com suporte a
-        busca e filtros.
+      description: Retorna lista paginada de rotas turísticas ativas com suporte a busca e filtros.
       operationId: list_routes_api_v1_routes_get
       security:
       - HTTPBearer: []
@@ -2420,8 +2866,7 @@ paths:
       tags:
       - Territorial - Routes
       summary: Geometria de uma rota por origem
-      description: Retorna a geometria GeoJSON e detalhes da rota a partir de uma
-        origem específica.
+      description: Retorna a geometria GeoJSON e detalhes da rota a partir de uma origem específica.
       operationId: get_route_geometry_api_v1_routes__route_id__geometry_get
       parameters:
       - name: route_id
@@ -2486,8 +2931,7 @@ paths:
       tags:
       - Territorial - Routes
       summary: Atores associados a uma rota
-      description: Retorna lista paginada de estabelecimentos e pontos turísticos
-        associados à rota.
+      description: Retorna lista paginada de estabelecimentos e pontos turísticos associados à rota.
       operationId: get_route_actors_api_v1_routes__route_id__actors_get
       parameters:
       - name: route_id
@@ -2567,8 +3011,7 @@ paths:
       tags:
       - Territorial - Routes
       summary: Payload otimizado para renderização do mapa
-      description: Retorna bounds, linha de geometria e pins dos atores para a tela
-        de mapa.
+      description: Retorna bounds da rota e da cidade, geometria, pins com camada canônica e metadados visuais, além da legenda com contagens dos pins retornados.
       operationId: get_route_map_payload_api_v1_routes__route_id__map_get
       parameters:
       - name: route_id
@@ -2589,6 +3032,30 @@ paths:
           description: UUID da origem selecionada
           title: Origin Id
         description: UUID da origem selecionada
+      - name: layer
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - enum:
+            - route_corridor
+            - citywide_essential
+            - both
+            type: string
+          - type: 'null'
+          description: Filtrar pela camada espacial canônica
+          title: Layer
+        description: Filtrar pela camada espacial canônica
+      - name: category
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filtrar pelo slug canônico
+          title: Category
+        description: Filtrar pelo slug canônico
       responses:
         '200':
           description: Successful Response
@@ -2596,19 +3063,88 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RouteMapPayloadEnvelope'
-        '422':
-          description: Validation Error
+        '404':
+          description: A rota solicitada ou seu payload de mapa não foi encontrado.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: O identificador da rota ou da origem não é um UUID válido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Falha interna inesperada, retornada com request_id para rastreamento.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/routes/{route_id}/preview:
+    post:
+      tags:
+      - Territorial - Routes
+      summary: Pré-visualização de rota dinâmica
+      description: Calcula trajeto efêmero entre a coordenada do usuário e o destino oficial da rota sem persistência.
+      operationId: preview_route_api_v1_routes__route_id__preview_post
+      parameters:
+      - name: route_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Route Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoutePreviewRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutePreviewEnvelope'
+        '404':
+          description: Rota ativa não encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Entrada ou destino oficial inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Limite de previews excedido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Recurso ou provedor indisponível.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '504':
+          description: Tempo limite do provedor excedido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/actor-categories:
     get:
       tags:
       - Territorial - Actors
       summary: Categorias de atores
-      description: Retorna a taxonomia oficial de categorias de estabelecimentos e
-        atrações.
+      description: Retorna a taxonomia oficial de categorias de estabelecimentos e atrações.
       operationId: list_actor_categories_api_v1_actor_categories_get
       responses:
         '200':
@@ -2693,8 +3229,7 @@ paths:
       tags:
       - User - Profile & Preferences
       summary: Substituir avatar
-      description: Recebe uma imagem multipart, sanitiza e gera derivados WebP no backend,
-        publicando-os no Supabase Storage sem expor credenciais privilegiadas.
+      description: Recebe uma imagem multipart, sanitiza e gera derivados WebP no backend, publicando-os no Supabase Storage sem expor credenciais privilegiadas.
       operationId: replace_avatar_api_v1_me_avatar_post
       requestBody:
         content:
@@ -2728,8 +3263,7 @@ paths:
       tags:
       - User - Profile & Preferences
       summary: Excluir a conta atual
-      description: Remove avatares, dados de domínio e identidade Auth. É idempotente
-        enquanto o JWT residual ainda for válido.
+      description: Remove avatares, dados de domínio e identidade Auth. É idempotente enquanto o JWT residual ainda for válido.
       operationId: delete_my_account_api_v1_me_account_delete
       responses:
         '200':
@@ -2757,8 +3291,7 @@ paths:
       tags:
       - User - Profile & Preferences
       summary: Preferências do usuário atual
-      description: Retorna as preferências de acessibilidade, região e navegação do
-        usuário.
+      description: Retorna as preferências de acessibilidade, região e navegação do usuário.
       operationId: get_my_preferences_api_v1_me_preferences_get
       responses:
         '200':
@@ -2951,8 +3484,7 @@ paths:
       tags:
       - User - Profile & Preferences
       summary: Histórico de viagens do usuário
-      description: Retorna o histórico de viagens iniciadas e concluídas pelo usuário
-        autenticado.
+      description: Retorna o histórico de viagens iniciadas e concluídas pelo usuário autenticado.
       operationId: get_my_trips_api_v1_me_trips_get
       responses:
         '200':
@@ -2967,8 +3499,7 @@ paths:
       tags:
       - User - Profile & Preferences
       summary: Iniciar nova viagem
-      description: Cria um novo registro de viagem para o usuário autenticado na rota
-        informada.
+      description: Cria um novo registro de viagem para o usuário autenticado na rota informada.
       operationId: create_trip_api_v1_me_trips_post
       requestBody:
         content:
@@ -3006,17 +3537,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/SupportContentEnvelope'
 components:
-  parameters:
-    AdminRegionScope:
-      name: X-Region-ID
-      in: header
-      required: false
-      description: Escopo regional explícito da operação editorial.
-      schema:
-        anyOf:
-        - type: string
-          format: uuid
-        - type: 'null'
   schemas:
     ActorCategoryListEnvelope:
       properties:
@@ -3818,9 +4338,15 @@ components:
       properties:
         slug:
           type: string
-          maxLength: 100
-          minLength: 2
-          pattern: ^[a-z0-9-]+$
+          enum:
+          - alimentacao
+          - atrativos
+          - hospedagem
+          - artesanato
+          - transporte
+          - saude
+          - seguranca
+          - outros
           title: Slug
         label:
           type: string
@@ -3828,16 +4354,13 @@ components:
           minLength: 2
           title: Label
         icon:
-          anyOf:
-          - type: string
-            maxLength: 100
-          - type: 'null'
+          type: string
+          maxLength: 100
+          minLength: 1
           title: Icon
         color:
-          anyOf:
-          - type: string
-            maxLength: 50
-          - type: 'null'
+          type: string
+          pattern: ^#[0-9A-F]{6}$
           title: Color
         sort_order:
           type: integer
@@ -3848,6 +4371,8 @@ components:
       required:
       - slug
       - label
+      - icon
+      - color
       title: AdminCategoryCreateSchema
     AdminCategoryEnvelope:
       properties:
@@ -3993,8 +4518,7 @@ components:
           - type: 'null'
       type: object
       title: AdminContractSchema
-      description: Cross-cutting mutation contract for subsequent administrative CRUD
-        tasks.
+      description: Cross-cutting mutation contract for subsequent administrative CRUD tasks.
     AdminJobReferenceSchema:
       properties:
         job_id:
@@ -4897,8 +5421,7 @@ components:
           - type: string
           - type: 'null'
           title: Expected Version
-          description: Expected ISO string timestamp or version hash for optimistic
-            concurrency
+          description: Expected ISO string timestamp or version hash for optimistic concurrency
       type: object
       title: AdminRouteUpdateSchema
     AdminScopeAccessSchema:
@@ -4928,8 +5451,7 @@ components:
       - roles
       - capabilities
       title: AdminScopeAccessSchema
-      description: Roles and capabilities that are valid together in one authorization
-        scope.
+      description: Roles and capabilities that are valid together in one authorization scope.
     AdminUploadReferenceSchema:
       properties:
         upload_id:
@@ -5014,17 +5536,6 @@ components:
       - is_anonymous
       - role
       title: AuthUserSchema
-    Body_replace_avatar_api_v1_me_avatar_post:
-      properties:
-        file:
-          type: string
-          format: binary
-          title: File
-          description: Imagem JPEG, PNG ou WebP; máximo 5 MiB
-      type: object
-      required:
-      - file
-      title: Body_replace_avatar_api_v1_me_avatar_post
     AvatarUploadResponseData:
       properties:
         media_asset_id:
@@ -5089,7 +5600,7 @@ components:
           title: License Code
         image:
           type: string
-          format: binary
+          contentMediaType: application/octet-stream
           title: Image
       type: object
       required:
@@ -5100,6 +5611,17 @@ components:
       - license_code
       - image
       title: Body_process_editorial_media_api_v1_admin_media_process_post
+    Body_replace_avatar_api_v1_me_avatar_post:
+      properties:
+        file:
+          type: string
+          contentMediaType: application/octet-stream
+          title: File
+          description: Imagem JPEG, PNG ou WebP; máximo 5 MiB
+      type: object
+      required:
+      - file
+      title: Body_replace_avatar_api_v1_me_avatar_post
     BootstrapDataSchema:
       properties:
         active_region:
@@ -5336,22 +5858,27 @@ components:
     EditorialAlertUpdateRequest:
       properties:
         title:
-          type: string
-          maxLength: 255
-          minLength: 1
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
           title: Title
         message:
-          type: string
-          minLength: 1
+          anyOf:
+          - type: string
+            minLength: 1
+          - type: 'null'
           title: Message
         severity:
-          type: string
-          enum:
-          - info
-          - warning
-          - critical
+          anyOf:
+          - type: string
+            enum:
+            - info
+            - warning
+            - critical
+          - type: 'null'
           title: Severity
-          default: info
         source:
           anyOf:
           - type: string
@@ -5377,13 +5904,11 @@ components:
           - type: 'null'
           title: Published At
         is_active:
-          type: boolean
+          anyOf:
+          - type: boolean
+          - type: 'null'
           title: Is Active
-          default: true
       type: object
-      required:
-      - title
-      - message
       title: EditorialAlertUpdateRequest
     EditorialInfoSchema:
       properties:
@@ -5504,6 +6029,35 @@ components:
       - title
       - url
       title: HelpLinkSchema
+    MapLegendItemSchema:
+      properties:
+        category_slug:
+          type: string
+          title: Category Slug
+        label:
+          type: string
+          title: Label
+        color:
+          type: string
+          title: Color
+        icon:
+          type: string
+          title: Icon
+        count:
+          type: integer
+          title: Count
+        sort_order:
+          type: integer
+          title: Sort Order
+      type: object
+      required:
+      - category_slug
+      - label
+      - color
+      - icon
+      - count
+      - sort_order
+      title: MapLegendItemSchema
     MapPinSchema:
       properties:
         id:
@@ -5520,6 +6074,15 @@ components:
         category_slug:
           type: string
           title: Category Slug
+        category_label:
+          type: string
+          title: Category Label
+        color:
+          type: string
+          title: Color
+        icon:
+          type: string
+          title: Icon
         latitude:
           type: number
           title: Latitude
@@ -5531,12 +6094,23 @@ components:
           - type: integer
           - type: 'null'
           title: Distance From Origin M
+        layer:
+          type: string
+          enum:
+          - route_corridor
+          - citywide_essential
+          - both
+          title: Layer
+          default: route_corridor
       type: object
       required:
       - id
       - actor_id
       - name
       - category_slug
+      - category_label
+      - color
+      - icon
       - latitude
       - longitude
       title: MapPinSchema
@@ -6001,6 +6575,27 @@ components:
       - severity
       - title
       title: RouteAlertSchema
+    RouteBoundsSchema:
+      properties:
+        min_lat:
+          type: number
+          title: Min Lat
+        max_lat:
+          type: number
+          title: Max Lat
+        min_lng:
+          type: number
+          title: Min Lng
+        max_lng:
+          type: number
+          title: Max Lng
+      type: object
+      required:
+      - min_lat
+      - max_lat
+      - min_lng
+      - max_lng
+      title: RouteBoundsSchema
     RouteDetailEnvelope:
       properties:
         data:
@@ -6186,11 +6781,12 @@ components:
           title: Selected Origin Id
         bounds:
           anyOf:
-          - additionalProperties:
-              type: number
-            type: object
+          - $ref: '#/components/schemas/RouteBoundsSchema'
           - type: 'null'
-          title: Bounds
+        city_bounds:
+          anyOf:
+          - $ref: '#/components/schemas/RouteBoundsSchema'
+          - type: 'null'
         geometry:
           anyOf:
           - $ref: '#/components/schemas/RouteGeometrySchema'
@@ -6200,10 +6796,16 @@ components:
             $ref: '#/components/schemas/MapPinSchema'
           type: array
           title: Pins
+        legend:
+          items:
+            $ref: '#/components/schemas/MapLegendItemSchema'
+          type: array
+          title: Legend
       type: object
       required:
       - pins
       - route_id
+      - legend
       title: RouteMapPayloadSchema
     RouteOriginListEnvelope:
       properties:
@@ -6259,6 +6861,103 @@ components:
       - name
       - sort_order
       title: RouteOriginSchema
+    RoutePreviewDataSchema:
+      properties:
+        route_id:
+          type: string
+          format: uuid
+          title: Route Id
+        route_kind:
+          type: string
+          const: dynamic_preview
+          title: Route Kind
+          default: dynamic_preview
+        is_verified:
+          type: boolean
+          title: Is Verified
+          default: false
+        provider:
+          type: string
+          enum:
+          - fake_deterministic
+          - google_routes
+          title: Provider
+        distance_m:
+          type: integer
+          title: Distance M
+        duration_s:
+          type: integer
+          title: Duration S
+        geojson:
+          additionalProperties: true
+          type: object
+          title: Geojson
+        encoded_polyline:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Encoded Polyline
+        bounds:
+          $ref: '#/components/schemas/RouteBoundsSchema'
+        pins:
+          items:
+            $ref: '#/components/schemas/MapPinSchema'
+          type: array
+          title: Pins
+        legend:
+          items:
+            $ref: '#/components/schemas/MapLegendItemSchema'
+          type: array
+          title: Legend
+        city_bounds:
+          anyOf:
+          - $ref: '#/components/schemas/RouteBoundsSchema'
+          - type: 'null'
+      type: object
+      required:
+      - route_id
+      - route_kind
+      - is_verified
+      - provider
+      - distance_m
+      - duration_s
+      - geojson
+      - bounds
+      - pins
+      - legend
+      title: RoutePreviewDataSchema
+    RoutePreviewEnvelope:
+      properties:
+        data:
+          $ref: '#/components/schemas/RoutePreviewDataSchema'
+      type: object
+      required:
+      - data
+      title: RoutePreviewEnvelope
+    RoutePreviewRequest:
+      properties:
+        latitude:
+          type: number
+          maximum: 90.0
+          minimum: -90.0
+          title: Latitude
+          description: Latitude da origem do usuário
+        longitude:
+          type: number
+          maximum: 180.0
+          minimum: -180.0
+          title: Longitude
+          description: Longitude da origem do usuário
+        travel_mode:
+          type: string
+          const: DRIVE
+          title: Travel Mode
+          default: DRIVE
+      type: object
+      required:
+      - latitude
+      - longitude
+      title: RoutePreviewRequest
     RouteSummarySchema:
       properties:
         id:
@@ -6367,6 +7066,7 @@ components:
         expected_version:
           anyOf:
           - type: integer
+            minimum: 1.0
           - type: 'null'
           title: Expected Version
           description: Versão esperada para controle de concorrência otimista
@@ -6713,6 +7413,11 @@ components:
         type:
           type: string
           title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
       type: object
       required:
       - loc

@@ -16,15 +16,17 @@ import type { ActorSummary } from '../../../src/api/types';
 
 export default function CatalogScreen() {
   const router = useRouter();
-  const { routeId = '', originId, actorId } = useLocalSearchParams<{
+  const { routeId = '', originId, actorId, category: initialCategory, q: initialQuery } = useLocalSearchParams<{
     routeId: string;
     originId?: string;
     actorId?: string;
+    category?: string;
+    q?: string;
   }>();
 
-  const [q, setQ] = useState('');
-  const [debouncedQ, setDebouncedQ] = useState('');
-  const [category, setCategory] = useState('');
+  const [q, setQ] = useState(initialQuery?.trim() || '');
+  const [debouncedQ, setDebouncedQ] = useState(initialQuery?.trim() || '');
+  const [category, setCategory] = useState(initialCategory?.trim() || '');
 
   useEffect(() => {
     const timer = setTimeout(() => {

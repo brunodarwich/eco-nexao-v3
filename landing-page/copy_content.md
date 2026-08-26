@@ -1,10 +1,10 @@
-# ECOnexão — Especificação Completa de Copywriting para a Landing Page
+# ECOnexão — Especificação de Copywriting da Landing Page
 
 > **Diretrizes de Tom de Voz:**
-> - **Linguagem:** Clara, direta, acolhedora e institucionalmente sólida.
+> - **Linguagem:** Simples, direta, acolhedora e realista.
 > - **Território:** Focado na Amazônia paraense (Santarém, Belterra, Alter do Chão, Praia do Pindobal e bacia do Rio Tapajós).
-> - **Sem clichês de IA:** Ausência total de termos inflados como "revolucione", "desbloqueie", "inteligência incomparável", "imersão definitiva" ou "mergulhe no futuro".
-> - **Foco de Valor:** Respeito às comunidades tradicionais, valorização da economia de base local, segurança em trilhas e rios, e eficiência técnica em áreas de baixa conectividade.
+> - **Sem apelos ou bajulação:** Ausência de promessas infladas, estatísticas forçadas de "100%", termos combativos ou slogans de marketing vazios.
+> - **Foco de Valor:** Utilidade real para o visitante (caminhos, contatos, dicas práticas e modo offline) e apoio direto aos moradores e pequenos empreendedores locais.
 
 ---
 
@@ -22,59 +22,59 @@
 5. **Tecnologia** `[#tecnologia]`
 
 ### Botão de Ação Principal (CTA Header)
-- **Texto do Botão:** `Agendar Demonstração`
-- **Ação:** Rola suavemente até o formulário institucional de contato `[#contato]`
+- **Texto do Botão:** `Falar com a Equipe`
+- **Ação:** Rola suavemente até a seção de contato `[#contato]`
 
 ---
 
 ## 2. Hero Section (Destaque Principal)
 
 ### Tag de Contexto (Badge Superior)
-`[Piloto Ativo: Santarém, Belterra & Alter do Chão — PA]`
+`[Piloto: Santarém, Belterra e Alter do Chão — PA]`
 
 ### Título Principal (H1)
-**O ecoturismo comunitário da Amazônia mapeado com precisão e respeito local.**
+**Um guia simples para explorar o Tapajós pelo olhar de quem mora aqui.**
 
 ### Subtítulo Explicativo
-Conecte-se a roteiros verificados em campo, trilhas georreferenciadas e pequenos empreendedores familiares do Rio Tapajós — com dados confiáveis que funcionam mesmo sem sinal de internet.
+Trilhas mapeadas, dicas do caminho e contato direto com pousadas, restaurantes e barqueiros locais. Tudo disponível no celular, mesmo quando acabar o sinal de internet.
 
 ### Botões de Ação
 - **Botão Primário (CTA Principal):** `Conhecer o Aplicativo` `[#showcase]`
-- **Botão Secundário (CTA Secundário):** `Ver Rota Piloto Pindobal` `[#rota-piloto]`
+- **Botão Secundário (CTA Secundário):** `Ver Rota Pindobal` `[#rota-piloto]`
 
-### Faixa de Indicadores de Confiança (Trust Bar / Bento Mini)
-| Indicador | Dado / Rótulo | Descrição de Apoio |
+### Faixa de Indicadores Úteis (Trust Bar)
+| Indicador | Rótulo | Descrição de Apoio |
 | :--- | :--- | :--- |
-| **Atores Locais** | `300+ Estabelecimentos` | Pousadas familiares, restaurantes típicos, barqueiros e artesãos catalogados. |
-| **Auditoria Territorial** | `100% Verificado em Campo` | Informações checadas com apoio comunitário e dados oficiais da SEMTUR. |
-| **Resiliência Amazônica** | `Modo Offline Completo` | Rotas, mapas e contatos de emergência disponíveis sem sinal de celular. |
+| **Locais e Serviços** | `Pousadas & Guias` | Contatos de barqueiros, cozinhas locais e hospedagens reunidos no mapa. |
+| **Checagem no Terreno** | `Mapeamento Real` | Trilhas e acessos percorridos e anotados com pontos de apoio práticos. |
+| **Sem Internet** | `Modo Offline` | Baixe as rotas e telefones antes de sair para o passeio sem se preocupar com sinal. |
 
 ---
 
-## 3. Seção A Proposta: Problema vs. Solução
+## 3. Seção A Proposta: Pensado para a Realidade Local
 
 ### Título da Seção
 `[Por Que o ECOnexão]`
-## Por que as ferramentas convencionais não atendem o ecoturismo comunitário?
+## Pensado para o dia a dia da região
 
 ### Subtítulo
-Grandes plataformas foram desenhadas para cidades conectadas e grandes redes hoteleiras. Na Amazônia ribeirinha, a realidade exige precisão geográfica, respeito aos saberes locais e independência de sinal.
+Em muitas praias e ramais de terra do Tapajós, os aplicativos comuns ficam sem sinal ou não mostram os caminhos reais. O ECOnexão reúne o que você precisa saber para planejar sua ida com tranquilidade.
 
 ---
 
-### Grade Comparativa: O Cenário Atual vs. A Solução ECOnexão
+### Grade Comparativa: O Cenário Comum vs. A Solução ECOnexão
 
-#### Card 1 — A Realidade do Território
-- **O Problema Comum:** Mapas genéricos ignoram ramais de terra, variações de maré do rio e pontos sem cobertura de dados móveis, deixando viajantes desorientados e inseguros.
-- **A Solução ECOnexão:** Trilhas e acessos fluviais traçados ponto a ponto, com perfil altimétrico, avisos sazonais e cache offline garantido para toda a jornada.
+#### Card 1 — Caminhos e Ramais de Terra
+- **O Cenário Comum:** Mapas automáticos muitas vezes ignoram estradas de terra, variações de praia na seca e na cheia, ou levam a caminhos difíceis de passar.
+- **A Abordagem ECOnexão:** Trilhas traçadas com distâncias reais, tipo de terreno (areia, terra batida ou várzea) e avisos sobre pontos que exigem mais cuidado.
 
-#### Card 2 — A Visibilidade de Quem Produz
-- **O Problema Comum:** Taxas intermediárias abusivas e algoritmos centralizadores invisibilizam cozinheiras tradicionais, mestres artesãos e catraieiros locais.
-- **A Solução ECOnexão:** Catálogo direto e sem comissões intermediárias, conectando o turista ao pequeno produtor e mantendo a renda integral na comunidade.
+#### Card 2 — Contato Direto com Quem Atende
+- **O Cenário Comum:** Plataformas de fora cobram comissões altas ou dificultam o contato simples com pequenas cozinhas, barqueiros e moradores.
+- **A Abordagem ECOnexão:** Um catálogo aberto com telefone e WhatsApp direto de quem mora e trabalha no local, sem cobrança de comissão intermediária.
 
-#### Card 3 — A Confiabilidade das Informações
-- **O Problema Comum:** Cadastros desatualizados em buscadores abertos exibem telefones inexistentes, horários incorretos e locais já desativados.
-- **A Solução ECOnexão:** Curadoria contínua e dados normalizados a partir do inventário oficial da SEMTUR e de checagens territoriais periódicas.
+#### Card 3 — Informações Checadas Localmente
+- **O Cenário Comum:** Buscadores genéricos mostram locais fechados, telefones desatualizados e rotas imprecisas.
+- **A Abordagem ECOnexão:** Informações levantadas e atualizadas periodicamente com a comunidade e fontes locais confiáveis.
 
 ---
 
@@ -84,222 +84,198 @@ Grandes plataformas foram desenhadas para cidades conectadas e grandes redes hot
 `[Interface & Funcionalidades]`
 
 ### Título Principal
-## Desenhado para a realidade do viajante e da comunidade
+## Tudo o que você precisa durante a viagem
 
 ### Subtítulo
-Conheça os fluxos essenciais do aplicativo: do planejamento do percurso ao apoio imediato durante a caminhada ou navegação.
+Uma navegação clara e direta, pensada para economizar bateria e funcionar direto no bolso.
 
 ---
 
 ### Detalhamento das 6 Telas
 
 #### Tela 1: Início & Descoberta
-- **Título do Card:** `01. Descoberta e Destaques da Região`
-- **Subtítulo:** Acesso rápido ao que o território oferece de mais autêntico.
+- **Título do Card:** `01. Início e Regiões`
+- **Subtítulo:** Escolha seu ponto de partida no Tapajós.
 - **Texto Descritivo:**
-  A tela inicial apresenta uma curadoria territorial atualizada, permitindo alternar rapidamente entre regiões polo (como Santarém e Alter do Chão). O visitante visualiza rotas verificadas, pontos de interesse recomendados e acessa diretamente o histórico de trajetos salvos para início imediato da viagem.
-- **Recursos Chave:** Seleção regional ágil, busca com autocompletar e carrossel de rotas auditadas com selo de verificação.
+  Alterne facilmente entre Santarém, Belterra e Alter do Chão para ver roteiros próximos, atrativos naturais e salvar caminhos para início rápido.
+- **Recursos Chave:** Seleção rápida de região, busca de locais e atalhos para rotas recomendadas.
 
-#### Tela 2: Catálogo de Rotas & Trilhas com Altimetria
-- **Título do Card:** `02. Rotas Detalhadas e Perfil de Terreno`
-- **Subtítulo:** Planejamento técnico com distância, relevo e tempo estimado.
+#### Tela 2: Catálogo de Rotas & Trilhas
+- **Título do Card:** `02. Rotas e Trilhas Detalhadas`
+- **Subtítulo:** Distância, tipo de solo e tempo estimado de percurso.
 - **Texto Descritivo:**
-  Cada rota conta com uma ficha técnica clara: quilometragem real, tipo de solo (areia de praia, ramal de terra batida ou várzea), altimetria acumulada e tempo médio de conclusão a pé, de bicicleta ou de barco. Sem surpresas ou estimativas irreais de navegação urbana.
-- **Recursos Chave:** Filtros por nível de esforço, cálculo de trajeto por diferentes pontos de partida (Porto, Rodoviária ou Aeroporto) e visualização de altimetria.
+  Cada trajeto traz informações essenciais: quilometragem, esforço físico necessário, tipo de solo (areia de praia ou ramal de terra) e tempo médio a pé, de bicicleta ou de barco.
+- **Recursos Chave:** Filtro por nível de caminhada, pontos de saída (Porto, Rodoviária, Aeroporto) e resumo do relevo.
 
-#### Tela 3: Mapa Interativo & Alertas Territoriais
-- **Título do Card:** `03. Navegação Georreferenciada e Alertas Locais`
-- **Subtítulo:** Segurança geográfica em tempo real com avisos da comunidade.
+#### Tela 3: Mapa Interativo & Avisos
+- **Título do Card:** `03. Mapa do Trajeto e Avisos Práticos`
+- **Subtítulo:** Pontos de apoio e dicas sobre o caminho.
 - **Texto Descritivo:**
-  Mapa interativo de alta precisão que posiciona atrativos naturais, serviços e pontos de apoio ao longo do trajeto. A tela exibe avisos territoriais emitidos por guias e órgãos locais, como trechos de areia fofa na estiagem, subida das águas do Tapajós ou áreas com sinal de telefonia instável.
-- **Recursos Chave:** Camadas de visualização, pins categorizados por cor, alertas de segurança visíveis e botão de expansão imersiva.
+  Visualize onde ficam quiosques, áreas de sombra, pontos de banho e atrativos naturais. A tela também mostra avisos úteis da comunidade, como trechos de areia fofa na estiagem ou áreas sem sinal.
+- **Recursos Chave:** Mapa com pontos de interesse coloridos, avisos sobre o terreno e modo em tela cheia.
 
-#### Tela 4: Catálogo de Atores & Comércio Local
-- **Título do Card:** `04. Comércio Familiar e Serviços Comunitários`
-- **Subtítulo:** Conexão direta com quem vive e preserva o Tapajós.
+#### Tela 4: Catálogo de Atores Locais
+- **Título do Card:** `04. Comércio e Serviços da Comunidade`
+- **Subtítulo:** Contato direto com quem recebe você no território.
 - **Texto Descritivo:**
-  Um diretório completo e organizado dos empreendimentos locais vinculados a cada roteiro. Encontre pousadas familiares, quiosques de comida caseira, condutores de trilhas, trançadeiras de palha e oficinas de biojoias. Os dados incluem telefone direto, formas aceitas de pagamento e estrutura acessível.
-- **Recursos Chave:** Filtro por categorias essenciais (Hospedagem, Alimentação, Artesanato, Apoio), contato direto sem intermediação e identificação de iniciativas comunitárias.
+  Encontre pousadas familiares, restaurantes caseiros, barqueiros, condutores locais e artesãos. Os cartões incluem número de WhatsApp, formas de pagamento aceitas e orientações de chegada.
+- **Recursos Chave:** Filtros por tipo de serviço (Hospedagem, Alimentação, Barcos, Artesanato) e contato direto sem comissões.
 
 #### Tela 5: Perfil do Viajante & Modo Offline
-- **Título do Card:** `05. Gestão de Viagem e Operação Sem Sinal`
-- **Subtítulo:** Baixo consumo de bateria e autonomia completa em áreas remotas.
+- **Título do Card:** `05. Gestão de Roteiros e Uso Offline`
+- **Subtítulo:** Suas rotas guardadas para consultar sem internet.
 - **Texto Descritivo:**
-  No perfil, o usuário gerencia rotas favoritas, histórico de percursos realizados e consulta seu painel de impacto socioambiental positivo. É onde se ativa o download de mapas e fichas de atores para funcionamento 100% offline antes de ingressar nas trilhas ou nas praias afastadas.
-- **Recursos Chave:** Download de pacotes de rota em um toque, histórico de impacto local e sincronização automática ao restabelecer a conexão.
+  Guarde seus roteiros favoritos e baixe os mapas com antecedência. Assim, você consulta caminhos, contatos e pontos de interesse com autonomia mesmo em locais remotos.
+- **Recursos Chave:** Download da rota em um toque, consumo econômico de bateria e sincronização quando reconectar.
 
 #### Tela 6: Acessibilidade & Inclusão
-- **Título do Card:** `06. Acessibilidade Real no Território`
-- **Subtítulo:** Informação transparente sobre acessibilidade física e cognitiva.
+- **Título do Card:** `06. Acessibilidade e Clareza`
+- **Subtítulo:** Informação transparente sobre a estrutura dos locais.
 - **Texto Descritivo:**
-  O ECOnexão trata acessibilidade com responsabilidade: informa com exatidão quais atrativos e estabelecimentos possuem rampas, banheiros adaptados, cardápios em áudio ou atendimento em linguagem simples. A interface do app oferece alto contraste, tipografia escalável e compatibilidade plena com leitores de tela.
-- **Recursos Chave:** Indicadores objetivos de acessibilidade arquitetônica nos estabelecimentos, conformidade com padrões WCAG e modo de alto contraste para leitura sob sol forte.
+  O app indica de forma clara quais espaços possuem rampas, banheiros acessíveis e facilidade de acesso. A interface conta com alto contraste para leitura sob sol forte e suporte a leitores de tela.
+- **Recursos Chave:** Informações práticas sobre acesso físico nos locais, texto legível e modo de alto contraste para o sol.
 
 ---
 
-## 5. Seção Rota Piloto: Praia do Pindobal e Região do Tapajós
+## 5. Seção Rota Piloto: Santarém, Alter do Chão e Praia do Pindobal
 
 ### Tag da Seção
 `[Território Piloto]`
 
 ### Título Principal
-## Rota Pindobal: A experiência piloto entre o rio e a floresta
+## Primeiro roteiro: Santarém, Alter do Chão e Praia do Pindobal
 
 ### Subtítulo
-Localizada entre Santarém e Belterra, a Praia do Pindobal reúne praias de areia branca, gastronomia cabocla e pousadas familiares às margens do Rio Tapajós.
+Um percurso que reúne praias de areia clara, culinária ribeirinha e pousadas acolhedoras às margens do Rio Tapajós.
 
 ---
 
-### Pilares da Rota Piloto
+### Ficha Resumida do Percurso
+- `42 km` de percurso mapeado
+- `Terreno plano` com trechos de ramal e praia
+- `Pousadas e barracas` para parada e alimentação
+- `Acesso offline` completo para a caminhada ou travessia
 
-#### 1. Hospedagem Familiar & Pousadas Ecológicas
-- **Descrição:** Acomodações acolhedoras geridas por famílias locais, com arquitetura integrada ao ambiente natural, café da manhã com frutas da época e respeito aos ciclos de descanso da comunidade.
-- **Destaque:** Estadia tranquila a passos do Tapajós, com hospitalidade autêntica.
+---
 
-#### 2. Gastronomia Típica do Tapajós
-- **Descrição:** Sabores ancestrais preparados com ingredientes frescos da bacia amazônica: peixe assado na brasa (tambaqui, tucunaré e pirarucu), molho de tucupi, farinha de mandioca artesanal e doces de cupuaçu e taperebá.
-- **Destaque:** Cozinhas familiares com atendimento direto na beira da praia e nas vilas.
+### Pilares de Hospitalidade e Serviços Locais
 
-#### 3. Barqueiros e Catraieiros Locais
-- **Descrição:** Condutores tradicionais que conhecem as correntes, os bancos de areia e os igarapés da região. Transporte seguro para travessias fluviais, passeios pelas pontas de praia e observação da fauna aquática.
-- **Destaque:** Navegação segura com barqueiros credenciados e orientações de segurança fluvial.
+#### 1. Pousadas e Hospedagem Familiar
+- **Descrição:** Acomodações simples e acolhedoras geridas por famílias da região, perto da praia e com café da manhã regional.
+- **Destaque:** Estadia tranquila a poucos passos do Rio Tapajós.
 
-#### 4. Artesanato e Tradição Ribeirinha
-- **Descrição:** Biojoias feitas de sementes nativas (jarina, morototó, açaí), peças trançadas em palha de tucumã e cerâmica inspirada na tradição tapajônica, comercializadas diretamente por quem produz.
-- **Destaque:** Renda que fortalece as famílias de artesãos e preserva técnicas manuais históricas.
+#### 2. Comida Típica do Tapajós
+- **Descrição:** Peixes frescos assados na brasa (tambaqui, tucunaré e pirarucu), molho de tucupi, farinha de mandioca local e frutas da estação.
+- **Destaque:** Cozinhas familiares na beira da praia e nas vilas.
 
-#### 5. Atrativos Naturais & Igarapés Preservados
-- **Descrição:** Acesso mapeado a praias de água doce, igarapés de água cristalina e trilhas de terra firme que conectam comunidades ribeirinhas a áreas de floresta nativa preservada.
-- **Destaque:** Roteiros autoguiados com marcação de pontos de descanso, sombra e cuidados ambientais.
+#### 3. Barqueiros e Travessias
+- **Descrição:** Moradores que conhecem o rio, os bancos de areia e os igarapés, oferecendo travessias e passeios com tranquilidade.
+- **Destaque:** Deslocamentos de barco entre pontas de praia e comunidades.
+
+#### 4. Artesanato e Peças Locais
+- **Descrição:** Biojoias com sementes nativas, peças em palha de tucumã e cerâmica regional vendidas diretamente pelas artesãs e artesãos.
+- **Destaque:** Renda que apoia diretamente as famílias produtoras.
+
+#### 5. Praias e Igarapés
+- **Descrição:** Pontos de banho em águas calmas e trilhas de terra com marcação de sombra, acessos e cuidados de preservação.
+- **Destaque:** Orientações sobre o rio, banho seguro e respeito à mata nativa.
 
 ---
 
 ## 6. Seção Para Quem é o ECOnexão (Públicos e Impacto)
 
 ### Tag da Seção
-`[Impacto Coletivo]`
+`[Impacto Comunitário]`
 
 ### Título Principal
-## Uma ferramenta construída para todos os elos do território
+## Uma ferramenta útil para quem visita e para quem vive aqui
 
 ### Subtítulo
-O turismo sustentável só acontece quando gera valor real para quem visita, para quem recebe e para quem cuida da região.
+O turismo no Tapajós funciona melhor quando é bom para quem passeia e justo para quem mora e cuida da região.
 
 ---
 
 ### Colunas de Público
 
-#### Para Turistas Conscientes
-- **Objetivo:** Viajar com segurança, autonomia e propósito.
-- **Benefícios Entregues:**
-  - Roteiros confiáveis e testados no terreno, sem surpresas desagradáveis.
-  - Conexão genuína com anfitriões locais e histórias reais da Amazônia.
-  - Funcionamento offline para trilhas e praias distantes de antenas de celular.
-  - Certeza de que seu investimento financeiro apoia diretamente a comunidade.
+#### Para Quem Visita
+- **Objetivo:** Planejar passeios com tranquilidade e autonomia.
+- **Vantagens:**
+  - Roteiros claros com distâncias e condições reais do caminho.
+  - Contato direto com moradores e anfitriões locais.
+  - Acesso aos mapas mesmo em praias e trilhas sem sinal de celular.
+  - Apoio direto aos pequenos negócios da comunidade.
 
-#### Para Empreendedores e Famílias Locais
-- **Objetivo:** Conquistar clientes qualificados sem intermediários dispendiosos.
-- **Benefícios Entregues:**
-  - Página e catálogo dedicados no app com dados de contato direto (telefone e WhatsApp).
-  - Sem cobrança de comissões abusivas sobre refeições, diárias ou passeios.
-  - Reconhecimento formal de práticas de sustentabilidade e acessibilidade.
-  - Acesso facilitado aos visitantes que já estão na rota de sua localidade.
+#### Para Moradores e Empreendedores
+- **Objetivo:** Divulgar seus serviços e receber visitantes com autonomia.
+- **Vantagens:**
+  - Página dedicada com número de WhatsApp e telefone direto.
+  - Sem cobrança de comissões sobre diárias, refeições ou passeios.
+  - Divulgação simples para visitantes que já estão na rota.
+  - Valorização de práticas responsáveis e atendimento acolhedor.
 
-#### Para Gestores Públicos, SEMTUR e Associações
-- **Objetivo:** Promover o turismo ordenado com dados qualificados e governança.
-- **Benefícios Entregues:**
-  - Base de dados georreferenciada e padronizada (compatível com inventários turísticos).
-  - Monitoramento da distribuição de fluxo de visitantes ao longo dos ramais e praias.
-  - Canal ágil para emissão de comunicados de segurança e preservação ambiental.
-  - Fortalecimento da política pública de turismo comunitário em Santarém e Belterra.
+#### Para Associações e Gestão Local
+- **Objetivo:** Apoiar a organização do turismo com dados organizados.
+- **Vantagens:**
+  - Base de dados georreferenciada e alinhada com levantamentos locais.
+  - Visão clara da distribuição de visitantes pelas rotas.
+  - Canal para avisos importantes sobre preservação e segurança no rio.
+  - Apoio prático ao Turismo de Base Comunitária em Santarém e Belterra.
 
 ---
 
-## 7. Seção Confiabilidade Técnica & Pilares de Engenharia
+## 7. Seção Tecnologia & Confiabilidade
 
 ### Tag da Seção
-`[Arquitetura & Rigor Técnico]`
+`[Tecnologia e Performance]`
 
 ### Título Principal
-## Engenharia sólida pensada para a geografia amazônica
+## Tecnologia leve e voltada para o uso real
 
 ### Subtítulo
-O ECOnexão foi desenvolvido com padrões modernos de desenvolvimento de software para garantir velocidade, segurança e resiliência em qualquer dispositivo.
+Construído para abrir rápido, gastar pouca bateria e funcionar sem depender de internet de alta velocidade.
 
 ---
 
-### Os 4 Pilares Técnicos
-
-#### 1. Georreferenciamento Espacial com PostGIS
-- **Tecnologia:** Banco de dados relacional com extensões espaciais de alta precisão.
-- **Impacto Prático:** Cálculo exato de distâncias ao longo das vias terrestres e fluviais, projeção correta de coordenadas geográficas e filtragem contextual por proximidade real da rota.
-
-#### 2. Dados Normalizados e Auditoria Editorial
-- **Tecnologia:** Pipeline estruturado de ingestão com checagem de integridade e histórico de alterações.
-- **Impacto Prático:** Integração sem duplicidades a partir do inventário SEMTUR e de mapeamento de campo, garantindo que nenhum número de telefone ou coordenada seja publicado sem conferência.
-
-#### 3. Otimização Extrema para Conexões Lentas
-- **Tecnologia:** Armazenamento local leve (cache inteligente), imagens compactadas em WebP e tráfego enxuto via APIs REST.
-- **Impacto Prático:** O aplicativo carrega com rapidez mesmo em redes 3G oscilantes e armazena os pacotes da viagem na memória do aparelho para consulta sem sinal.
-
-#### 4. Acessibilidade e Privacidade por Princípio
-- **Tecnologia:** Padrões WCAG 2.1 AA, anonimização de sessões de navegação e tratamento rigoroso de mídias sem metadados sensíveis.
-- **Impacto Prático:** Uso seguro, sem rastreamento invasivo de dados pessoais, com leitura facilitada para pessoas com deficiência visual ou motora.
+### Pilares Técnicos
+1. **Frontend Leve (React Native & Expo):** Aplicativo rápido e fluido para Android e iOS, desenhado para economizar bateria em dias longos de trilha.
+2. **Backend Organizado (FastAPI & Python):** Serviços ágeis para consulta de rotas e dados com segurança.
+3. **Mapas e Distâncias Exatas (PostGIS):** Processamento espacial para medir distâncias e tempos de trajeto por caminhos reais de terra e rio.
+4. **Armazenamento e Fotos (Supabase):** Imagens compactas e carregamento otimizado para não travar em redes lentas.
+5. **Navegação Offline (Smart Caching):** Pacotes de rotas salvos na memória do aparelho para consulta sem sinal.
 
 ---
 
-## 8. Seção CTA Final: Parcerias, Demonstração & Contato
+## 8. Seção Contato & Conversa com a Equipe
 
 ### Tag da Seção
-`[Próximos Passos]`
+`[Fale Conosco]`
 
 ### Título Principal
-## Leve o turismo comunitário e estruturado para a sua região
+## Quer conversar com a equipe do projeto?
 
 ### Subtítulo
-Estamos expandindo o mapeamento de rotas e consolidando parcerias com municípios, cooperativas, operadoras sustentáveis e associações comunitárias do Norte do Brasil.
+Seja você um morador com negócio local, condutor de turismo, pesquisador ou representante institucional, estamos à disposição para conversar sobre o projeto no Tapajós.
 
----
-
-### Cartão de Ação / Painel de Parceria
-
-#### Bloco 1: Para Órgãos Públicos e Associações
-- **Chamada:** `Deseja implementar o ECOnexão em seu município ou unidade de conservação?`
-- **Texto:** Apresentamos a metodologia de inventário, o sistema de gestão territorial e a integração com bases de dados turísticas locais.
-- **Ação:** `Solicitar Reunião Institucional`
-
-#### Bloco 2: Para Empreendedores do Polo Tapajós
-- **Chamada:** `Tem uma pousada, restaurante, barco ou oficina de artesanato na região?`
-- **Texto:** Cadastre seu estabelecimento no catálogo oficial verificado e receba turistas conscientes que percorrem as rotas mapeadas.
-- **Ação:** `Cadastrar Meu Negócio Local`
-
-#### Bloco 3: Para Pesquisadores e Imprensa
-- **Chamada:** `Conheça os dados do projeto e a arquitetura técnica.`
-- **Texto:** Acesse nosso material institucional completo com os relatórios da rota piloto e as especificações de impacto socioeconômico.
-- **Ação:** `Acessar Relatório da Rota Piloto`
+### Formulário de Contato
+- **Campos:** Nome, Instituição / Atividade, E-mail, Tipo de Interesse, Mensagem.
+- **Botão:** `Enviar Mensagem`
+- **Nota:** `Retornamos em até 1 dia útil por e-mail ou WhatsApp.`
 
 ---
 
 ## 9. Rodapé (Footer)
 
-### Coluna 1: Sobre o Projeto
+### Sobre o Projeto
 - **Nome:** ECOnexão
-- **Texto Institucional:** Plataforma digital de ecoturismo comunitário, trilhas sustentáveis e valorização da economia familiar amazônica.
-- **Selo Territorial:** Desenvolvido e testado na bacia do Rio Tapajós — Santarém, Belterra e Alter do Chão, Pará.
+- **Texto:** Guia de turismo comunitário e trilhas no Rio Tapajós. Desenvolvido para conectar viajantes a experiências autênticas e ao comércio local de Santarém, Belterra e Alter do Chão.
 
-### Coluna 2: Navegação Rápida
+### Links
 - A Proposta
-- Funcionalidades do App
-- Rota Piloto Pindobal
-- Impacto & Comunidades
-- Arquitetura Técnica
+- Telas do Aplicativo
+- Rota Pindobal
+- Comunidades & Gestores
+- Tecnologia
 
-### Coluna 3: Documentação & Parcerias
-- Inventário SEMTUR Santarém
-- Relatório Metodológico
-- Termos de Uso e Privacidade
-- Contato Institucional
-
-### Linha Inferior (Copyright & Acessibilidade)
+### Linha Inferior (Copyright & Princípios)
 - **Copyright:** `© 2026 ECOnexão. Todos os direitos reservados.`
-- **Compromisso:** `Iniciativa alinhada aos princípios do Turismo de Base Comunitária (TBC) e à conservação socioambiental da Amazônia.`
+- **Compromisso:** `Iniciativa voltada ao fortalecimento do Turismo de Base Comunitária e à valorização do território amazônico.`

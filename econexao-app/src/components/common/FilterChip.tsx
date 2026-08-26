@@ -24,6 +24,7 @@ export const FilterChip: React.FC<FilterChipProps> = ({
         isSelected ? styles.chipSelected : styles.chipUnselected,
       ]}
       onPress={onPress}
+      accessibilityState={{ selected: isSelected }}
       {...makeAccessibleButton(
         `Filtro ${label}`,
         isSelected ? 'Filtro ativado. Toque para desativar.' : 'Toque para filtrar por esta categoria.'
@@ -51,7 +52,7 @@ export const FilterChip: React.FC<FilterChipProps> = ({
 
 const styles = StyleSheet.create({
   chip: {
-    height: 40,
+    minHeight: 44,
     paddingHorizontal: 16,
     borderRadius: theme.radii.full,
     flexDirection: 'row',

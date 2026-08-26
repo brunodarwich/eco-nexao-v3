@@ -199,6 +199,16 @@ cd backend
 .\.venv\Scripts\python.exe -m scripts.verify_editorial_workflow
 ```
 
+Para verificar as camadas espaciais estáticas da ECO-2306 no Supabase `test`,
+incluindo corredor, isolamento regional, prioridade, categorias incompatíveis e
+índices, execute a matriz transacional (todas as fixtures sofrem rollback):
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m scripts.check_test_isolation
+.\.venv\Scripts\python.exe -m scripts.verify_actor_region_layers --env-file .env.test
+```
+
 ## Variáveis de ambiente
 
 Copie `econexao-app/.env.example` para `econexao-app/.env.local` e
@@ -223,7 +233,9 @@ SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SECRET_KEY=
 SUPABASE_JWKS_URL=
 GOOGLE_PLACES_API_KEY=
-OSRM_BASE_URL=
+ROUTING_PROVIDER=fake_deterministic
+ENABLE_DYNAMIC_ROUTING=false
+GOOGLE_ROUTES_API_KEY=
 SENTRY_DSN=
 ```
 
@@ -299,9 +311,15 @@ isolamento e verificação e nunca use staging/production para essa prova.
 
 ## Conectores
 
-O `OsrmConnector` é usado somente por serviços/jobs editoriais. Seus testes
-usam `httpx.MockTransport` e não fazem chamadas externas. Leituras normais da
-API consomem geometrias persistidas no PostgreSQL/PostGIS.
+O provider real aprovado para previews dinâmicos é `google_routes`. A flag
+`ENABLE_DYNAMIC_ROUTING` permanece `false` por padrão; `fake_deterministic` é
+permitido somente em development/test. OSRM runtime foi revogado pelo ADR 0013;
+as geometrias OSRM importadas continuam válidas como snapshots oficiais.
+
+O conector Google usa `ComputeRoutes Essentials`, POST, field mask mínima,
+timeout/retries limitados, circuit breaker e guardas de 10 previews/minuto,
+alerta em 7.500 e bloqueio em 9.000 chamadas mensais. Respostas não são cacheadas
+até homologação jurídica específica. Consulte `docs/deployment_google_routes.md`.
 
 O `GooglePlacesClient` usa exclusivamente Places API (New), field masks
 allowlisted, timeout, retries limitados e orçamento de chamadas por job. Seus

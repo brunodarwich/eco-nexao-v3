@@ -160,6 +160,7 @@ HTTP_STATUS_CODE_MAP: dict[int, str] = {
     422: "UNPROCESSABLE_ENTITY",
     500: "INTERNAL_SERVER_ERROR",
     503: "SERVICE_UNAVAILABLE",
+    504: "GATEWAY_TIMEOUT",
 }
 
 
@@ -179,11 +180,16 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
     req_id = _get_request_id(request)
     code = HTTP_STATUS_CODE_MAP.get(exc.status_code, f"HTTP_{exc.status_code}")
     details = getattr(exc, "details", None)
+    message = str(exc.detail)
+    if isinstance(exc.detail, dict):
+        code = str(exc.detail.get("code", code))
+        message = str(exc.detail.get("message", "Falha ao processar a solicitação."))
+        details = exc.detail.get("details")
 
     content = {
         "error": {
             "code": code,
-            "message": str(exc.detail),
+            "message": message,
             "details": details,
         },
         "request_id": req_id,
@@ -201,11 +207,15 @@ async def validation_exception_handler(
 ) -> JSONResponse:
     """Custom exception handler for 422 RequestValidationError adhering to ErrorResponse schema."""
     req_id = _get_request_id(request)
+    safe_errors = []
+    for error in exc.errors():
+        safe_error = {key: value for key, value in error.items() if key != "input"}
+        safe_errors.append(safe_error)
     content = {
         "error": {
             "code": "VALIDATION_ERROR",
             "message": "Dados de requisição inválidos",
-            "details": exc.errors(),
+            "details": safe_errors,
         },
         "request_id": req_id,
     }

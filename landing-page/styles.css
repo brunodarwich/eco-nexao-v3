@@ -765,61 +765,141 @@ button, input, select, textarea {
 }
 
 /* ==========================================================================
-   Seção A Proposta (Cards de Problema & Solução)
+   Seção A Proposta (Cards Comparativos: Cenário Atual vs ECOnexão)
    ========================================================================== */
 
-.feature-card {
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+.comparison-card {
   background-color: var(--color-surface-white);
-  border: 1px solid rgba(117, 155, 113, 0.2);
+  border: 1px solid rgba(117, 155, 113, 0.22);
   border-radius: var(--radius-lg);
-  padding: 36px 28px;
+  padding: 32px 26px;
   box-shadow: var(--shadow-card);
   transition: all var(--transition-normal);
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
-.feature-card:hover {
+.comparison-card:hover {
   transform: translateY(-6px);
   box-shadow: var(--shadow-card-hover);
   border-color: var(--color-leaf);
 }
 
-.card-icon-box {
-  width: 52px;
-  height: 52px;
+.card-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  max-width: 48px;
+  max-height: 48px;
   border-radius: var(--radius-md);
   background-color: rgba(51, 96, 30, 0.1);
   color: var(--color-primary);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
-.card-title {
-  font-size: 1.35rem;
-  font-weight: 700;
+.card-icon-wrapper svg {
+  width: 24px;
+  height: 24px;
+}
+
+.comparison-card-title {
+  font-size: 1.3rem;
+  font-weight: 800;
   color: var(--color-deep);
-  margin-bottom: 14px;
-  line-height: 1.3;
+  margin-bottom: 20px;
+  line-height: 1.25;
 }
 
-.card-text {
-  font-size: 1rem;
-  color: var(--color-text-muted);
-  line-height: 1.6;
+.comparison-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   margin-bottom: 24px;
   flex-grow: 1;
 }
 
+.problem-block,
+.solution-block {
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.problem-block {
+  background-color: rgba(185, 28, 28, 0.04);
+  border-left: 3px solid #DC2626;
+}
+
+.solution-block {
+  background-color: rgba(51, 96, 30, 0.06);
+  border-left: 3px solid var(--color-primary);
+}
+
+.block-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.block-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.problem-block .block-label {
+  color: #B91C1C;
+}
+
+.solution-block .block-label {
+  color: var(--color-deep);
+}
+
+.danger-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #DC2626;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.success-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-leaf);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.block-text {
+  font-size: 0.92rem;
+  color: var(--color-text-body);
+}
+
 .card-footer-tag span {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-leaf);
-  background-color: rgba(93, 141, 62, 0.1);
-  padding: 4px 12px;
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-deep);
+  background-color: rgba(93, 141, 62, 0.12);
+  padding: 5px 12px;
   border-radius: var(--radius-full);
+  border: 1px solid rgba(93, 141, 62, 0.2);
 }
 
 /* ==========================================================================
@@ -908,19 +988,19 @@ button, input, select, textarea {
 }
 
 .fade-effect {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.35s ease, transform 0.35s ease;
 }
 
 .fade-effect.switching {
-  opacity: 0.3;
-  transform: scale(0.97);
+  opacity: 0.2;
+  transform: scale(0.96);
 }
 
 /* Coluna Informativa */
 .showcase-header-row {
   display: flex;
   gap: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .badge-pill {
@@ -942,33 +1022,58 @@ button, input, select, textarea {
 }
 
 .showcase-title {
-  font-size: 2rem;
+  font-size: 1.85rem;
   font-weight: 800;
   color: var(--color-deep);
+  margin-bottom: 6px;
+  line-height: 1.25;
+}
+
+.showcase-subtitle {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-leaf);
   margin-bottom: 16px;
-  line-height: 1.2;
+  line-height: 1.4;
 }
 
 .showcase-description {
-  font-size: 1.1rem;
+  font-size: 1.02rem;
   color: var(--color-text-muted);
   line-height: 1.6;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
-.showcase-features-list {
+/* Dynamic Key Features Container */
+.showcase-features-wrapper {
+  margin-bottom: 30px;
+}
+
+.showcase-features-heading {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-deep);
+  margin-bottom: 12px;
+}
+
+.showcase-features-container {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  margin-bottom: 36px;
+  gap: 10px;
 }
 
-.feature-item {
+.feature-pill-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 0.95rem;
+  gap: 10px;
+  font-size: 0.92rem;
   color: var(--color-text-body);
+  background-color: var(--color-bg-canvas);
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(117, 155, 113, 0.15);
 }
 
 .check-svg {
@@ -976,13 +1081,21 @@ button, input, select, textarea {
   flex-shrink: 0;
 }
 
-/* Controles Anterior/Próximo */
+/* Controles Anterior/Próximo e Autoplay */
 .showcase-nav-controls {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
-  padding-top: 24px;
+  padding-top: 22px;
   border-top: 1px solid rgba(117, 155, 113, 0.2);
+  flex-wrap: wrap;
+}
+
+.ctrl-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .btn-ctrl {
@@ -1012,143 +1125,445 @@ button, input, select, textarea {
   color: var(--color-text-muted);
 }
 
-/* ==========================================================================
-   Seção Rota Piloto: Pindobal e Tapajós
-   ========================================================================== */
-
-.territory-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-auto-rows: 280px;
-  gap: 24px;
+.btn-autoplay {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(51, 96, 30, 0.08);
+  border: 1px solid rgba(51, 96, 30, 0.25);
+  color: var(--color-deep);
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
-.territory-card {
+.btn-autoplay:hover {
+  background-color: rgba(51, 96, 30, 0.16);
+  border-color: var(--color-primary);
+}
+
+.btn-autoplay.paused {
+  background-color: transparent;
+  color: var(--color-text-muted);
+  border-color: rgba(117, 155, 113, 0.3);
+}
+
+/* ==========================================================================
+   Seção Rota Piloto: Pindobal e Tapajós (Hero Imersivo + Atores)
+   ========================================================================== */
+
+.territory-section {
   position: relative;
+}
+
+/* Card Hero Imersivo de Pindobal */
+.pilot-hero-card {
+  position: relative;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  margin-top: 40px;
+  margin-bottom: 56px;
+  box-shadow: 0 16px 40px rgba(20, 40, 11, 0.16);
+  border: 1px solid rgba(117, 155, 113, 0.3);
+  min-height: 440px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.pilot-hero-bg-wrapper {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.pilot-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
+  transition: transform 1.2s var(--ease-spring);
+}
+
+.pilot-hero-card:hover .pilot-hero-img {
+  transform: scale(1.03);
+}
+
+.pilot-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(16, 28, 12, 0.4) 0%, rgba(16, 28, 12, 0.75) 45%, rgba(16, 28, 12, 0.96) 100%);
+  z-index: 2;
+}
+
+.pilot-hero-content {
+  position: relative;
+  z-index: 3;
+  padding: 48px;
+  width: 100%;
+  color: #ffffff;
+}
+
+.pilot-hero-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.pilot-badge {
+  background-color: var(--color-sun);
+  color: var(--color-deep);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 5px 14px;
+  border-radius: var(--radius-full);
+}
+
+.pilot-badge-secondary {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: var(--radius-full);
+  backdrop-filter: blur(8px);
+}
+
+.pilot-hero-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 12px;
+  line-height: 1.2;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.pilot-hero-desc {
+  font-size: 1.08rem;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1.6;
+  max-width: 840px;
+  margin-bottom: 32px;
+}
+
+/* Territorial Stats Bar */
+.pilot-stats-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: var(--radius-lg);
+  padding: 20px 28px;
+  gap: 16px;
+}
+
+.pilot-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+}
+
+.stat-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background-color: rgba(248, 201, 0, 0.2);
+  color: var(--color-sun);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-number {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.1;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+.pilot-stat-divider {
+  width: 1px;
+  height: 40px;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Header dos Atores Locais */
+.actors-section-header {
+  margin-bottom: 32px;
+}
+
+.actors-section-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--color-deep);
+  margin-bottom: 6px;
+}
+
+.actors-section-subtitle {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+}
+
+/* Grade de Atores Comunitários (5 cards) */
+.actors-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+
+.actor-card {
+  background-color: var(--color-surface-white);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(117, 155, 113, 0.22);
   overflow: hidden;
   box-shadow: var(--shadow-card);
-  border: 1px solid rgba(117, 155, 113, 0.2);
+  display: flex;
+  flex-direction: column;
   transition: all var(--transition-normal);
 }
 
-.territory-card:hover {
-  transform: translateY(-4px);
+.actor-card:hover {
+  transform: translateY(-6px);
   box-shadow: var(--shadow-card-hover);
+  border-color: var(--color-leaf);
 }
 
-.territory-card:hover .territory-img {
-  transform: scale(1.06);
-}
-
-.territory-card-large {
+.actor-card-featured {
   grid-column: span 2;
-  grid-row: span 1;
 }
 
-.territory-img {
+.actor-media {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  margin: 0;
+  overflow: hidden;
+  background-color: var(--color-bg-canvas);
+}
+
+.actor-card-featured .actor-media {
+  height: 240px;
+}
+
+.actor-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.6s var(--ease-spring);
 }
 
-.territory-card-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 24px;
-  background: linear-gradient(0deg, rgba(20, 40, 11, 0.92) 0%, rgba(20, 40, 11, 0.5) 60%, transparent 100%);
-  color: #ffffff;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
+.actor-card:hover .actor-img {
+  transform: scale(1.06);
 }
 
-.territory-chip {
-  align-self: flex-start;
-  font-size: 0.75rem;
+.actor-category-tag {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  font-size: 0.76rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  background-color: var(--color-sun);
-  color: var(--color-deep);
-  padding: 3px 10px;
+  letter-spacing: 0.04em;
+  padding: 4px 12px;
   border-radius: var(--radius-full);
-  margin-bottom: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(6px);
 }
 
-.territory-card-title {
-  font-size: 1.3rem;
+.tag-hospedagem { background-color: rgba(51, 96, 30, 0.92); color: #ffffff; }
+.tag-gastronomia { background-color: rgba(220, 38, 38, 0.92); color: #ffffff; }
+.tag-transporte { background-color: rgba(14, 116, 144, 0.92); color: #ffffff; }
+.tag-artesanato { background-color: rgba(180, 83, 9, 0.92); color: #ffffff; }
+.tag-condutores { background-color: rgba(93, 141, 62, 0.95); color: #ffffff; }
+
+.actor-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.actor-title {
+  font-size: 1.22rem;
   font-weight: 700;
-  margin-bottom: 6px;
-  line-height: 1.2;
+  color: var(--color-deep);
+  margin-bottom: 10px;
+  line-height: 1.3;
 }
 
-.territory-card-desc {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.88);
-  line-height: 1.4;
+.actor-desc {
+  font-size: 0.92rem;
+  color: var(--color-text-muted);
+  line-height: 1.55;
+  margin-bottom: 18px;
+  flex-grow: 1;
+}
+
+.actor-highlight {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  background-color: rgba(51, 96, 30, 0.06);
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-primary);
+}
+
+.actor-highlight svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--color-leaf);
 }
 
 /* ==========================================================================
    Seção Para Quem é o ECOnexão (Públicos e Impacto)
    ========================================================================== */
 
+.impact-header-badge {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-sun);
+  margin-bottom: 8px;
+}
+
 .impact-card {
   background-color: var(--color-dark-surface);
   border: 1px solid rgba(117, 155, 113, 0.25);
   border-radius: var(--radius-lg);
-  padding: 40px 32px;
+  padding: 36px 30px;
   transition: all var(--transition-normal);
+  display: flex;
+  flex-direction: column;
 }
 
 .impact-card:hover {
   transform: translateY(-6px);
   border-color: var(--color-leaf);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
 }
 
 .impact-icon-circle {
-  width: 54px;
-  height: 54px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background-color: rgba(248, 201, 0, 0.15);
   color: var(--color-sun);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .impact-title {
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: #ffffff;
   margin-bottom: 20px;
+  line-height: 1.3;
 }
 
 .impact-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
+  flex-grow: 1;
 }
 
 .impact-list li {
   position: relative;
-  padding-left: 24px;
-  font-size: 0.98rem;
+  padding-left: 20px;
+  font-size: 0.92rem;
   color: var(--color-text-muted-light);
-  line-height: 1.5;
+  line-height: 1.55;
+}
+
+.impact-list li strong {
+  color: #ffffff;
 }
 
 .impact-list li::before {
-  content: '✓';
+  content: '•';
   position: absolute;
-  left: 0;
+  left: 4px;
   color: var(--color-sun);
   font-weight: bold;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+/* Banner de Pilares de Impacto Territorial (Row Inferior) */
+.impact-pillars-row {
+  margin-top: 48px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(117, 155, 113, 0.2);
+  border-radius: var(--radius-xl);
+  padding: 28px 32px;
+}
+
+.impact-pillar-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pillar-stat {
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: var(--color-sun);
+  background-color: rgba(248, 201, 0, 0.12);
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(248, 201, 0, 0.25);
+  flex-shrink: 0;
+  font-family: var(--font-heading);
+}
+
+.pillar-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.pillar-content strong {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 2px;
+}
+
+.pillar-content span {
+  font-size: 0.82rem;
+  color: var(--color-text-muted-light);
+  line-height: 1.4;
 }
 
 /* ==========================================================================
@@ -1182,17 +1597,74 @@ button, input, select, textarea {
   margin-bottom: 14px;
 }
 
+/* ==========================================================================
+   Seção Pilares Técnicos & Engenharia (5 Cards)
+   ========================================================================== */
+
+.tech-grid-5 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.tech-header-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tech-pill {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-primary);
+  background-color: rgba(51, 96, 30, 0.12);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+}
+
+.tech-subpill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background-color: var(--color-bg-canvas);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(117, 155, 113, 0.2);
+}
+
+.tech-box {
+  background-color: var(--color-surface-white);
+  padding: 32px 28px;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid rgba(117, 155, 113, 0.25);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+}
+
+.tech-box:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-card);
+}
+
 .tech-box-title {
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--color-deep);
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .tech-box-desc {
   font-size: 0.95rem;
   color: var(--color-text-muted);
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 /* ==========================================================================
@@ -1201,7 +1673,7 @@ button, input, select, textarea {
 
 .pitch-box {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
+  grid-template-columns: 1.05fr 0.95fr;
   gap: 56px;
   align-items: center;
 }
@@ -1220,15 +1692,15 @@ button, input, select, textarea {
 }
 
 .pitch-title {
-  font-size: 2.4rem;
+  font-size: 2.35rem;
   font-weight: 800;
   line-height: 1.2;
   margin-bottom: 20px;
 }
 
 .pitch-desc {
-  font-size: 1.15rem;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.12rem;
+  color: rgba(255, 255, 255, 0.92);
   line-height: 1.6;
   margin-bottom: 32px;
 }
@@ -1272,7 +1744,7 @@ button, input, select, textarea {
 .pitch-form-card {
   background-color: var(--color-surface-white);
   border-radius: var(--radius-xl);
-  padding: 40px;
+  padding: 38px 34px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
   color: var(--color-text-body);
 }
@@ -1285,9 +1757,10 @@ button, input, select, textarea {
 }
 
 .form-card-desc {
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   color: var(--color-text-muted);
-  margin-bottom: 24px;
+  margin-bottom: 22px;
+  line-height: 1.5;
 }
 
 .contact-form {
@@ -1299,13 +1772,21 @@ button, input, select, textarea {
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .form-group label {
   font-size: 0.88rem;
   font-weight: 600;
   color: var(--color-deep);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.required-asterisk {
+  color: #c53030;
+  font-weight: 700;
 }
 
 .form-group input,
@@ -1314,9 +1795,11 @@ button, input, select, textarea {
   width: 100%;
   padding: 10px 14px;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(117, 155, 113, 0.4);
+  border: 1.5px solid rgba(117, 155, 113, 0.35);
   background-color: var(--color-bg-canvas);
   color: var(--color-text-body);
+  font-family: inherit;
+  font-size: 0.95rem;
   transition: all var(--transition-fast);
 }
 
@@ -1329,93 +1812,147 @@ button, input, select, textarea {
   box-shadow: 0 0 0 3px rgba(51, 96, 30, 0.15);
 }
 
+.form-group input[aria-invalid="true"],
+.form-group select[aria-invalid="true"] {
+  border-color: #e53e3e;
+  background-color: #fff5f5;
+}
+
+.field-error-msg {
+  font-size: 0.78rem;
+  color: #c53030;
+  font-weight: 600;
+  min-height: 16px;
+}
+
+.btn-spinner {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+}
+
+.spinner-svg {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .form-feedback {
-  margin-top: 12px;
+  margin-top: 10px;
   font-size: 0.9rem;
   font-weight: 600;
   text-align: center;
-  min-height: 20px;
+  min-height: 22px;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
 }
 
 .form-feedback.success {
-  color: var(--color-leaf);
+  color: #1b4332;
+  background-color: #d8f3dc;
+  border: 1px solid #95d5b2;
+}
+
+.form-feedback.error {
+  color: #721c24;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
 }
 
 /* ==========================================================================
-   Rodapé Institucional
+   Rodapé Institucional Multi-Colunas
    ========================================================================== */
 
 .site-footer {
-  background-color: #101c0c;
+  background-color: #0f1c0d;
   color: var(--color-text-light);
-  padding-top: 80px;
+  padding-top: 76px;
   border-top: 1px solid rgba(117, 155, 113, 0.2);
 }
 
 .footer-container {
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
-  gap: 48px;
-  padding-bottom: 60px;
+  grid-template-columns: 1.4fr 0.9fr 0.9fr 0.9fr 1.1fr;
+  gap: 36px;
+  padding-bottom: 56px;
 }
 
 .footer-logo {
-  height: 36px;
+  height: 38px;
   width: auto;
   margin-bottom: 16px;
 }
 
 .footer-text {
-  font-size: 0.95rem;
+  font-size: 0.93rem;
   color: var(--color-text-muted-light);
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   line-height: 1.6;
 }
 
-.footer-tagline {
+.footer-badges-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.footer-pill-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-sun);
+  background-color: rgba(248, 201, 0, 0.12);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(248, 201, 0, 0.25);
+}
+
+.footer-heading {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 18px;
+  letter-spacing: 0.02em;
+}
+
+.footer-links-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.footer-links-list a {
+  color: var(--color-text-muted-light);
+  font-size: 0.88rem;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+
+.footer-links-list a:hover {
+  color: var(--color-sun);
+  transform: translateX(3px);
+}
+
+.footer-a11y-desc {
+  font-size: 0.86rem;
+  color: var(--color-text-muted-light);
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+
+.footer-location-tag {
   font-size: 0.82rem;
   color: var(--color-sun);
   font-weight: 600;
 }
 
-.footer-heading {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #ffffff;
-  margin-bottom: 20px;
-}
-
-.footer-links {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.footer-links a {
-  color: var(--color-text-muted-light);
-  font-size: 0.9rem;
-  transition: color var(--transition-fast);
-}
-
-.footer-links a:hover {
-  color: var(--color-sun);
-}
-
-.footer-links span {
-  color: var(--color-text-muted-light);
-  font-size: 0.9rem;
-}
-
-.footer-a11y-desc {
-  font-size: 0.88rem;
-  color: var(--color-text-muted-light);
-  line-height: 1.6;
-}
-
 .footer-bottom {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 24px 0;
-  font-size: 0.85rem;
+  padding: 22px 0;
+  font-size: 0.83rem;
   color: var(--color-text-muted-light);
 }
 
@@ -1425,6 +1962,16 @@ button, input, select, textarea {
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+.footer-bottom-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footer-dot-sep {
+  color: rgba(255, 255, 255, 0.3);
 }
 
 /* ==========================================================================
@@ -1494,6 +2041,18 @@ button, input, select, textarea {
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .actors-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .actor-card-featured {
+    grid-column: span 2;
+  }
+
+  .impact-pillars-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .footer-container {
     grid-template-columns: repeat(2, 1fr);
     gap: 36px;
@@ -1549,7 +2108,8 @@ button, input, select, textarea {
     font-size: 1.75rem;
   }
 
-  .grid-3-col {
+  .grid-3-col,
+  .comparison-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1557,13 +2117,51 @@ button, input, select, textarea {
     grid-template-columns: 1fr;
   }
 
-  .territory-grid {
-    grid-template-columns: 1fr;
-    grid-auto-rows: 240px;
+  .pilot-hero-card {
+    min-height: auto;
   }
 
-  .territory-card-large {
+  .pilot-hero-content {
+    padding: 28px 20px;
+  }
+
+  .pilot-hero-title {
+    font-size: 1.6rem;
+  }
+
+  .pilot-hero-desc {
+    font-size: 0.95rem;
+    margin-bottom: 24px;
+  }
+
+  .pilot-stats-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 18px 20px;
+  }
+
+  .pilot-stat-divider {
+    display: none;
+  }
+
+  .pilot-stat-item {
+    width: 100%;
+  }
+
+  .actors-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .actor-card-featured {
     grid-column: span 1;
+  }
+
+  .impact-pillars-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 20px;
   }
 
   .phone-frame {
@@ -1578,12 +2176,75 @@ button, input, select, textarea {
 
   .footer-container {
     grid-template-columns: 1fr;
+    gap: 32px;
   }
-}
 
   .footer-bottom-container {
     flex-direction: column;
     text-align: center;
+    gap: 16px;
+  }
+
+  .footer-bottom-links {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .pitch-form-card {
+    padding: 28px 20px;
+  }
+
+  .pitch-title {
+    font-size: 1.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 16px;
+  }
+
+  .pitch-form-card {
+    padding: 24px 16px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 9px 12px;
+    font-size: 0.9rem;
+  }
+
+  .btn-lg {
+    padding: 12px 20px;
+    font-size: 0.95rem;
+  }
+
+  .tech-grid-5 {
+    grid-template-columns: 1fr;
+  }
+
+  .tech-box {
+    padding: 24px 20px;
+  }
+}
+
+@media (max-width: 320px) {
+  .hero-title {
+    font-size: 1.6rem;
+  }
+
+  .hero-tag {
+    font-size: 0.72rem;
+  }
+
+  .pitch-title {
+    font-size: 1.55rem;
+  }
+
+  .pitch-badge {
+    font-size: 0.75rem;
+    padding: 4px 12px;
   }
 }
 

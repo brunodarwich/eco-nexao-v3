@@ -79,13 +79,20 @@ describe('Marco 11 — Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+      defaultOptions: {
+        queries: { retry: false, gcTime: Infinity },
+        mutations: { retry: false, gcTime: Infinity },
+      },
     });
     (useRouter as jest.Mock).mockReturnValue({ push, back });
     (useAuth as jest.Mock).mockReturnValue({
       user: { id: 'user-1', email: 'test@econexao.org', is_anonymous: false },
       signOut: jest.fn(),
     });
+  });
+
+  afterEach(() => {
+    queryClient.clear();
   });
 
   const renderProfile = () => (

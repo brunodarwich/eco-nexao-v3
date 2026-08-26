@@ -129,6 +129,45 @@ describe('ApiClient auth', () => {
     );
   });
 
+  it('serializa origem, camada e categoria do payload de mapa', async () => {
+    global.fetch = jest.fn().mockResolvedValue(
+      new Response(JSON.stringify({ data: { pins: [], legend: [] } }), { status: 200 })
+    );
+    const client = new ApiClient('https://api.example/api/v1');
+    await client.getRouteMapPayload('route-id', {
+      origin_id: 'origin-id',
+      layer: 'citywide_essential',
+      category: 'saude',
+    });
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://api.example/api/v1/routes/route-id/map?origin_id=origin-id&layer=citywide_essential&category=saude',
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
+  });
+
+  it('classifica mapa offline sem chamar a rede', async () => {
+    global.fetch = jest.fn();
+    onlineManager.setOnline(false);
+    const client = new ApiClient('https://api.example/api/v1');
+    await expect(client.getRouteMapPayload('route-id')).rejects.toMatchObject({
+      status: 0,
+      code: 'OFFLINE',
+    });
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('aborta e classifica timeout do mapa', async () => {
+    global.fetch = jest.fn((_url, options) => new Promise((_resolve, reject) => {
+      options?.signal?.addEventListener('abort', () =>
+        reject(Object.assign(new Error('aborted'), { name: 'AbortError' }))
+      );
+    })) as jest.Mock;
+    const client = new ApiClient('https://api.example/api/v1');
+    await expect(
+      client.getRouteMapPayload('route-id', {}, { timeoutMs: 1 })
+    ).rejects.toMatchObject({ status: 0, code: 'TIMEOUT' });
+  });
+
   it('coordena refresh concorrente e repete cada request uma vez', async () => {
     let token = 'old';
     const fetchMock = jest

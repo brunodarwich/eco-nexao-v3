@@ -1,0 +1,22 @@
+{
+  "routes": [
+    {
+      "distanceMeters": 14200,
+      "duration": "1680s",
+      "polyline": {
+        "encodedPolyline": "_a`|Bfg_xLr@iC?uAoB?wBeC?q@aC"
+      },
+      "viewport": {
+        "low": {
+          "latitude": -2.635412,
+          "longitude": -54.958210
+        },
+        "high": {
+          "latitude": -2.571230,
+          "longitude": -54.891230
+        }
+      },
+      "description": "Via Ramal do Pindobal"
+    }
+  ]
+}

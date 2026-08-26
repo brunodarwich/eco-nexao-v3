@@ -14,6 +14,101 @@ const isFiniteCoordinate = (latitude: unknown, longitude: unknown): boolean =>
 export const getItemId = (item: FlexiblePinItem): string =>
   ('actor_id' in item && item.actor_id ? item.actor_id : item.id) || '';
 
+export const filterPinsByModeAndCategory = <T extends FlexiblePinItem>(
+  pins: T[],
+  mode: 'route' | 'city' = 'route',
+  selectedCategory?: string | null,
+  selectedActorId?: string | null
+): T[] => {
+  return pins.filter((pin) => {
+    const pinId = getItemId(pin);
+    const isSelected = Boolean(selectedActorId && (pinId === selectedActorId || ('actor_id' in pin && pin.actor_id === selectedActorId)));
+
+    // Layer check
+    const layer = 'layer' in pin ? pin.layer : undefined;
+    if (mode === 'route') {
+      const isInRouteLayer = !layer || layer === 'route_corridor' || layer === 'both';
+      if (!isInRouteLayer) {
+        return false;
+      }
+    }
+
+    // Selection survives category changes within the active spatial layer, but
+    // never leaks a citywide pin into the route camera.
+    if (isSelected) {
+      return true;
+    }
+
+    // Category filter check
+    if (selectedCategory && selectedCategory.trim().length > 0) {
+      const categorySlug = 'category_slug' in pin ? pin.category_slug : undefined;
+      const segment = 'segment' in pin ? pin.segment : undefined;
+      if (categorySlug !== selectedCategory && segment !== selectedCategory) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+};
+
+export const SELECTION_PIN_COLOR = '#EA580C';
+
+export const CONTRACT_PIN_ICONS = [
+  'utensils', 'compass', 'bed', 'palette', 'bus', 'heart-pulse', 'cross', 'shield', 'help-circle',
+] as const;
+
+export const isContractPinColor = (value: unknown): value is string =>
+  typeof value === 'string' && /^#[0-9A-Fa-f]{6}$/.test(value);
+
+export const isContractPinIcon = (value: unknown): value is string =>
+  typeof value === 'string' && (CONTRACT_PIN_ICONS as readonly string[]).includes(value);
+
+export const formatCoordinateDisplay = (coord: MapCoordinate): string =>
+  `${coord.latitude.toFixed(4)}, ${coord.longitude.toFixed(4)}`;
+
+export const getSelectionPinAccessibilityLabel = (
+  coord?: MapCoordinate | null,
+  customLabel?: string
+): string => {
+  const base = customLabel || 'Ponto de partida selecionado no mapa';
+  if (!coord) return base;
+  return `${base}: ${formatCoordinateDisplay(coord)}. Arraste para reposicionar.`;
+};
+
+export const getItemPinColor = (item: FlexiblePinItem): string | null =>
+  'color' in item && isContractPinColor(item.color) ? item.color : null;
+
+export const getItemPinIcon = (item: FlexiblePinItem): string | null =>
+  'icon' in item && isContractPinIcon(item.icon) ? item.icon : null;
+
+export const getItemCategoryLabel = (item: FlexiblePinItem): string => {
+  if (
+    'category_label' in item &&
+    typeof item.category_label === 'string' &&
+    item.category_label.trim().length > 0
+  ) {
+    return item.category_label;
+  }
+  if ('category_slug' in item && item.category_slug) {
+    return item.category_slug;
+  }
+  if ('segment' in item && item.segment) {
+    return item.segment;
+  }
+  return 'Geral';
+};
+
+export const getItemAccessibilityLabel = (
+  item: FlexiblePinItem,
+  isSelected: boolean = false
+): string => {
+  const name = item.name || 'Ponto';
+  const category = getItemCategoryLabel(item);
+  const selectionStatus = isSelected ? ', selecionado' : '';
+  return `Ponto no mapa: ${name}. Categoria: ${category}${selectionStatus}`;
+};
+
 export const getItemCategory = (item: FlexiblePinItem): string =>
   ('category_slug' in item && item.category_slug
     ? item.category_slug
@@ -81,15 +176,7 @@ export const getFitCoordinates = (
   items: FlexiblePinItem[]
 ): MapCoordinate[] => {
   const boundsCoordinates = getBoundsCoordinates(bounds);
-  if (boundsCoordinates.length) return boundsCoordinates;
-
-  const geometryCoordinates = getGeometryCoordinates(geometry);
-  if (geometryCoordinates.length) return geometryCoordinates;
-
-  return items.flatMap((item) => {
-    const coordinate = getItemCoordinate(item);
-    return coordinate ? [coordinate] : [];
-  });
+  return boundsCoordinates;
 };
 
 export const getInitialRegion = (

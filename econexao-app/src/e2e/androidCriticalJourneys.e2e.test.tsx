@@ -108,9 +108,14 @@ describe('E2E Android - Critical Mobile Journeys & Degraded Network (ECO-2102)',
 
     queryClient = new QueryClient({
       defaultOptions: {
-        queries: { retry: false, gcTime: 0 },
+        queries: { retry: false, gcTime: Infinity },
+        mutations: { retry: false, gcTime: Infinity },
       },
     });
+  });
+
+  afterEach(() => {
+    queryClient.clear();
   });
 
   test('Jornada 1: Resolução de Deep Link Nativo Android e Acessibilidade da Rota', async () => {

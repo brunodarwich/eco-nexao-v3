@@ -24,8 +24,11 @@ describe('server cache', () => {
     expect(queryKeys.routes.geometry('route', 'port')).not.toEqual(
       queryKeys.routes.geometry('route', 'airport')
     );
-    expect(queryKeys.routes.map('route', 'port')).not.toEqual(
-      queryKeys.routes.map('route', 'airport')
+    expect(queryKeys.routes.map('route', { origin_id: 'port' })).not.toEqual(
+      queryKeys.routes.map('route', { origin_id: 'airport' })
+    );
+    expect(queryKeys.routes.map('route', { category: 'saude' })).not.toEqual(
+      queryKeys.routes.map('route', { category: 'seguranca' })
     );
   });
 

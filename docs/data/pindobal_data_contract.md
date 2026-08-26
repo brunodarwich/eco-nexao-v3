@@ -123,19 +123,26 @@ Distância e posição finais serão recalculadas com PostGIS e comparadas ao le
 
 Limitação crítica: o CSV final não preserva `place_id`, apesar de o coletor usá-lo para deduplicar em memória. Não derivar ID a partir da URL nem inventar valor. Marcar `external_id_missing=true`. Nova coleta Places API (New) deve preservar `places.id` ponta a ponta.
 
-## 9. Taxonomia inicial
+## 9. Taxonomia canônica
 
-Mapeamento mínimo, versionado em código/fixture:
+Conforme o ADR 0010 aceito, o mapeamento versionado em código/fixture usa exatamente:
 
-- hospedagem: pousada, hotel, casa de temporada.
-- alimentação: restaurante, alimentação, bar, lanchonete.
-- transporte: transporte, locadora, posto de combustível quando definido pelo produto.
-- artesanato: artesanato/biojoias.
-- atrativos: atrativo, centro turístico, religioso quando editorialmente aprovado.
-- emergência: hospital, UPA, UBS, posto de saúde, farmácia, polícia, bombeiros.
-- outros: não publicar em chip até classificação editorial.
+- `hospedagem`: pousada, hotel, hostel, área de camping e casa de temporada;
+- `alimentacao`: restaurante, alimentação, bar, café, barraca de praia e lanchonete;
+- `transporte`: táxi/mototáxi, porto/catraia, ônibus, transfer e demais aliases aceitos;
+- `artesanato`: artesanato, biojoias, souvenirs e comunidade tradicional com vendas;
+- `atrativos`: atrativo natural, praia, trilha, ponto turístico, igreja histórica e mirante;
+- `saude`: hospital, UPA, UBS, posto de saúde, farmácia, pronto atendimento e clínica;
+- `seguranca`: polícia, delegacia, bombeiros e guarda municipal;
+- `outros`: serviços gerais, comércio não classificado, indefinido e qualquer valor desconhecido.
 
-O importador não força categorias desconhecidas para `atrativos`.
+As oito categorias são públicas. Em particular, `outros` é publicado como pin cinza e
+chip de filtro, permanecendo também disponível para triagem editorial. O importador
+nunca força categoria desconhecida para `atrativos`, `saude` ou `seguranca`.
+
+O escopo espacial aceito no ADR 0011 é `route_corridor` para alimentação, atrativos,
+hospedagem, artesanato e outros; `citywide_essential` para saúde e segurança; e `both`
+para transporte.
 
 ## 10. Deduplicação
 

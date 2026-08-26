@@ -1,0 +1,43 @@
+{
+  "code": "Ok",
+  "routes": [
+    {
+      "geometry": {
+        "coordinates": [
+          [-54.89123, -2.57123],
+          [-54.91255, -2.59341],
+          [-54.93412, -2.61205],
+          [-54.95821, -2.635412]
+        ],
+        "type": "LineString"
+      },
+      "legs": [
+        {
+          "summary": "Ramal do Pindobal",
+          "weight": 1710.0,
+          "duration": 1710.0,
+          "steps": [],
+          "distance": 14150.0
+        }
+      ],
+      "weight_name": "routability",
+      "weight": 1710.0,
+      "duration": 1710.0,
+      "distance": 14150.0
+    }
+  ],
+  "waypoints": [
+    {
+      "hint": "ramal_start_hint",
+      "distance": 8.0,
+      "name": "Entroncamento Ramal Pindobal",
+      "location": [-54.89123, -2.57123]
+    },
+    {
+      "hint": "pindobal_hint",
+      "distance": 4.5,
+      "name": "Praia de Pindobal",
+      "location": [-54.95821, -2.635412]
+    }
+  ]
+}

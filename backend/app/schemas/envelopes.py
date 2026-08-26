@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -45,6 +45,7 @@ class BootstrapDataSchema(SchemaBase):
             "google_business_profile": False,
             "green_badge_verification": True,
             "anonymous_signin": True,
+            "dynamic_routing": False,
         }
     )
     supported_regions: list[RegionSchema] = Field(default_factory=list)
@@ -104,9 +105,7 @@ class RouteListEnvelope(SchemaBase):
 class RouteOriginSchema(SchemaBase):
     model_config = ConfigDict(
         from_attributes=True,
-        json_schema_extra={
-            "required": ["id", "route_id", "code", "name", "sort_order"]
-        },
+        json_schema_extra={"required": ["id", "route_id", "code", "name", "sort_order"]},
     )
     id: uuid.UUID
     route_id: uuid.UUID
@@ -185,30 +184,102 @@ class RouteGeometryEnvelope(SchemaBase):
     data: RouteGeometrySchema
 
 
+class RouteBoundsSchema(SchemaBase):
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={"required": ["min_lat", "max_lat", "min_lng", "max_lng"]},
+    )
+    min_lat: float
+    max_lat: float
+    min_lng: float
+    max_lng: float
+
+
 class MapPinSchema(SchemaBase):
     id: uuid.UUID
     actor_id: uuid.UUID
     name: str
     category_slug: str
+    category_label: str
+    color: str
+    icon: str
     latitude: float
     longitude: float
     distance_from_origin_m: int | None = None
+    layer: Literal["route_corridor", "citywide_essential", "both"] = "route_corridor"
+
+
+class MapLegendItemSchema(SchemaBase):
+    category_slug: str
+    label: str
+    color: str
+    icon: str
+    count: int
+    sort_order: int
 
 
 class RouteMapPayloadSchema(SchemaBase):
     model_config = ConfigDict(
         from_attributes=True,
-        json_schema_extra={"required": ["pins", "route_id"]},
+        json_schema_extra={"required": ["pins", "route_id", "legend"]},
     )
     route_id: uuid.UUID
     selected_origin_id: uuid.UUID | None = None
-    bounds: dict[str, float] | None = None
+    bounds: RouteBoundsSchema | None = None
+    city_bounds: RouteBoundsSchema | None = None
     geometry: RouteGeometrySchema | None = None
     pins: list[MapPinSchema] = Field(default_factory=list)
+    legend: list[MapLegendItemSchema] = Field(default_factory=list)
 
 
 class RouteMapPayloadEnvelope(SchemaBase):
     data: RouteMapPayloadSchema
+
+
+class RoutePreviewRequest(SchemaBase):
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={"required": ["latitude", "longitude"]},
+    )
+    latitude: float = Field(..., ge=-90.0, le=90.0, description="Latitude da origem do usuário")
+    longitude: float = Field(..., ge=-180.0, le=180.0, description="Longitude da origem do usuário")
+    travel_mode: Literal["DRIVE"] = "DRIVE"
+
+
+class RoutePreviewDataSchema(SchemaBase):
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "required": [
+                "route_id",
+                "route_kind",
+                "is_verified",
+                "provider",
+                "distance_m",
+                "duration_s",
+                "geojson",
+                "bounds",
+                "pins",
+                "legend",
+            ]
+        },
+    )
+    route_id: uuid.UUID
+    route_kind: Literal["dynamic_preview"] = "dynamic_preview"
+    is_verified: bool = False
+    provider: Literal["fake_deterministic", "google_routes"]
+    distance_m: int
+    duration_s: int
+    geojson: dict[str, Any]
+    encoded_polyline: str | None = None
+    bounds: RouteBoundsSchema
+    pins: list[MapPinSchema] = Field(default_factory=list)
+    legend: list[MapLegendItemSchema] = Field(default_factory=list)
+    city_bounds: RouteBoundsSchema | None = None
+
+
+class RoutePreviewEnvelope(SchemaBase):
+    data: RoutePreviewDataSchema
 
 
 # -----------------------------------------------------------------------------
@@ -436,9 +507,7 @@ class AvatarUploadResponseEnvelope(SchemaBase):
 class AuthUserSchema(SchemaBase):
     model_config = ConfigDict(
         from_attributes=True,
-        json_schema_extra={
-            "required": ["id", "is_anonymous", "role"]
-        },
+        json_schema_extra={"required": ["id", "is_anonymous", "role"]},
     )
     id: uuid.UUID
     email: str | None = None
@@ -524,9 +593,7 @@ class TokenVerifyRequest(BaseModel):
 class TokenVerifyData(SchemaBase):
     model_config = ConfigDict(
         from_attributes=True,
-        json_schema_extra={
-            "required": ["valid", "user"]
-        },
+        json_schema_extra={"required": ["valid", "user"]},
     )
     valid: bool = True
     user: AuthUserSchema

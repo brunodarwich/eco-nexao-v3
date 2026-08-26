@@ -27,7 +27,19 @@ _SENSITIVE_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
         re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]+\.[A-Za-z0-9._-]+\b"),
         "eyJ***.***.***",
     ),
+    (
+        re.compile(r"(?i)(/route/v1/[^/]+/)[^?\s]+"),
+        r"\1[COORDINATES_REDACTED]",
+    ),
+    (re.compile(r"(?i)(x-goog-api-key\s*[:=]\s*)[^\s,;}]+"), r"\1***"),
+    (re.compile(r"(?i)([?&]key=)[^&\s]+"), r"\1***"),
+    (
+        re.compile(r'(?i)(["\']?(?:latitude|longitude)["\']?\s*[:=]\s*)-?\d+(?:\.\d+)?'),
+        r"\1[REDACTED]",
+    ),
 )
+
+_SAFE_EXTRA_FIELDS = ("provider", "result", "latency_ms", "status_code", "travel_mode")
 
 
 def redact_sensitive_text(value: str) -> str:
@@ -56,6 +68,13 @@ class JSONFormatter(logging.Formatter):
         if record.exc_info:
             log_data["exception"] = redact_sensitive_text(self.formatException(record.exc_info))
 
+        for field in _SAFE_EXTRA_FIELDS:
+            value = getattr(record, field, None)
+            if isinstance(value, (str, int, float, bool)):
+                log_data[field] = (
+                    redact_sensitive_text(str(value)) if isinstance(value, str) else value
+                )
+
         return json.dumps(log_data, ensure_ascii=False)
 
 
@@ -70,3 +89,10 @@ def setup_logging(log_level: str = "INFO") -> None:
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(JSONFormatter())
     root_logger.addHandler(handler)
+
+    # Transport records can include URLs, headers or exception representations.
+    # Disable them entirely: connector-owned sanitized metrics provide observability.
+    logging.getLogger("httpx").setLevel(logging.CRITICAL + 1)
+    logging.getLogger("httpx").disabled = True
+    logging.getLogger("httpcore").setLevel(logging.CRITICAL + 1)
+    logging.getLogger("httpcore").disabled = True

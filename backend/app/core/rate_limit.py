@@ -1,5 +1,6 @@
-"""In-memory rate limiter middleware and utilities with sliding-window accounting."""
-
+import ipaddress
+import re
+import threading
 import time
 from collections import defaultdict
 from typing import Any
@@ -9,6 +10,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.core.logging import request_id_ctx_var
+from app.core.security import verify_supabase_jwt
 
 
 class SlidingWindowRateLimiter:
@@ -19,6 +21,7 @@ class SlidingWindowRateLimiter:
         self.window_seconds = window_seconds
         self._history: dict[str, list[float]] = defaultdict(list)
         self._last_pruned = time.time()
+        self._lock = threading.Lock()
 
     def _prune_expired(self, now: float) -> None:
         """Prune entries older than the window to prevent unbounded memory growth."""
@@ -41,6 +44,12 @@ class SlidingWindowRateLimiter:
 
         Returns (is_limited, limit, remaining, reset_seconds).
         """
+        with self._lock:
+            return self._check_locked(key, limit, window_seconds)
+
+    def _check_locked(
+        self, key: str, limit: int | None, window_seconds: int | None
+    ) -> tuple[bool, int, int, int]:
         now = time.time()
         self._prune_expired(now)
 
@@ -63,23 +72,66 @@ class SlidingWindowRateLimiter:
 
     def reset(self) -> None:
         """Clear all stored rate limit history."""
-        self._history.clear()
-        self._last_pruned = time.time()
+        with self._lock:
+            self._history.clear()
+            self._last_pruned = time.time()
 
 
 limiter = SlidingWindowRateLimiter()
 
 
+def get_client_ip(request: Request) -> str:
+    """Extract validated client IP, trusting X-Forwarded-For only from configured proxies."""
+    client_host = request.client.host if request.client else "unknown"
+    trusted_proxies = getattr(settings, "TRUSTED_PROXIES", ["127.0.0.1", "::1", "testclient"])
+
+    is_trusted = client_host in trusted_proxies
+    if not is_trusted:
+        try:
+            client_addr = ipaddress.ip_address(client_host)
+            for proxy in trusted_proxies:
+                try:
+                    if "/" in proxy and client_addr in ipaddress.ip_network(proxy, strict=False):
+                        is_trusted = True
+                        break
+                except ValueError:
+                    continue
+        except ValueError:
+            pass
+
+    if is_trusted:
+        forwarded_for = request.headers.get("X-Forwarded-For")
+        if forwarded_for:
+            # Parse reverse-proxy chain from left to right; take first valid IP
+            ips = [ip.strip() for ip in forwarded_for.split(",") if ip.strip()]
+            for candidate in ips:
+                try:
+                    ipaddress.ip_address(candidate)
+                    return candidate
+                except ValueError:
+                    continue
+
+    return client_host
+
+
 def get_client_identifier(request: Request) -> str:
-    """Extract client identity from Authorization header sub/token or fallback to client IP."""
+    """Extract validated user identity from JWT or fallback safely to verified client IP."""
+    client_ip = get_client_ip(request)
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
-        return f"auth:{auth_header[7:32]}"
-    forwarded_for = request.headers.get("X-Forwarded-For")
-    if forwarded_for:
-        return f"ip:{forwarded_for.split(',')[0].strip()}"
-    client_host = request.client.host if request.client else "unknown"
-    return f"ip:{client_host}"
+        raw_token = auth_header[7:].strip()
+        if raw_token:
+            try:
+                user = verify_supabase_jwt(raw_token)
+                if not user.is_anonymous:
+                    return f"user:{user.id}"
+                # Anonymous authenticated user tied to client IP to prevent token-rotation bypass
+                return f"ip:{client_ip}"
+            except Exception:
+                # Invalid, expired, tampered or random Bearer tokens must not create new buckets
+                return f"ip:{client_ip}"
+
+    return f"ip:{client_ip}"
 
 
 async def rate_limit_middleware(request: Request, call_next: Any) -> Response:
@@ -99,9 +151,17 @@ async def rate_limit_middleware(request: Request, call_next: Any) -> Response:
         return res_skipped
 
     client_id = get_client_identifier(request)
-    limit = getattr(settings, "RATE_LIMIT_REQUESTS_PER_MINUTE", 120)
+    is_routing_preview = request.method == "POST" and re.fullmatch(
+        r"/api/v1/routes/[^/]+/preview", path
+    )
+    limit = (
+        settings.DYNAMIC_ROUTING_RATE_LIMIT_PER_MINUTE
+        if is_routing_preview
+        else settings.RATE_LIMIT_REQUESTS_PER_MINUTE
+    )
+    bucket = "routing-preview" if is_routing_preview else "general"
     is_limited, limit_val, remaining, reset_sec = limiter.check(
-        client_id, limit=limit, window_seconds=60
+        f"{bucket}:{client_id}", limit=limit, window_seconds=60
     )
 
     if is_limited:

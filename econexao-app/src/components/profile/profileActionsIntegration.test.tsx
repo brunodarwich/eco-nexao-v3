@@ -80,13 +80,14 @@ jest.mock('../../hooks/queries', () => ({
 describe('ECO-1904: Perfil, Trips, Termos Legais e LGPD', () => {
   let queryClient: QueryClient;
   let announceSpy: jest.SpyInstance;
+  let tree: renderer.ReactTestRenderer | undefined;
   const mockSignOut = jest.fn();
 
   beforeEach(() => {
     queryClient = new QueryClient({
       defaultOptions: {
-        queries: { retry: false },
-        mutations: { retry: false },
+        queries: { retry: false, gcTime: Infinity },
+        mutations: { retry: false, gcTime: Infinity },
       },
     });
     announceSpy = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockImplementation(() => {});
@@ -99,6 +100,11 @@ describe('ECO-1904: Perfil, Trips, Termos Legais e LGPD', () => {
   });
 
   afterEach(() => {
+    act(() => {
+      tree?.unmount();
+      tree = undefined;
+    });
+    queryClient.clear();
     announceSpy.mockRestore();
   });
 
@@ -113,7 +119,6 @@ describe('ECO-1904: Perfil, Trips, Termos Legais e LGPD', () => {
     });
 
     const mockClose = jest.fn();
-    let tree!: renderer.ReactTestRenderer;
 
     await act(async () => {
       tree = renderer.create(
@@ -135,7 +140,7 @@ describe('ECO-1904: Perfil, Trips, Termos Legais e LGPD', () => {
       );
     });
 
-    const inputs = tree.root.findAllByType(TextInput);
+    const inputs = tree!.root.findAllByType(TextInput);
     expect(inputs.length).toBe(2);
 
     // Alterar nome
@@ -143,7 +148,7 @@ describe('ECO-1904: Perfil, Trips, Termos Legais e LGPD', () => {
       inputs[0].props.onChangeText('Maria Floresta');
     });
 
-    const touchables = tree.root.findAllByType(TouchableOpacity);
+    const touchables = tree!.root.findAllByType(TouchableOpacity);
     const saveBtn = touchables.find(
       (t) => t.props.accessibilityLabel && t.props.accessibilityLabel.includes('Salvar perfil')
     );
@@ -170,7 +175,6 @@ describe('ECO-1904: Perfil, Trips, Termos Legais e LGPD', () => {
     });
     queryClient.setQueryData(['authenticated-test'], { private: true });
     const mockClose = jest.fn();
-    let tree!: renderer.ReactTestRenderer;
 
     await act(async () => {
       tree = renderer.create(
@@ -182,7 +186,7 @@ describe('ECO-1904: Perfil, Trips, Termos Legais e LGPD', () => {
       );
     });
 
-    const touchables = tree.root.findAllByType(TouchableOpacity);
+    const touchables = tree!.root.findAllByType(TouchableOpacity);
     const confirmBtn = touchables.find(
       (t) => t.props.accessibilityLabel && t.props.accessibilityLabel.includes('Confirmar exclusão')
     );
@@ -211,7 +215,6 @@ describe('ECO-1904: Perfil, Trips, Termos Legais e LGPD', () => {
     });
     queryClient.setQueryData(['authenticated-test'], { private: true });
 
-    let tree!: renderer.ReactTestRenderer;
     await act(async () => {
       tree = renderer.create(
         <QueryClientProvider client={queryClient}>
@@ -219,7 +222,7 @@ describe('ECO-1904: Perfil, Trips, Termos Legais e LGPD', () => {
         </QueryClientProvider>
       );
     });
-    const confirm = tree.root.findAllByType(TouchableOpacity).find(
+    const confirm = tree!.root.findAllByType(TouchableOpacity).find(
       (item) => item.props.accessibilityLabel?.includes('Confirmar exclusão')
     );
     await act(async () => confirm!.props.onPress());
@@ -239,7 +242,6 @@ describe('ECO-1904: Perfil, Trips, Termos Legais e LGPD', () => {
       })
     );
     const mockClose = jest.fn();
-    let tree!: renderer.ReactTestRenderer;
     await act(async () => {
       tree = renderer.create(
         <QueryClientProvider client={queryClient}>
@@ -247,7 +249,7 @@ describe('ECO-1904: Perfil, Trips, Termos Legais e LGPD', () => {
         </QueryClientProvider>
       );
     });
-    const confirm = tree.root.findAllByType(TouchableOpacity).find(
+    const confirm = tree!.root.findAllByType(TouchableOpacity).find(
       (item) => item.props.accessibilityLabel?.includes('Confirmar exclusão')
     );
     let pending!: Promise<void>;
@@ -255,7 +257,7 @@ describe('ECO-1904: Perfil, Trips, Termos Legais e LGPD', () => {
       pending = confirm!.props.onPress();
       await Promise.resolve();
     });
-    await act(async () => tree.root.findByType(Modal).props.onRequestClose());
+    await act(async () => tree!.root.findByType(Modal).props.onRequestClose());
     expect(mockClose).not.toHaveBeenCalled();
 
     resolveDelete({ success: true, data: { success: true, message: 'ok' } });
@@ -265,7 +267,6 @@ describe('ECO-1904: Perfil, Trips, Termos Legais e LGPD', () => {
   test('AccountDeletionModal mantém sessão e não anuncia sucesso quando API falha', async () => {
     jest.spyOn(apiClient, 'deleteMyAccount').mockRejectedValueOnce(new Error('offline'));
     const mockClose = jest.fn();
-    let tree!: renderer.ReactTestRenderer;
     await act(async () => {
       tree = renderer.create(
         <QueryClientProvider client={queryClient}>
@@ -273,7 +274,7 @@ describe('ECO-1904: Perfil, Trips, Termos Legais e LGPD', () => {
         </QueryClientProvider>
       );
     });
-    const confirm = tree.root.findAllByType(TouchableOpacity).find(
+    const confirm = tree!.root.findAllByType(TouchableOpacity).find(
       (item) => item.props.accessibilityLabel?.includes('Confirmar exclusão')
     );
     await act(async () => confirm!.props.onPress());
@@ -285,7 +286,6 @@ describe('ECO-1904: Perfil, Trips, Termos Legais e LGPD', () => {
   });
 
   test('LegalAndPrivacyScreen renderiza termos e privacidade sem erros', async () => {
-    let tree!: renderer.ReactTestRenderer;
     await act(async () => {
       tree = renderer.create(
         <QueryClientProvider client={queryClient}>
@@ -296,7 +296,7 @@ describe('ECO-1904: Perfil, Trips, Termos Legais e LGPD', () => {
       );
     });
 
-    expect(tree.toJSON()).toBeTruthy();
+    expect(tree!.toJSON()).toBeTruthy();
   });
 
   test('RouteDetailScreen permite iniciar e registrar uma viagem na rota', async () => {
@@ -309,7 +309,6 @@ describe('ECO-1904: Perfil, Trips, Termos Legais e LGPD', () => {
       },
     });
 
-    let tree!: renderer.ReactTestRenderer;
     await act(async () => {
       tree = renderer.create(
         <QueryClientProvider client={queryClient}>
@@ -320,7 +319,7 @@ describe('ECO-1904: Perfil, Trips, Termos Legais e LGPD', () => {
       );
     });
 
-    const touchables = tree.root.findAllByType(TouchableOpacity);
+    const touchables = tree!.root.findAllByType(TouchableOpacity);
     const startTripBtn = touchables.find(
       (t) => t.props.accessibilityLabel && t.props.accessibilityLabel.includes('Registrar início de viagem')
     );

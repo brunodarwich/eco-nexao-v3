@@ -1,4 +1,4 @@
-import type { GetRouteActorsQuery, ListRoutesQuery } from './types';
+import type { GetRouteActorsQuery, GetRouteMapQuery, ListRoutesQuery } from './types';
 
 export const normalizeQueryValue = (value?: string | null) => value?.trim() || undefined;
 
@@ -26,6 +26,7 @@ export const queryKeys = {
     geometry: (routeId: string, originId: string) =>
       ['routes', 'geometry', routeId, originId] as const,
     alerts: (routeId: string) => ['routes', 'alerts', routeId] as const,
+    ephemeralPreview: (routeId: string) => ['routes', 'ephemeral-preview', routeId] as const,
     actors: (routeId: string, params: GetRouteActorsQuery = {}) =>
       [
         'routes',
@@ -39,8 +40,17 @@ export const queryKeys = {
           limit: params.limit,
         },
       ] as const,
-    map: (routeId: string, originId?: string) =>
-      ['routes', 'map', routeId, normalizeQueryValue(originId)] as const,
+    map: (routeId: string, params: GetRouteMapQuery = {}) =>
+      [
+        'routes',
+        'map',
+        routeId,
+        {
+          originId: normalizeQueryValue(params.origin_id),
+          layer: normalizeQueryValue(params.layer),
+          category: normalizeQueryValue(params.category),
+        },
+      ] as const,
   },
   actorCategories: () => ['actor-categories'] as const,
   actorDetail: (actorId: string) => ['actors', 'detail', actorId] as const,
@@ -51,4 +61,3 @@ export const queryKeys = {
   myPreferences: (userId?: string) => ['me', 'preferences', normalizeQueryValue(userId)] as const,
   supportContent: () => ['content', 'support'] as const,
 };
-

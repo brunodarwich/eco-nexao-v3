@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  osrm-backend:
+    image: osrm/osrm-backend:v5.27.1
+    container_name: econexao-osrm
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./osrm-data:/data
+    command: osrm-routed --algorithm mld /data/para-latest.osrm
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/route/v1/driving/-54.9536,-2.5089;-54.9600,-2.5100?overview=false"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

@@ -77,7 +77,7 @@ FastAPI /api/v1
   └── adaptadores de conectores
         ├── Google Places API (New)
         ├── Google Business Profile (somente perfis autorizados)
-        ├── OSRM
+        ├── Google Routes API
         └── Supabase Storage
   │
   └── Supabase
@@ -275,12 +275,15 @@ O conector GBP será opcional e restrito a empreendimentos que autorizarem a ECO
 
 Referência: https://developers.google.com/my-business/content/overview
 
-### 8.3 OSRM
+### 8.3 Roteamento dinâmico
 
-- Importar inicialmente as três geometrias existentes.
-- Criar `OsrmConnector` para recalcular rota sob demanda editorial, não a cada toque do usuário.
-- Registrar perfil, versão/fonte, data, waypoints, distância, duração e geometria.
-- Validar ordem de coordenadas e bounds antes de publicar.
+- Preservar as três geometrias OSRM existentes como origens oficiais importadas;
+  elas não autorizam um serviço OSRM em runtime.
+- Conforme ADR 0013 e Gate H3 revisado, previews dinâmicos usam exclusivamente
+  Google Routes API v2 `ComputeRoutes Essentials`, via FastAPI e field mask mínima.
+- Provider, quota, custo, latência e resultado são observados sem coordenadas.
+- Provider desconhecido ou indisponível falha fechado; o cliente restaura uma origem
+  oficial e nunca usa Fake automaticamente fora de development/test.
 - Permitir trocar o fornecedor sem mudar o contrato do aplicativo.
 
 ### 8.4 Mapas no aplicativo

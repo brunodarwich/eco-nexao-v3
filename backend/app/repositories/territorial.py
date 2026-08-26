@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from typing import Any
 from typing import cast as typing_cast
 
-from geoalchemy2 import Geometry
+from geoalchemy2 import Geography, Geometry
 from geoalchemy2.functions import ST_X, ST_Y, ST_AsGeoJSON
 from sqlalchemy import cast, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -187,8 +187,10 @@ class TerritorialRepository:
 
     async def list_actor_categories(self) -> list[ActorCategory]:
         """Fetch all actor categories ordered by sort_order."""
-        stmt = select(ActorCategory).order_by(
-            ActorCategory.sort_order.asc(), ActorCategory.label.asc()
+        stmt = (
+            select(ActorCategory)
+            .where(ActorCategory.is_public.is_(True))
+            .order_by(ActorCategory.sort_order.asc(), ActorCategory.label.asc())
         )
         res = await self.db.scalars(stmt)
         return list(res.all())
@@ -264,6 +266,227 @@ class TerritorialRepository:
             formatted_actors.append((actor, cat_slug, lat, lon))
 
         return formatted_actors, total
+
+    async def find_route_corridor_actors(
+        self,
+        geojson_geom: dict[str, Any],
+        region_id: uuid.UUID,
+        route_id: uuid.UUID,
+        origin_id: uuid.UUID | None,
+        category_slug: str | None,
+        buffer_m: float,
+        limit: int = 200,
+    ) -> list[tuple[Actor, str, float | None, float | None, bool, int]]:
+        """Find active actors within a buffer distance (in meters) along a GeoJSON route
+        geometry.
+        """
+        geom_str = json.dumps(geojson_geom)
+        geom_from_json = func.ST_SetSRID(func.ST_GeomFromGeoJSON(geom_str), 4326)
+
+        stmt = (
+            select(
+                Actor,
+                ActorCategory.slug.label("category_slug"),
+                ST_Y(cast(Actor.location, Geometry)).label("latitude"),
+                ST_X(cast(Actor.location, Geometry)).label("longitude"),
+                RouteActor.is_featured,
+                RouteActor.sort_order,
+            )
+            .join(RouteActor, Actor.id == RouteActor.actor_id)
+            .join(ActorCategory, Actor.category_id == ActorCategory.id)
+            .where(
+                RouteActor.route_id == route_id,
+                RouteActor.archived_at.is_(None),
+                Actor.region_id == region_id,
+                Actor.deleted_at.is_(None),
+                Actor.location.is_not(None),
+                ActorCategory.spatial_scope.in_(["route_corridor", "both"]),
+                func.ST_DWithin(
+                    cast(Actor.location, Geography),
+                    cast(geom_from_json, Geography),
+                    buffer_m,
+                ),
+            )
+            .order_by(
+                RouteActor.is_featured.desc(),
+                Actor.green_badge_status.desc(),
+                RouteActor.sort_order.asc(),
+                Actor.name.asc(),
+                Actor.id.asc(),
+            )
+            .limit(limit)
+        )
+        if category_slug:
+            stmt = stmt.where(ActorCategory.slug == category_slug)
+        if origin_id:
+            origin_code = (
+                select(RouteOrigin.code)
+                .where(RouteOrigin.id == origin_id, RouteOrigin.route_id == route_id)
+                .scalar_subquery()
+            )
+            stmt = stmt.where(RouteActor.origin_flags[origin_code].as_boolean().is_(True))
+        exec_res = await self.db.execute(stmt)
+        results = exec_res.all()
+
+        formatted_actors = []
+        for row in results:
+            actor = row[0]
+            cat_slug = row[1]
+            lat = row[2]
+            lon = row[3]
+            is_featured = row[4]
+            sort_order = row[5]
+            actor._transient_cat_slug = cat_slug
+            actor._transient_lat = lat
+            actor._transient_lon = lon
+            formatted_actors.append((actor, cat_slug, lat, lon, is_featured, sort_order))
+
+        return formatted_actors
+
+    async def find_corridor_actors_by_geometry(
+        self,
+        geojson_geom: dict[str, Any],
+        region_id: uuid.UUID,
+        buffer_m: float,
+        limit: int = 200,
+    ) -> list[tuple[Actor, str, float | None, float | None]]:
+        """Find actors near an ephemeral preview geometry within the route's region
+        without persisting a route link.
+        """
+        geom = func.ST_SetSRID(func.ST_GeomFromGeoJSON(json.dumps(geojson_geom)), 4326)
+        stmt = (
+            select(
+                Actor,
+                ActorCategory.slug,
+                ST_Y(cast(Actor.location, Geometry)),
+                ST_X(cast(Actor.location, Geometry)),
+            )
+            .join(ActorCategory, Actor.category_id == ActorCategory.id)
+            .where(
+                Actor.region_id == region_id,
+                Actor.deleted_at.is_(None),
+                Actor.location.is_not(None),
+                ActorCategory.spatial_scope.in_(["route_corridor", "both"]),
+                func.ST_DWithin(
+                    cast(Actor.location, Geography), cast(geom, Geography), buffer_m
+                ),
+            )
+            .order_by(Actor.green_badge_status.desc(), Actor.name.asc(), Actor.id.asc())
+            .limit(limit)
+        )
+        return [tuple(row) for row in (await self.db.execute(stmt)).all()]
+
+    async def list_region_essential_actors(
+        self,
+        region_id: uuid.UUID,
+        categories: list[str] | None = None,
+        limit: int = 200,
+    ) -> list[tuple[Actor, str, float | None, float | None]]:
+        """Fetch essential public utility actors (saude, seguranca, transporte) for a region."""
+        if categories is None:
+            categories = ["saude", "seguranca", "transporte"]
+
+        stmt = (
+            select(
+                Actor,
+                ActorCategory.slug.label("category_slug"),
+                ActorCategory.label.label("category_label"),
+                ST_Y(cast(Actor.location, Geometry)).label("latitude"),
+                ST_X(cast(Actor.location, Geometry)).label("longitude"),
+            )
+            .join(ActorCategory, Actor.category_id == ActorCategory.id)
+            .where(
+                Actor.region_id == region_id,
+                Actor.deleted_at.is_(None),
+                Actor.location.is_not(None),
+                ActorCategory.slug.in_(categories),
+                ActorCategory.spatial_scope.in_(["citywide_essential", "both"]),
+            )
+            .order_by(
+                Actor.green_badge_status.desc(),
+                ActorCategory.sort_order.asc(),
+                Actor.name.asc(),
+            )
+            .limit(limit)
+        )
+        exec_res = await self.db.execute(stmt)
+        results = exec_res.all()
+
+        formatted_actors = []
+        for row in results:
+            actor = row[0]
+            cat_slug = row[1]
+            cat_label = row[2]
+            lat = row[3]
+            lon = row[4]
+            actor._transient_cat_slug = cat_slug
+            actor._transient_cat_label = cat_label
+            actor._transient_lat = lat
+            actor._transient_lon = lon
+            formatted_actors.append((actor, cat_slug, lat, lon))
+
+        return formatted_actors
+
+    async def origin_belongs_to_route(self, route_id: uuid.UUID, origin_id: uuid.UUID) -> bool:
+        stmt = select(func.count()).select_from(RouteOrigin).where(
+            RouteOrigin.id == origin_id, RouteOrigin.route_id == route_id
+        )
+        return bool(await self.db.scalar(stmt))
+
+    async def get_buffered_route_bounds(
+        self, geojson_geom: dict[str, Any], buffer_m: float
+    ) -> dict[str, float] | None:
+        geom = func.ST_SetSRID(func.ST_GeomFromGeoJSON(json.dumps(geojson_geom)), 4326)
+        envelope = func.ST_Envelope(func.ST_Buffer(cast(geom, Geography), buffer_m).cast(Geometry))
+        stmt = select(
+            func.ST_YMin(envelope).label("min_lat"),
+            func.ST_YMax(envelope).label("max_lat"),
+            func.ST_XMin(envelope).label("min_lng"),
+            func.ST_XMax(envelope).label("max_lng"),
+        )
+        row = (await self.db.execute(stmt)).first()
+        if not row or any(value is None for value in row):
+            return None
+        return {
+            "min_lat": float(row[0]),
+            "max_lat": float(row[1]),
+            "min_lng": float(row[2]),
+            "max_lng": float(row[3]),
+        }
+
+    async def get_region_bounds(
+        self, region_id: uuid.UUID
+    ) -> dict[str, float] | None:
+        """Calculate bounding box encompassing all active actors and routes in the region."""
+        stmt = (
+            select(
+                func.min(ST_Y(cast(Actor.location, Geometry))).label("min_lat"),
+                func.max(ST_Y(cast(Actor.location, Geometry))).label("max_lat"),
+                func.min(ST_X(cast(Actor.location, Geometry))).label("min_lng"),
+                func.max(ST_X(cast(Actor.location, Geometry))).label("max_lng"),
+            )
+            .where(
+                Actor.region_id == region_id,
+                Actor.deleted_at.is_(None),
+                Actor.location.is_not(None),
+            )
+        )
+        exec_res = await self.db.execute(stmt)
+        row = exec_res.first()
+        if (
+            row
+            and row[0] is not None
+            and row[1] is not None
+            and row[2] is not None
+            and row[3] is not None
+        ):
+            return {
+                "min_lat": float(row[0]),
+                "max_lat": float(row[1]),
+                "min_lng": float(row[2]),
+                "max_lng": float(row[3]),
+            }
+        return None
 
     async def get_actor_by_id(
         self, actor_id: uuid.UUID

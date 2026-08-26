@@ -18,9 +18,15 @@ export type ActorSummary = Schemas['ActorSummarySchema'];
 export type AccessibilityFeature = Record<string, unknown>;
 export type ActorDetail = Schemas['ActorDetailSchema'];
 export type MapPin = Schemas['MapPinSchema'];
-export type MapBounds = Record<string, number>;
+export type MapLegendItem = Schemas['MapLegendItemSchema'];
+export type MapBounds = Schemas['RouteBoundsSchema'];
 export type RouteMapPayload = Schemas['RouteMapPayloadSchema'];
 export type BootstrapData = Schemas['BootstrapDataSchema'];
+
+export type RouteBounds = Schemas['RouteBoundsSchema'];
+export type RoutePreviewRequest = Schemas['RoutePreviewRequest'];
+export type RoutePreviewData = Schemas['RoutePreviewDataSchema'];
+export type RoutePreviewEnvelope = Schemas['RoutePreviewEnvelope'];
 
 export type RegionListEnvelope = Schemas['RegionListEnvelope'];
 export type RouteListEnvelope = Schemas['RouteListEnvelope'];
@@ -90,6 +96,9 @@ export type AlertResolveRequest = Schemas['AlertResolveRequest'];
 
 export type ListRoutesQuery = operations['list_routes_api_v1_routes_get']['parameters']['query'];
 export type GetRouteActorsQuery = operations['get_route_actors_api_v1_routes__route_id__actors_get']['parameters']['query'];
+export type GetRouteMapQuery = NonNullable<
+  operations['get_route_map_payload_api_v1_routes__route_id__map_get']['parameters']['query']
+>;
 
 /** @deprecated Use the exact generated envelope alias for each operation. */
 export interface ApiResponseEnvelope<T> {

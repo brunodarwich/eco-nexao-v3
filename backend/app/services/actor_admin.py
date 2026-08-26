@@ -6,6 +6,7 @@ from typing import Any
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.taxonomy import get_canonical_category
 from app.repositories.actor_admin import ActorAdminRepository
 from app.repositories.editorial_authorization import EditorialAuthorizationRepository
 from app.schemas.admin_actors import (
@@ -213,6 +214,25 @@ class ActorAdminService:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Categoria com ID {category_id} não foi encontrada.",
+            )
+
+        canonical = get_canonical_category(category.slug)
+        resulting_metadata = (
+            body.label if body.label is not None else category.label,
+            body.icon if body.icon is not None else category.icon,
+            body.color if body.color is not None else category.color,
+            body.sort_order if body.sort_order is not None else category.sort_order,
+        )
+        canonical_metadata = (
+            canonical["label"],
+            canonical["icon"],
+            canonical["color"],
+            canonical["sort_order"],
+        )
+        if resulting_metadata != canonical_metadata:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Metadados da categoria devem corresponder à taxonomia aceita.",
             )
 
         updated = await self.repo.update_category(

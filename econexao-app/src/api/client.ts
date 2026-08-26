@@ -13,6 +13,7 @@ import {
   BootstrapData,
   BootstrapResponseEnvelope,
   GetRouteActorsQuery,
+  GetRouteMapQuery,
   ListRoutesQuery,
   Region,
   RegionListEnvelope,
@@ -28,6 +29,8 @@ import {
   RouteListEnvelope,
   RouteMapPayloadEnvelope,
   RouteOriginListEnvelope,
+  RoutePreviewEnvelope,
+  RoutePreviewRequest,
   TripCreate,
   TripEnvelope,
   TripListEnvelope,
@@ -294,12 +297,61 @@ export class ApiClient {
 
   public async getRouteMapPayload(
     routeId: string,
-    originId?: string
+    params: GetRouteMapQuery = {},
+    options?: { signal?: AbortSignal; timeoutMs?: number }
   ): Promise<RouteMapPayloadEnvelope> {
-    const query = originId ? `?origin_id=${encodeURIComponent(originId)}` : "";
-    return this.request<RouteMapPayloadEnvelope>(
-      `/routes/${routeId}/map${query}`
-    );
+    if (!onlineManager.isOnline()) {
+      throw new ApiClientError(
+        'O mapa não está disponível offline. Reconecte e tente novamente.',
+        0,
+        'OFFLINE'
+      );
+    }
+
+    const query = new URLSearchParams();
+    if (params.origin_id) query.append('origin_id', params.origin_id);
+    if (params.layer) query.append('layer', params.layer);
+    if (params.category) query.append('category', params.category);
+    const queryString = query.toString() ? `?${query.toString()}` : '';
+    const controller = new AbortController();
+    let didTimeout = false;
+    const abortFromCaller = () => controller.abort();
+    options?.signal?.addEventListener('abort', abortFromCaller, { once: true });
+    const timeout = setTimeout(() => {
+      didTimeout = true;
+      controller.abort();
+    }, options?.timeoutMs ?? 10_000);
+
+    try {
+      return await this.request<RouteMapPayloadEnvelope>(
+        `/routes/${routeId}/map${queryString}`,
+        { signal: controller.signal }
+      );
+    } catch (error) {
+      if (didTimeout) {
+        throw new ApiClientError(
+          'O carregamento do mapa excedeu o tempo limite.',
+          0,
+          'TIMEOUT'
+        );
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+      options?.signal?.removeEventListener('abort', abortFromCaller);
+    }
+  }
+
+  public async previewRoute(
+    routeId: string,
+    payload: RoutePreviewRequest,
+    options?: { signal?: AbortSignal }
+  ): Promise<RoutePreviewEnvelope> {
+    return this.request<RoutePreviewEnvelope>(`/routes/${routeId}/preview`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+      signal: options?.signal,
+    });
   }
 
   public async getActorCategories(): Promise<ActorCategoryListEnvelope> {

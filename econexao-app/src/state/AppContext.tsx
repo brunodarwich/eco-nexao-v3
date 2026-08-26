@@ -16,11 +16,13 @@ function AppStateSync({
   dispatch,
   activeRegionId,
   accessibility,
+  featureFlags,
 }: {
   children: ReactNode;
   dispatch: React.Dispatch<AppAction>;
   activeRegionId: string | null;
   accessibility: import('./appReducer').AccessibilityPreferences;
+  featureFlags: import('./appReducer').FeatureFlags;
 }) {
   const { user } = useAuth();
   const userId = user?.id ?? '';
@@ -33,8 +35,33 @@ function AppStateSync({
       if (serverActiveRegionId && serverActiveRegionId !== activeRegionId) {
         dispatch({ type: 'SET_ACTIVE_REGION', payload: serverActiveRegionId });
       }
+
+      if (bootstrap.data.feature_flags) {
+        const serverFlags = bootstrap.data.feature_flags;
+        const dynamicRouting = Boolean(serverFlags.dynamic_routing);
+        const googleBusinessProfile = Boolean(serverFlags.google_business_profile);
+        const greenBadgeVerification = Boolean(serverFlags.green_badge_verification ?? true);
+        const anonymousSignin = Boolean(serverFlags.anonymous_signin ?? true);
+
+        if (
+          dynamicRouting !== featureFlags.dynamicRouting ||
+          googleBusinessProfile !== featureFlags.googleBusinessProfile ||
+          greenBadgeVerification !== featureFlags.greenBadgeVerification ||
+          anonymousSignin !== featureFlags.anonymousSignin
+        ) {
+          dispatch({
+            type: 'SET_FEATURE_FLAGS',
+            payload: {
+              dynamicRouting,
+              googleBusinessProfile,
+              greenBadgeVerification,
+              anonymousSignin,
+            },
+          });
+        }
+      }
     }
-  }, [bootstrap.data, activeRegionId, dispatch]);
+  }, [bootstrap.data, activeRegionId, featureFlags, dispatch]);
 
   useEffect(() => {
     if (prefsQuery.data) {
@@ -70,6 +97,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
         dispatch={dispatch}
         activeRegionId={state.activeRegionId}
         accessibility={state.accessibility}
+        featureFlags={state.featureFlags}
       >
         {children}
       </AppStateSync>

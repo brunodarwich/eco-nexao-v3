@@ -42,9 +42,14 @@ describe('E2E Accessibility & WCAG Semantic Audit (ECO-2101)', () => {
     });
     queryClient = new QueryClient({
       defaultOptions: {
-        queries: { retry: false, gcTime: 0 },
+        queries: { retry: false, gcTime: Infinity },
+        mutations: { retry: false, gcTime: Infinity },
       },
     });
+  });
+
+  afterEach(() => {
+    queryClient.clear();
   });
 
   const renderWithProviders = (ui: React.ReactElement) => {

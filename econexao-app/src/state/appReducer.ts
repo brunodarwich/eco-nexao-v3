@@ -1,3 +1,10 @@
+export interface FeatureFlags {
+  dynamicRouting: boolean;
+  googleBusinessProfile?: boolean;
+  greenBadgeVerification?: boolean;
+  anonymousSignin?: boolean;
+}
+
 export interface AccessibilityPreferences {
   screenReaderMode: boolean;
   highContrast: boolean;
@@ -8,11 +15,13 @@ export interface AccessibilityPreferences {
 export interface AppState {
   activeRegionId: string | null;
   accessibility: AccessibilityPreferences;
+  featureFlags: FeatureFlags;
 }
 
 export type AppAction =
   | { type: 'SET_ACTIVE_REGION'; payload: string | null }
-  | { type: 'SET_ACCESSIBILITY'; payload: Partial<AccessibilityPreferences> };
+  | { type: 'SET_ACCESSIBILITY'; payload: Partial<AccessibilityPreferences> }
+  | { type: 'SET_FEATURE_FLAGS'; payload: Partial<FeatureFlags> };
 
 export const initialAppState: AppState = {
   activeRegionId: null,
@@ -21,6 +30,12 @@ export const initialAppState: AppState = {
     highContrast: false,
     textScale: 1,
     locale: 'pt-BR',
+  },
+  featureFlags: {
+    dynamicRouting: false,
+    googleBusinessProfile: false,
+    greenBadgeVerification: true,
+    anonymousSignin: true,
   },
 };
 
@@ -32,6 +47,12 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     return {
       ...state,
       accessibility: { ...state.accessibility, ...action.payload },
+    };
+  }
+  if (action.type === 'SET_FEATURE_FLAGS') {
+    return {
+      ...state,
+      featureFlags: { ...state.featureFlags, ...action.payload },
     };
   }
   return state;

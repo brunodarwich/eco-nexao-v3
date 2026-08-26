@@ -10,6 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.taxonomy import get_canonical_category
 from app.models.domain import (
     AccessibilityFeature,
     Actor,
@@ -52,6 +53,7 @@ class ActorAdminRepository:
         color: str | None = None,
         sort_order: int = 0,
     ) -> ActorCategory:
+        canonical = get_canonical_category(slug)
         category = ActorCategory(
             id=uuid.uuid4(),
             slug=slug,
@@ -59,6 +61,8 @@ class ActorAdminRepository:
             icon=icon,
             color=color,
             sort_order=sort_order,
+            is_public=canonical["is_public"],
+            spatial_scope=canonical["spatial_scope"],
         )
         self.db.add(category)
         await self.db.flush()

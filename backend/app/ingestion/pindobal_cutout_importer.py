@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from app.core.taxonomy import normalize_category_slug
+
 DEFAULT_SNAPSHOT_DIR = Path(r"C:\Users\Bruno\Downloads\teste-rota")
 
 
@@ -81,7 +83,9 @@ def process_pindobal_cutout(
                 latitude=lat,
                 longitude=lon,
                 status_coord=status_coord,
-                categoria_normalizada=(row.get("categoria_normalizada") or cat_raw).strip(),
+                categoria_normalizada=normalize_category_slug(
+                    (row.get("categoria_normalizada") or cat_raw).strip()
+                ),
                 endereco=(row.get("endereco") or "").strip() or None,
                 telefone=(row.get("telefone") or "").strip() or None,
                 email=(row.get("email") or "").strip() or None,

@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from app.core.taxonomy import normalize_category_slug
+
 DEFAULT_SNAPSHOT_DIR = Path(r"C:\Users\Bruno\Downloads\teste-rota")
 
 
@@ -13,6 +15,7 @@ class GooglePOIRecord:
     snapshot_id: int
     grupo: str
     categoria_raw: str
+    categoria_slug: str
     nome: str
     endereco: str | None
     telefone: str | None
@@ -71,6 +74,7 @@ def process_google_snapshot(
             snapshot_id=snap_id,
             grupo=grupo,
             categoria_raw=cat_raw,
+            categoria_slug=normalize_category_slug(f"{grupo} {cat_raw}"),
             nome=nome,
             endereco=(item.get("e") or "").strip() or None,
             telefone=(item.get("t") or "").strip() or None,

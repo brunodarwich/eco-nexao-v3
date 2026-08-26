@@ -1,0 +1,44 @@
+{
+  "code": "Ok",
+  "routes": [
+    {
+      "geometry": {
+        "coordinates": [
+          [-54.71045, -2.42851],
+          [-54.74512, -2.44123],
+          [-54.81234, -2.48512],
+          [-54.91234, -2.55123],
+          [-54.95821, -2.635412]
+        ],
+        "type": "LineString"
+      },
+      "legs": [
+        {
+          "summary": "Rodovia Fernando Guilhon, PA-457",
+          "weight": 2820.5,
+          "duration": 2820.5,
+          "steps": [],
+          "distance": 35180.0
+        }
+      ],
+      "weight_name": "routability",
+      "weight": 2820.5,
+      "duration": 2820.5,
+      "distance": 35180.0
+    }
+  ],
+  "waypoints": [
+    {
+      "hint": "airport_stm_hint",
+      "distance": 1.2,
+      "name": "Aeroporto Maestro Wilson Fonseca",
+      "location": [-54.71045, -2.42851]
+    },
+    {
+      "hint": "pindobal_hint",
+      "distance": 4.5,
+      "name": "Praia de Pindobal",
+      "location": [-54.95821, -2.635412]
+    }
+  ]
+}

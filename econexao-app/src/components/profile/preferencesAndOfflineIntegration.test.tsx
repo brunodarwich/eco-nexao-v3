@@ -29,15 +29,18 @@ jest.mock('../../hooks/useAuth', () => ({
 describe('ECO-1903: Preferências de Acessibilidade e Comportamento Offline', () => {
   let queryClient: QueryClient;
   let announceSpy: jest.SpyInstance;
+  let tree: renderer.ReactTestRenderer | undefined;
 
   beforeEach(() => {
     queryClient = new QueryClient({
       defaultOptions: {
-        queries: { retry: false },
-        mutations: { retry: false },
+        queries: { retry: false, gcTime: Infinity },
+        mutations: { retry: false, gcTime: Infinity },
       },
     });
     announceSpy = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockImplementation(() => {});
+    jest.spyOn(apiClient, 'getBootstrap').mockResolvedValue({ data: null } as any);
+    jest.spyOn(apiClient, 'getRegions').mockResolvedValue({ data: [{ id: 'pindobal', name: 'Pindobal' }] } as any);
     jest.spyOn(apiClient, 'getMyPreferences').mockResolvedValue({
       data: {
         id: 'pref-1',
@@ -52,6 +55,11 @@ describe('ECO-1903: Preferências de Acessibilidade e Comportamento Offline', ()
   });
 
   afterEach(() => {
+    act(() => {
+      tree?.unmount();
+      tree = undefined;
+    });
+    queryClient.clear();
     announceSpy.mockRestore();
   });
 
@@ -67,7 +75,6 @@ describe('ECO-1903: Preferências de Acessibilidade e Comportamento Offline', ()
       },
     });
 
-    let tree!: renderer.ReactTestRenderer;
     await act(async () => {
       tree = renderer.create(
         <QueryClientProvider client={queryClient}>
@@ -78,7 +85,7 @@ describe('ECO-1903: Preferências de Acessibilidade e Comportamento Offline', ()
       );
     });
 
-    const switches = tree.root.findAllByType(Switch);
+    const switches = tree!.root.findAllByType(Switch);
     expect(switches.length).toBeGreaterThanOrEqual(2);
 
     const contrastSwitch = switches[0];
@@ -106,7 +113,6 @@ describe('ECO-1903: Preferências de Acessibilidade e Comportamento Offline', ()
       },
     });
 
-    let tree!: renderer.ReactTestRenderer;
     await act(async () => {
       tree = renderer.create(
         <QueryClientProvider client={queryClient}>
@@ -117,7 +123,7 @@ describe('ECO-1903: Preferências de Acessibilidade e Comportamento Offline', ()
       );
     });
 
-    const switches = tree.root.findAllByType(Switch);
+    const switches = tree!.root.findAllByType(Switch);
     const readerSwitch = switches[1];
 
     await act(async () => {
@@ -141,7 +147,6 @@ describe('ECO-1903: Preferências de Acessibilidade e Comportamento Offline', ()
       },
     });
 
-    let tree!: renderer.ReactTestRenderer;
     await act(async () => {
       tree = renderer.create(
         <QueryClientProvider client={queryClient}>
@@ -152,7 +157,7 @@ describe('ECO-1903: Preferências de Acessibilidade e Comportamento Offline', ()
       );
     });
 
-    const touchables = tree.root.findAllByType(TouchableOpacity);
+    const touchables = tree!.root.findAllByType(TouchableOpacity);
     const scaleButtons = touchables.filter(
       (t) => t.props.accessibilityLabel && t.props.accessibilityLabel.includes('Tamanho de texto')
     );
@@ -173,7 +178,6 @@ describe('ECO-1903: Preferências de Acessibilidade e Comportamento Offline', ()
     const refetchSpy = jest.spyOn(queryClient, 'refetchQueries').mockResolvedValue();
 
 
-    let tree!: renderer.ReactTestRenderer;
     await act(async () => {
       tree = renderer.create(
         <QueryClientProvider client={queryClient}>
@@ -184,7 +188,7 @@ describe('ECO-1903: Preferências de Acessibilidade e Comportamento Offline', ()
       );
     });
 
-    const reconnectBtn = tree.root.findByType(TouchableOpacity);
+    const reconnectBtn = tree!.root.findByType(TouchableOpacity);
     expect(reconnectBtn).toBeTruthy();
 
     await act(async () => {

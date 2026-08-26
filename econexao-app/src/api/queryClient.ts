@@ -21,6 +21,7 @@ export function createQueryClient(): QueryClient {
       },
       mutations: {
         retry: false,
+        gcTime: process.env.NODE_ENV === 'test' ? Infinity : 30 * 60_000,
         // Execute the mutationFn so ApiClient can reject immediately with an
         // explicit offline error instead of silently queueing a write.
         networkMode: 'always',

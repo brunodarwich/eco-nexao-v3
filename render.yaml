@@ -24,7 +24,7 @@ services:
         sync: false
       - key: SUPABASE_PUBLISHABLE_KEY
         sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
+      - key: SUPABASE_SECRET_KEY
         sync: false
       - key: SUPABASE_JWT_SECRET
         sync: false
@@ -32,3 +32,19 @@ services:
         sync: false
       - key: CORS_ORIGINS
         value: '["https://econexao.app","https://staging.econexao.app","http://localhost:8081","https://eco-nexao-v3.vercel.app"]'
+      - key: ROUTING_PROVIDER
+        value: "google_routes"
+      - key: GOOGLE_ROUTES_API_KEY
+        sync: false
+      - key: ENABLE_DYNAMIC_ROUTING
+        value: "false"
+      - key: DYNAMIC_ROUTING_RATE_LIMIT_PER_MINUTE
+        value: "10"
+      - key: GOOGLE_ROUTES_TIMEOUT_SECONDS
+        value: "3.5"
+      - key: GOOGLE_ROUTES_MAX_RETRIES
+        value: "2"
+      - key: GOOGLE_ROUTES_MONTHLY_ALERT_AT
+        value: "7500"
+      - key: GOOGLE_ROUTES_MONTHLY_LIMIT
+        value: "9000"

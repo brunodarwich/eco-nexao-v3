@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": 404,
+    "message": "No route could be found between the provided points.",
+    "status": "NOT_FOUND"
+  }
+}

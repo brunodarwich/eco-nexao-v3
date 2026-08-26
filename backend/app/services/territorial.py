@@ -2,10 +2,12 @@
 
 import time
 import uuid
-from typing import Any
+from typing import Any, cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
+from app.core.taxonomy import get_canonical_category
 from app.repositories.territorial import TerritorialRepository
 from app.schemas.envelopes import (
     ActorCategoryListEnvelope,
@@ -16,12 +18,14 @@ from app.schemas.envelopes import (
     ActorSummarySchema,
     BootstrapDataSchema,
     BootstrapResponseEnvelope,
+    MapLegendItemSchema,
     MapPinSchema,
     PaginationMeta,
     RegionListEnvelope,
     RegionSchema,
     RouteAlertListEnvelope,
     RouteAlertSchema,
+    RouteBoundsSchema,
     RouteDetailEnvelope,
     RouteDetailSchema,
     RouteGeometryEnvelope,
@@ -52,7 +56,7 @@ class TerritorialService:
     async def get_regions(self) -> RegionListEnvelope:
         now = time.monotonic()
         if _REGIONS_CACHE["data"] is not None and _REGIONS_CACHE["expires_at"] > now:
-            return _REGIONS_CACHE["data"]
+            return cast(RegionListEnvelope, _REGIONS_CACHE["data"])
 
         regions = await self.repo.get_active_regions()
         result = RegionListEnvelope(
@@ -112,6 +116,7 @@ class TerritorialService:
                 "google_business_profile": False,
                 "green_badge_verification": True,
                 "anonymous_signin": True,
+                "dynamic_routing": settings.ENABLE_DYNAMIC_ROUTING,
             },
             supported_regions=supported_regions,
         )
@@ -261,10 +266,16 @@ class TerritorialService:
         self,
         route_id: uuid.UUID,
         origin_id: uuid.UUID | None = None,
+        layer: str | None = None,
+        category: str | None = None,
         simplify_tolerance: float | None = 0.0001,
     ) -> RouteMapPayloadEnvelope | None:
         route = await self.repo.get_route_by_id(route_id)
         if not route:
+            return None
+        if origin_id is not None and not await self.repo.origin_belongs_to_route(
+            route_id, origin_id
+        ):
             return None
 
         geom, geojson_obj = await self.repo.get_route_geometry(
@@ -288,49 +299,144 @@ class TerritorialService:
             # Fallback to first origin if geometry is missing
             selected_origin_id = route.origins[0].id
 
-        # Fetch route actors for map pins
-        actors_data, _ = await self.repo.list_route_actors(
-            route_id=route_id,
-            origin_id=selected_origin_id,
-            limit=200,
-            offset=0,
-        )
-        pins: list[MapPinSchema] = []
-        lats: list[float] = []
-        lons: list[float] = []
+        corridor_actors_data: list[tuple[Any, str, float | None, float | None, bool, int]] = []
+        if geojson_obj is not None and layer in (None, "route_corridor", "both"):
+            corridor_actors_data = await self.repo.find_route_corridor_actors(
+                geojson_geom=geojson_obj,
+                region_id=route.region_id,
+                route_id=route_id,
+                origin_id=selected_origin_id,
+                category_slug=category,
+                buffer_m=settings.ROUTE_CORRIDOR_BUFFER_METERS,
+                limit=settings.STATIC_MAP_MAX_PINS,
+            )
 
-        for actor, cat_slug, lat, lon in actors_data:
+        # Fetch region essential actors (saude, seguranca, transporte)
+        essential_actors_data: list[tuple[Any, str, float | None, float | None]] = []
+        if layer in (None, "citywide_essential", "both"):
+            essential_categories = ["saude", "seguranca", "transporte"]
+            if category:
+                essential_categories = [category]
+            essential_actors_data = await self.repo.list_region_essential_actors(
+                region_id=route.region_id,
+                categories=essential_categories,
+                limit=settings.STATIC_MAP_MAX_PINS,
+            )
+
+        # Merge actors and determine layer
+        combined_actors: dict[
+            uuid.UUID, tuple[Any, str, float | None, float | None, str, bool, int]
+        ] = {}
+
+        for actor, cat_slug, lat, lon, is_featured, sort_order in corridor_actors_data:
+            actor_layer = str(get_canonical_category(cat_slug)["spatial_scope"])
+            if layer is None or layer == actor_layer:
+                combined_actors[actor.id] = (
+                    actor, cat_slug, lat, lon, actor_layer, is_featured, sort_order
+                )
+
+        for actor, cat_slug, lat, lon in essential_actors_data:
+            actor_layer = str(get_canonical_category(cat_slug)["spatial_scope"])
+            if actor.id not in combined_actors and (layer is None or layer == actor_layer):
+                combined_actors[actor.id] = (actor, cat_slug, lat, lon, actor_layer, False, 0)
+
+        # Deterministic sorting: is_featured DESC, green_badge_status DESC, sort_order ASC, name ASC
+        def get_priority_key(
+            item: tuple[Any, str, float | None, float | None, str, bool, int],
+        ) -> tuple[int, int, int, str, str]:
+            act, _, _, _, _, route_is_featured, route_sort_order = item
+            is_featured = 1 if route_is_featured else 0
+            has_badge = getattr(act, "green_badge_status", "none") in ("verified", "provisional")
+            green_badge = 1 if has_badge else 0
+            name = getattr(act, "name", "")
+            return (-is_featured, -green_badge, route_sort_order, name, str(act.id))
+
+        sorted_actors = sorted(combined_actors.values(), key=get_priority_key)[
+            : settings.STATIC_MAP_MAX_PINS
+        ]
+
+        pins: list[MapPinSchema] = []
+        corridor_lats: list[float] = []
+        corridor_lons: list[float] = []
+        category_counts: dict[str, int] = {}
+
+        for actor, cat_slug, lat, lon, actor_layer, _, _ in sorted_actors:
             if lat is not None and lon is not None:
+                canonical_cat = get_canonical_category(cat_slug)
+                canonical_slug = canonical_cat["slug"]
                 pins.append(
                     MapPinSchema(
                         id=actor.id,
                         actor_id=actor.id,
                         name=actor.name,
-                        category_slug=cat_slug,
+                        category_slug=canonical_slug,
+                        category_label=canonical_cat["label"],
+                        color=canonical_cat["color"],
+                        icon=canonical_cat["icon"],
                         latitude=lat,
                         longitude=lon,
+                        layer=actor_layer,  # type: ignore[arg-type]
                     )
                 )
-                lats.append(lat)
-                lons.append(lon)
+                if actor_layer in ("route_corridor", "both"):
+                    corridor_lats.append(lat)
+                    corridor_lons.append(lon)
+                category_counts[canonical_slug] = category_counts.get(canonical_slug, 0) + 1
 
+        legend: list[MapLegendItemSchema] = []
+        for cat_slug, count in category_counts.items():
+            cat_meta = get_canonical_category(cat_slug)
+            legend.append(
+                MapLegendItemSchema(
+                    category_slug=cat_slug,
+                    label=cat_meta["label"],
+                    color=cat_meta["color"],
+                    icon=cat_meta["icon"],
+                    count=count,
+                    sort_order=cat_meta["sort_order"],
+                )
+            )
+        legend.sort(key=lambda item: (item.sort_order, item.label))
+
+        # route_bounds strictly derived from geometry or corridor pins
         bounds: dict[str, float] | None = None
-        if lats and lons:
-            bounds = {
-                "min_lat": min(lats),
-                "max_lat": max(lats),
-                "min_lng": min(lons),
-                "max_lng": max(lons),
-            }
+        if geojson_obj is not None:
+            bounds = await self.repo.get_buffered_route_bounds(
+                geojson_obj, settings.ROUTE_CORRIDOR_BUFFER_METERS
+            )
         elif geom and geom.bounds:
-            bounds = geom.bounds
+            raw_bounds = geom.bounds
+            min_lng = raw_bounds.get("min_lng", raw_bounds.get("min_lon"))
+            max_lng = raw_bounds.get("max_lng", raw_bounds.get("max_lon"))
+            if min_lng is None or max_lng is None:
+                raise ValueError("Route geometry bounds are missing longitude limits")
+            bounds = {
+                "min_lat": raw_bounds["min_lat"],
+                "max_lat": raw_bounds["max_lat"],
+                "min_lng": min_lng,
+                "max_lng": max_lng,
+            }
+        elif corridor_lats and corridor_lons:
+            bounds = {
+                "min_lat": min(corridor_lats),
+                "max_lat": max(corridor_lats),
+                "min_lng": min(corridor_lons),
+                "max_lng": max(corridor_lons),
+            }
+
+        # city_bounds derived from region
+        city_bounds = await self.repo.get_region_bounds(route.region_id)
 
         payload = RouteMapPayloadSchema(
             route_id=route_id,
             selected_origin_id=selected_origin_id,
-            bounds=bounds,
+            bounds=RouteBoundsSchema.model_validate(bounds) if bounds is not None else None,
+            city_bounds=(
+                RouteBoundsSchema.model_validate(city_bounds) if city_bounds is not None else None
+            ),
             geometry=geom_schema,
             pins=pins,
+            legend=legend,
         )
         return RouteMapPayloadEnvelope(data=payload)
 
@@ -368,7 +474,7 @@ class TerritorialService:
     async def list_actor_categories(self) -> ActorCategoryListEnvelope:
         now = time.monotonic()
         if _CATEGORIES_CACHE["data"] is not None and _CATEGORIES_CACHE["expires_at"] > now:
-            return _CATEGORIES_CACHE["data"]
+            return cast(ActorCategoryListEnvelope, _CATEGORIES_CACHE["data"])
 
         categories = await self.repo.list_actor_categories()
         schemas = [

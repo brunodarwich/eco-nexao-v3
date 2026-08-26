@@ -44,6 +44,7 @@ def test_sensitive_settings_are_masked_in_representations() -> None:
         DATABASE_URL=SecretStr(f"postgresql+psycopg://user:{marker}@db.example/postgres"),
         SUPABASE_SECRET_KEY=SecretStr(marker),
         GOOGLE_PLACES_API_KEY=SecretStr(marker),
+        GOOGLE_ROUTES_API_KEY=SecretStr(marker),
         SENTRY_DSN=SecretStr(marker),
     )
 
@@ -56,6 +57,28 @@ def test_deployed_environment_rejects_placeholders(monkeypatch: pytest.MonkeyPat
     monkeypatch.delenv("DATABASE_URL", raising=False)
     with pytest.raises(ValidationError, match="Configuração obrigatória"):
         Settings(_env_file=None, APP_ENV="production", DATABASE_URL=SecretStr(""))  # type: ignore[call-arg]
+
+
+def test_deployed_environment_rejects_fake_and_production_activation() -> None:
+    common = {
+        "_env_file": None,
+        "APP_ENV": "staging",
+        "DATABASE_URL": SecretStr("postgresql://user:password@db.example/postgres"),
+        "SUPABASE_URL": "https://project-ref.supabase.co",
+        "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_test",
+    }
+    with pytest.raises(ValidationError, match="Google Routes"):
+        Settings(**common, ROUTING_PROVIDER="fake_deterministic")  # type: ignore[arg-type]
+    configured = Settings(**common, ROUTING_PROVIDER="google_routes")  # type: ignore[arg-type]
+    assert configured.ENABLE_DYNAMIC_ROUTING is False
+    production = {**common, "APP_ENV": "production"}
+    with pytest.raises(ValidationError, match="não está autorizado em production"):
+        Settings(
+            **production,
+            ROUTING_PROVIDER="google_routes",
+            ENABLE_DYNAMIC_ROUTING=True,
+            GOOGLE_ROUTES_API_KEY=SecretStr("test-only"),
+        )  # type: ignore[arg-type]
 
 
 def test_provider_database_url_and_jwks_are_normalized() -> None:

@@ -40,6 +40,14 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: jest.fn(),
 }));
 
+jest.mock('@tanstack/react-query', () => {
+  const actual = jest.requireActual('@tanstack/react-query');
+  return {
+    ...actual,
+    useQueryClient: jest.fn(),
+  };
+});
+
 jest.mock('../../hooks/useApp', () => ({
   useApp: () => ({
     state: { activeRegionId: 'pindobal' },
@@ -59,6 +67,16 @@ jest.mock('../../hooks/queries', () => ({
   useRouteMapQuery: jest.fn(),
   useActorCategoriesQuery: jest.fn(),
 }));
+
+jest.mock('../../state/useAppContext', () => {
+  const { initialAppState } = require('../../state/appReducer');
+  return {
+    useAppContext: jest.fn().mockReturnValue({
+      state: initialAppState,
+      dispatch: jest.fn(),
+    }),
+  };
+});
 
 describe('RouteDetailScreen Integration (ECO-0901..0907)', () => {
   const mockPush = jest.fn();
@@ -163,6 +181,24 @@ describe('RouteDetailScreen Integration (ECO-0901..0907)', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    const { useQueryClient } = require('@tanstack/react-query');
+    (useQueryClient as jest.Mock).mockReturnValue({
+      getQueryData: jest.fn().mockReturnValue(undefined),
+      setQueryData: jest.fn(),
+      removeQueries: jest.fn(),
+      invalidateQueries: jest.fn(),
+    });
+
+    const { useAppContext } = require('../../state/useAppContext');
+    const { initialAppState } = require('../../state/appReducer');
+    (useAppContext as jest.Mock).mockReturnValue({
+      state: {
+        ...initialAppState,
+        featureFlags: { ...initialAppState.featureFlags, dynamicRouting: false },
+      },
+      dispatch: jest.fn(),
+    });
 
     (useRouter as jest.Mock).mockReturnValue({
       push: mockPush,
@@ -496,5 +532,274 @@ describe('RouteDetailScreen Integration (ECO-0901..0907)', () => {
     expect(contents).not.toContain('4G Parcial');
     expect(contents).not.toContain('Asfalto e Terra');
     expect(contents).not.toContain('Dinheiro e Pix');
+  });
+
+  it('hides "Escolher no mapa" and ignores ephemeral cache when dynamicRouting is false (fail-closed remediation ECO-2311)', async () => {
+    const { useQueryClient } = require('@tanstack/react-query');
+    const { useAppContext } = require('../../state/useAppContext');
+    const { initialAppState } = require('../../state/appReducer');
+    (useAppContext as jest.Mock).mockReturnValue({
+      state: {
+        ...initialAppState,
+        featureFlags: { ...initialAppState.featureFlags, dynamicRouting: false },
+      },
+      dispatch: jest.fn(),
+    });
+
+    const getQueryDataMock = jest.fn().mockReturnValue({
+      originType: 'map-selection-preview',
+      previewData: {
+        distance_m: 15400,
+        duration_s: 1200,
+        provider: 'dynamic_preview',
+        geojson: { type: 'LineString', coordinates: [[-54.7083, -2.4431], [-54.9, -2.5]] },
+        bounds: { min_lat: -2.5, max_lat: -2.4, min_lng: -54.9, max_lng: -54.7 },
+      },
+    });
+    const removeQueriesMock = jest.fn();
+    (useQueryClient as jest.Mock).mockReturnValue({
+      getQueryData: getQueryDataMock,
+      removeQueries: removeQueriesMock,
+    });
+
+    let tree!: renderer.ReactTestRenderer;
+    await act(async () => {
+      tree = renderer.create(<RouteDetailScreen />);
+    });
+
+    const root = tree.root;
+    const buttons = root.findAllByType(TouchableOpacity);
+
+    // "Escolher no mapa" must NOT be rendered when dynamic routing is false
+    const mapButton = buttons.find(
+      (b) => b.props.accessibilityLabel === 'Escolher ponto de partida no mapa'
+    );
+    expect(mapButton).toBeUndefined();
+
+    // Notice banner must NOT be visible
+    const textContents = root.findAllByType(Text).map((node) => textValue(node.props.children));
+    expect(textContents).not.toContain('Trajeto sugerido a partir do seu ponto de partida');
+
+    // Ephemeral cache was not consumed
+    expect(removeQueriesMock).not.toHaveBeenCalled();
+  });
+
+  it('consumes ephemeral preview from queryClient cache, renders notice banner and geometry, and clears cache on fixed origin selection (ECO-2311)', async () => {
+    const { useQueryClient } = require('@tanstack/react-query');
+    const { useAppContext } = require('../../state/useAppContext');
+    const { initialAppState } = require('../../state/appReducer');
+    (useAppContext as jest.Mock).mockReturnValue({
+      state: {
+        ...initialAppState,
+        featureFlags: { ...initialAppState.featureFlags, dynamicRouting: true },
+      },
+      dispatch: jest.fn(),
+    });
+
+    const getQueryDataMock = jest.fn().mockReturnValue({
+      originType: 'map-selection-preview',
+      previewData: {
+        distance_m: 15400,
+        duration_s: 1200,
+        provider: 'dynamic_preview',
+        geojson: { type: 'LineString', coordinates: [[-54.7083, -2.4431], [-54.9, -2.5]] },
+        bounds: { min_lat: -2.5, max_lat: -2.4, min_lng: -54.9, max_lng: -54.7 },
+      },
+    });
+    const removeQueriesMock = jest.fn();
+    (useQueryClient as jest.Mock).mockReturnValue({
+      getQueryData: getQueryDataMock,
+      removeQueries: removeQueriesMock,
+    });
+
+    let tree!: renderer.ReactTestRenderer;
+    await act(async () => {
+      tree = renderer.create(<RouteDetailScreen />);
+    });
+
+    const root = tree.root;
+    const textContents = root.findAllByType(Text).map((node) => textValue(node.props.children));
+
+    // Notice banner should be visible
+    expect(textContents).toContain('Trajeto sugerido a partir do seu ponto de partida');
+    expect(textContents.join(' ')).toContain('15.4 km');
+    expect(textContents.join(' ')).toContain('20 min');
+
+    // QueryClient ephemeral preview key should have been consumed
+    expect(removeQueriesMock).toHaveBeenCalledWith({
+      queryKey: ['routes', 'ephemeral-preview', 'route-pindobal'],
+    });
+
+    // Selecting a fixed origin restores official origin and clears ephemeral preview
+    const originButtons = root.findAll((node) => node.type === TouchableOpacity && node.props.accessibilityLabel?.includes('Selecionar origem'));
+    await act(async () => {
+      originButtons[0].props.onPress();
+    });
+
+    expect(removeQueriesMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('clicking "Escolher no mapa" opens map screen with mode=select-origin and without coordinates in URL (ECO-2311)', async () => {
+    const { useAppContext } = require('../../state/useAppContext');
+    const { initialAppState } = require('../../state/appReducer');
+    (useAppContext as jest.Mock).mockReturnValue({
+      state: {
+        ...initialAppState,
+        featureFlags: { ...initialAppState.featureFlags, dynamicRouting: true },
+      },
+      dispatch: jest.fn(),
+    });
+
+    let tree!: renderer.ReactTestRenderer;
+    await act(async () => {
+      tree = renderer.create(<RouteDetailScreen />);
+    });
+
+    const root = tree.root;
+    const mapButton = root.find(
+      (b) => b.type === TouchableOpacity && b.props.accessibilityLabel === 'Escolher ponto de partida no mapa'
+    );
+    expect(mapButton).toBeDefined();
+
+    await act(async () => {
+      mapButton.props.onPress();
+    });
+
+    expect(mockPush).toHaveBeenCalledWith(
+      '/route/route-pindobal/map?originId=origin-porto&mode=select-origin'
+    );
+  });
+
+  it('provides and consumes dynamic pins, legend and city_bounds on RouteMapPreview and transfers state on expand (ECO-2312)', async () => {
+    const { useQueryClient } = require('@tanstack/react-query');
+    const { useAppContext } = require('../../state/useAppContext');
+    const { initialAppState } = require('../../state/appReducer');
+    (useAppContext as jest.Mock).mockReturnValue({
+      state: {
+        ...initialAppState,
+        featureFlags: { ...initialAppState.featureFlags, dynamicRouting: true },
+      },
+      dispatch: jest.fn(),
+    });
+
+    const setQueryDataMock = jest.fn();
+    const dynamicPreviewData = {
+      distance_m: 15400,
+      duration_s: 1200,
+      provider: 'dynamic_preview',
+      geojson: { type: 'LineString', coordinates: [[-54.7083, -2.4431], [-54.9, -2.5]] },
+      bounds: { min_lat: -2.5, max_lat: -2.4, min_lng: -54.9, max_lng: -54.7 },
+      city_bounds: { min_lat: -2.8, max_lat: -2.3, min_lng: -55.1, max_lng: -54.5 },
+      pins: [
+        {
+          id: 'pin-dynamic-1',
+          actor_id: 'actor-dynamic-1',
+          name: 'Restaurante Corredor Dinâmico',
+          category_slug: 'alimentacao',
+          category_label: 'Alimentação',
+          color: '#D97706',
+          icon: 'utensils',
+          latitude: -2.46,
+          longitude: -54.75,
+          layer: 'route_corridor',
+        },
+      ],
+      legend: [
+        {
+          category_slug: 'alimentacao',
+          label: 'Alimentação',
+          color: '#D97706',
+          icon: 'utensils',
+          count: 1,
+          sort_order: 1,
+        },
+      ],
+    };
+
+    (useQueryClient as jest.Mock).mockReturnValue({
+      getQueryData: jest.fn().mockReturnValue({
+        originType: 'my-location-preview',
+        previewData: dynamicPreviewData,
+      }),
+      setQueryData: setQueryDataMock,
+      removeQueries: jest.fn(),
+    });
+
+    let tree!: renderer.ReactTestRenderer;
+    await act(async () => {
+      tree = renderer.create(<RouteDetailScreen />);
+    });
+
+    const root = tree.root;
+
+    // Expand map button should transfer previewData to memory cache
+    const expandButton = root.find(
+      (node) => node.type === TouchableOpacity && node.props.accessibilityLabel === 'Expandir mapa da rota'
+    );
+    expect(expandButton).toBeTruthy();
+
+    await act(async () => {
+      expandButton.props.onPress();
+    });
+
+    expect(setQueryDataMock).toHaveBeenCalledWith(
+      ['routes', 'ephemeral-preview', 'route-pindobal'],
+      {
+        previewData: dynamicPreviewData,
+        originType: 'my-location-preview',
+      }
+    );
+    expect(mockPush).toHaveBeenCalledWith('/route/route-pindobal/map');
+  });
+
+  it('falls back to previous valid official route and alerts user when dynamic routing preview request fails (ECO-2311)', async () => {
+    const { useAppContext } = require('../../state/useAppContext');
+    const { initialAppState } = require('../../state/appReducer');
+    (useAppContext as jest.Mock).mockReturnValue({
+      state: {
+        ...initialAppState,
+        featureFlags: { ...initialAppState.featureFlags, dynamicRouting: true },
+      },
+      dispatch: jest.fn(),
+    });
+
+    const { apiClient } = require('../../api/client');
+    const previewSpy = jest.spyOn(apiClient, 'previewRoute').mockRejectedValueOnce(new Error('Provider timeout'));
+    const alertSpy = jest.spyOn(require('react-native').Alert, 'alert');
+
+    let tree!: renderer.ReactTestRenderer;
+    await act(async () => {
+      tree = renderer.create(<RouteDetailScreen />);
+    });
+
+    const root = tree.root;
+
+    // Select Aeroporto first as previous valid origin
+    const originButtons = root.findAll((node) => node.type === TouchableOpacity && node.props.accessibilityLabel?.includes('Selecionar origem'));
+    await act(async () => {
+      originButtons[1].props.onPress();
+    });
+
+    // Simulate calling handleSelectCurrentLocation / coordinate selection failure
+    const selector = root.findByType(require('../../../src/components/routes/OriginSelector').OriginSelector);
+    await act(async () => {
+      await selector.props.onSelectCurrentLocation({ latitude: -2.44, longitude: -54.70, accuracy: 10 });
+    });
+
+    expect(previewSpy).toHaveBeenCalledWith('route-pindobal', {
+      latitude: -2.44,
+      longitude: -54.70,
+      travel_mode: 'DRIVE',
+    });
+
+    // Alert shown to user
+    expect(alertSpy).toHaveBeenCalledWith(
+      'Trajeto Sugerido Indisponível',
+      expect.stringContaining('Não conseguimos calcular o trajeto sugerido')
+    );
+
+    // Selector preserves the last valid origin (Aeroporto)
+    const updatedButtons = root.findAll((node) => node.type === TouchableOpacity && node.props.accessibilityLabel?.includes('Selecionar origem'));
+    expect(updatedButtons[1].props.accessibilityState).toEqual({ selected: true });
   });
 });

@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     ]
     LOG_LEVEL: str = "INFO"
     DATABASE_ECHO: bool = False
+    ROUTE_CORRIDOR_BUFFER_METERS: float = 1000.0
+    STATIC_MAP_MAX_PINS: int = 200
 
     DATABASE_URL: SecretStr = SecretStr(
         "postgresql+psycopg://postgres:postgres@localhost:5432/econexao_dev"
@@ -46,18 +48,28 @@ class Settings(BaseSettings):
 
     GOOGLE_PLACES_API_KEY: SecretStr = SecretStr("")
     GBP_CONNECTOR_ENABLED: bool = False
-    OSRM_BASE_URL: str = "http://router.project-osrm.org"
+    ROUTING_PROVIDER: Literal["fake_deterministic", "google_routes"] = "fake_deterministic"
+    ENABLE_DYNAMIC_ROUTING: bool = False
+    DYNAMIC_ROUTING_RATE_LIMIT_PER_MINUTE: int = 10
+    GOOGLE_ROUTES_API_KEY: SecretStr = SecretStr("")
+    GOOGLE_ROUTES_TIMEOUT_SECONDS: float = 3.5
+    GOOGLE_ROUTES_MAX_RETRIES: int = 2
+    GOOGLE_ROUTES_MONTHLY_LIMIT: int = 9000
+    GOOGLE_ROUTES_MONTHLY_ALERT_AT: int = 7500
+    ROUTING_CIRCUIT_BREAKER_FAILURES: int = 5
+    ROUTING_CIRCUIT_BREAKER_RESET_SECONDS: int = 60
     SENTRY_DSN: SecretStr = SecretStr("")
 
     RATE_LIMIT_ENABLED: bool = True
     RATE_LIMIT_REQUESTS_PER_MINUTE: int = 120
     SECURITY_HEADERS_ENABLED: bool = True
+    TRUSTED_PROXIES: list[str] = ["127.0.0.1", "::1", "testclient"]
 
     DEEP_LINK_ANDROID_PACKAGE_NAME: str = "org.econexao.app"
     DEEP_LINK_ANDROID_SHA256_FINGERPRINTS: list[str] = []
     DEEP_LINK_IOS_APP_ID: str = "TEAMID.org.econexao.app"
 
-    @field_validator("CORS_ORIGINS", mode="before")
+    @field_validator("CORS_ORIGINS", "TRUSTED_PROXIES", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v: Any) -> Any:
         if isinstance(v, str):
@@ -104,6 +116,14 @@ class Settings(BaseSettings):
             if invalid:
                 names = ", ".join(sorted(invalid))
                 raise ValueError(f"Configuração obrigatória ausente ou placeholder: {names}")
+            if self.ROUTING_PROVIDER != "google_routes":
+                raise ValueError("Staging/production exigem Google Routes, o provider aprovado.")
+            if self.APP_ENV == "production" and self.ENABLE_DYNAMIC_ROUTING:
+                raise ValueError("Roteamento dinâmico ainda não está autorizado em production.")
+            if self.ENABLE_DYNAMIC_ROUTING and not self.GOOGLE_ROUTES_API_KEY.get_secret_value():
+                raise ValueError("GOOGLE_ROUTES_API_KEY é obrigatória quando o recurso está ativo.")
+        if self.GOOGLE_ROUTES_MONTHLY_ALERT_AT >= self.GOOGLE_ROUTES_MONTHLY_LIMIT:
+            raise ValueError("O alerta mensal deve ocorrer antes do limite mensal.")
         return self
 
 

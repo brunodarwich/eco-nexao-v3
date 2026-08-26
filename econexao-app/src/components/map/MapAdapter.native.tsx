@@ -1,29 +1,29 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker, Polyline, type LatLng, type Region } from 'react-native-maps';
 
 import { theme } from '../../theme/theme';
 import { MapControls } from './MapControls';
 import {
+  SELECTION_PIN_COLOR,
   getFitCoordinates,
   getGeometryCoordinates,
   getInitialRegion,
-  getItemCategory,
+  getItemAccessibilityLabel,
+  getItemCategoryLabel,
   getItemCoordinate,
   getItemId,
+  getItemPinColor,
+  getItemPinIcon,
+  getSelectionPinAccessibilityLabel,
 } from './MapAdapter.helpers';
 import type { MapAdapterProps } from './MapAdapter.types';
+import { getCategoryIonicons } from '../catalog/CategoryFilters';
 
 const MIN_ZOOM = 3;
 const MAX_ZOOM = 20;
 const EDGE_PADDING = { top: 52, right: 52, bottom: 52, left: 52 };
-
-const getPinColor = (category: string): string => {
-  if (category === 'alimentacao' || category === 'gastronomia') return theme.colors.brandSun;
-  if (category === 'emergencia' || category === 'saude') return theme.colors.error;
-  if (category === 'artesanato' || category === 'comercio') return theme.colors.brandLeaf;
-  return theme.colors.brandForest;
-};
 
 const regionToZoom = (region: Region): number =>
   Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.log2(360 / region.longitudeDelta)));
@@ -37,6 +37,10 @@ export const MapAdapter: React.FC<MapAdapterProps> = ({
   onSelectActor,
   height = 360,
   showControls = true,
+  selectionMode = false,
+  selectedCoordinate,
+  onSelectCoordinate,
+  selectionPinLabel,
 }) => {
   const mapRef = useRef<MapView>(null);
   const [zoomLevel, setZoomLevel] = useState(12);
@@ -72,6 +76,11 @@ export const MapAdapter: React.FC<MapAdapterProps> = ({
     setZoomLevel(nextZoom);
   }, [zoomLevel]);
 
+  const selectionPinA11y = useMemo(
+    () => getSelectionPinAccessibilityLabel(selectedCoordinate, selectionPinLabel),
+    [selectedCoordinate, selectionPinLabel]
+  );
+
   return (
     <View style={[styles.container, { height }]}>
       <MapView
@@ -80,6 +89,11 @@ export const MapAdapter: React.FC<MapAdapterProps> = ({
         initialRegion={initialRegion}
         onMapReady={recenter}
         onRegionChangeComplete={(region) => setZoomLevel(regionToZoom(region))}
+        onPress={(e) => {
+          if (selectionMode && onSelectCoordinate) {
+            onSelectCoordinate(e.nativeEvent.coordinate);
+          }
+        }}
         minZoomLevel={MIN_ZOOM}
         maxZoomLevel={MAX_ZOOM}
         accessibilityLabel="Mapa interativo da rota, com percurso e pontos selecionáveis"
@@ -97,25 +111,57 @@ export const MapAdapter: React.FC<MapAdapterProps> = ({
           const coordinate = getItemCoordinate(item);
           if (!coordinate) return null;
           const itemId = getItemId(item);
-          const category = getItemCategory(item);
           const selected = itemId === selectedActorId;
+          const categoryLabel = getItemCategoryLabel(item);
+          const color = getItemPinColor(item);
+          const icon = getCategoryIonicons(getItemPinIcon(item));
+          const a11yLabel = getItemAccessibilityLabel(item, selected);
+          if (!color || !icon) return null;
 
           return (
             <Marker
               key={itemId}
               coordinate={coordinate}
               title={item.name}
-              description={`Categoria: ${category}`}
-              pinColor={getPinColor(category)}
-              opacity={selected ? 1 : 0.88}
+              description={`Categoria: ${categoryLabel}`}
               zIndex={selected ? 2 : 1}
               onPress={() => onSelectActor(itemId)}
               accessibilityRole="button"
-              accessibilityLabel={`Ponto no mapa: ${item.name}`}
-              accessibilityHint={`Categoria: ${category}. Toque para selecionar.`}
-            />
+              accessibilityLabel={a11yLabel}
+              accessibilityHint={`Categoria: ${categoryLabel}. Toque para selecionar.`}
+              accessibilityState={{ selected }}
+            >
+              <View
+                style={[
+                  styles.contractPin,
+                  { backgroundColor: color },
+                  selected && styles.contractPinSelected,
+                ]}
+              >
+                <Ionicons name={icon} size={selected ? 22 : 19} color="#FFFFFF" />
+              </View>
+            </Marker>
           );
         })}
+
+        {selectedCoordinate && (
+          <Marker
+            coordinate={selectedCoordinate}
+            title={selectionPinLabel || 'Ponto de Partida Escolhido'}
+            description={selectionPinA11y}
+            pinColor={SELECTION_PIN_COLOR}
+            draggable
+            zIndex={2000}
+            onDragEnd={(e) => {
+              if (onSelectCoordinate) {
+                onSelectCoordinate(e.nativeEvent.coordinate);
+              }
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={selectionPinA11y}
+            accessibilityHint="Ponto de partida selecionado no mapa. Arraste para reposicionar."
+          />
+        )}
       </MapView>
 
       {showControls && (
@@ -132,6 +178,22 @@ export const MapAdapter: React.FC<MapAdapterProps> = ({
 };
 
 const styles = StyleSheet.create({
+  contractPin: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  contractPinSelected: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 4,
+    borderColor: '#111827',
+  },
   container: {
     width: '100%',
     position: 'relative',

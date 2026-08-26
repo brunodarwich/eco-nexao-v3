@@ -1,0 +1,19 @@
+{
+  "code": "NoRoute",
+  "message": "Impossible route between points",
+  "routes": [],
+  "waypoints": [
+    {
+      "hint": "river_hint",
+      "distance": 1500.0,
+      "name": "Rio Tapajós",
+      "location": [-55.05000, -2.50000]
+    },
+    {
+      "hint": "pindobal_hint",
+      "distance": 4.5,
+      "name": "Praia de Pindobal",
+      "location": [-54.95821, -2.635412]
+    }
+  ]
+}

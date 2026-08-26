@@ -90,6 +90,7 @@ def test_get_bootstrap(api: tuple[TestClient, SimpleNamespace]) -> None:
     response = client.get("/api/v1/bootstrap")
     assert response.status_code == 200
     assert response.json()["data"]["feature_flags"]["anonymous_signin"] is True
+    assert response.json()["data"]["feature_flags"]["dynamic_routing"] is False
     service.get_bootstrap.assert_awaited_once_with(preferred_region_id=None)
 
 
@@ -154,3 +155,35 @@ def test_list_actor_categories(api: tuple[TestClient, SimpleNamespace]) -> None:
     assert response.status_code == 200
     assert response.json()["data"] == []
     service.list_actor_categories.assert_awaited_once_with()
+
+
+def test_route_map_passes_spatial_filters(api: tuple[TestClient, SimpleNamespace]) -> None:
+    client, service = api
+    route_id = uuid.uuid4()
+    origin_id = uuid.uuid4()
+    response = client.get(
+        f"/api/v1/routes/{route_id}/map?origin_id={origin_id}"
+        "&layer=both&category=transporte"
+    )
+    assert response.status_code == 404
+    service.get_route_map_payload.assert_awaited_once_with(
+        route_id, origin_id=origin_id, layer="both", category="transporte"
+    )
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "layer=both&category=saude",
+        "layer=citywide_essential&category=transporte",
+        "category=nao-canonica",
+        "layer=invalid",
+    ],
+)
+def test_route_map_rejects_incompatible_spatial_filters(
+    api: tuple[TestClient, SimpleNamespace], query: str
+) -> None:
+    client, service = api
+    response = client.get(f"/api/v1/routes/{uuid.uuid4()}/map?{query}")
+    assert response.status_code == 422
+    service.get_route_map_payload.assert_not_awaited()

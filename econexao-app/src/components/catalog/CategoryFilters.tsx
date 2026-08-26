@@ -1,14 +1,42 @@
 import React from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
-import type { ActorCategory } from '../../api/types';
+import type { ActorCategory, MapLegendItem } from '../../api/types';
 import { FilterChip } from '../common/FilterChip';
 import { Ionicons } from '@expo/vector-icons';
 
 interface CategoryFiltersProps {
-  categories: ActorCategory[];
+  categories: Array<ActorCategory | MapLegendItem>;
   selectedCategory: string;
   onSelectCategory: (category: string) => void;
 }
+
+export const getCategoryIonicons = (
+  iconName?: string | null
+): keyof typeof Ionicons.glyphMap | null => {
+  switch (iconName) {
+    case 'utensils':
+    case 'restaurant':
+      return 'restaurant-outline';
+    case 'compass':
+      return 'compass-outline';
+    case 'bed':
+      return 'bed-outline';
+    case 'palette':
+      return 'color-palette-outline';
+    case 'bus':
+      return 'bus-outline';
+    case 'heart-pulse':
+    case 'cross':
+    case 'medkit':
+      return 'heart-outline';
+    case 'shield':
+      return 'shield-checkmark-outline';
+    case 'help-circle':
+      return 'help-circle-outline';
+    default:
+      return null;
+  }
+};
 
 export const CategoryFilters: React.FC<CategoryFiltersProps> = ({
   selectedCategory,
@@ -28,15 +56,19 @@ export const CategoryFilters: React.FC<CategoryFiltersProps> = ({
         onPress={() => onSelectCategory('')}
         icon="apps-outline"
       />
-      {categories.map((cat) => (
-        <FilterChip
-          key={cat.slug}
-          label={cat.label}
-          isSelected={selectedCategory === cat.slug}
-          onPress={() => onSelectCategory(cat.slug)}
-          icon={(cat.icon || 'leaf-outline') as keyof typeof Ionicons.glyphMap}
-        />
-      ))}
+      {categories.map((cat) => {
+        const slug = 'category_slug' in cat ? cat.category_slug : cat.slug;
+        const label = 'count' in cat ? `${cat.label} (${cat.count})` : cat.label;
+        return (
+          <FilterChip
+            key={slug}
+            label={label}
+            isSelected={selectedCategory === slug}
+            onPress={() => onSelectCategory(slug)}
+            icon={getCategoryIonicons(cat.icon) ?? undefined}
+          />
+        );
+      })}
     </ScrollView>
   );
 };

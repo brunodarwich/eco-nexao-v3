@@ -32,7 +32,7 @@ describe('ECO-1901 — Dados reais, paginação e favoritos consistentes no App 
     queryClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false, gcTime: Infinity },
-        mutations: { retry: false },
+        mutations: { retry: false, gcTime: Infinity },
       },
     });
 
@@ -45,6 +45,10 @@ describe('ECO-1901 — Dados reais, paginação e favoritos consistentes no App 
       user: { id: 'test-user-1' },
       status: 'authenticated',
     });
+  });
+
+  afterEach(() => {
+    queryClient.clear();
   });
 
   test('useOptimisticFavoriteRoute atualiza cache imediatamente e faz rollback no erro', async () => {
@@ -93,6 +97,7 @@ describe('ECO-1901 — Dados reais, paginação e favoritos consistentes no App 
     // Executa mutação otimista
     await act(async () => {
       hookResult!.toggleFavorite('route-100', false);
+      await new Promise((resolve) => setTimeout(resolve, 50));
     });
 
     // O cache deve ter sido desfeito para o estado inicial após falha
@@ -140,6 +145,7 @@ describe('ECO-1901 — Dados reais, paginação e favoritos consistentes no App 
 
     await act(async () => {
       hookResult!.toggleFavorite(actor, false);
+      await new Promise((resolve) => setTimeout(resolve, 50));
     });
 
     const cachedData = queryClient.getQueryData<typeof initialActorList>(queryKey);

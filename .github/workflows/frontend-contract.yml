@@ -45,4 +45,4 @@ jobs:
         run: npm run typecheck
 
       - name: Tests
-        run: npm test -- --watch=false --forceExit
+        run: npm test -- --watch=false
