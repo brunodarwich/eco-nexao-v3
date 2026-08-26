@@ -30,6 +30,9 @@ def run_seed_pindobal(
     dry_run: bool = True,
 ) -> dict[str, Any]:
     """Execute complete Pindobal seed pipeline and produce JSON summary report."""
+    if not dry_run:
+        raise RuntimeError("Use run_seed_pindobal_apply com uma sessão DB explícita.")
+
     run_started_at = datetime.now(UTC).isoformat()
 
     # Step 1: Verify Manifest
@@ -143,9 +146,6 @@ def run_seed_pindobal(
         },
     }
 
-    if not dry_run:
-        raise RuntimeError("Use run_seed_pindobal_apply com uma sessão DB explícita.")
-
     return report
 
 
@@ -194,11 +194,11 @@ async def run_seed_pindobal_apply(
 
 async def apply_from_test_environment(snapshot_dir: Path, env_file: Path) -> dict[str, Any]:
     """Load an explicit test environment and refuse every other target."""
-    if not env_file.is_file():
-        raise RuntimeError("Arquivo de ambiente de test não encontrado.")
     canonical_test_file = (BACKEND_DIR / ".env.test").resolve()
     if env_file.resolve() != canonical_test_file:
         raise RuntimeError("--apply aceita somente o arquivo canônico backend/.env.test.")
+    if not env_file.is_file():
+        raise RuntimeError("Arquivo de ambiente de test não encontrado.")
     require_test_isolation(test_path=env_file)
     load_dotenv(env_file, override=True)
     settings = Settings()

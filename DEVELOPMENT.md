@@ -270,7 +270,7 @@ desenvolvimento.
 
 O pipeline `.github/workflows/staging-deploy.yml` executa a validação contínua e o deploy automático em Staging:
 
-1. **Backend Quality Gate**: Ruff, Mypy, validação de migrations, testes de segurança de RLS e cobertura pytest (mínimo 85%).
+1. **Backend Quality Gate**: Ruff, Mypy, validação de migrations, testes de segurança de RLS e cobertura pytest (mínimo 85%) sobre o runtime FastAPI. O pipeline offline de ingestão fica fora desse denominador e é validado pelos testes determinísticos próprios de contrato, importação e persistência executados na mesma suíte.
 2. **Frontend Quality Gate**: Sincronização OpenAPI, Typecheck TypeScript e suíte Jest.
 3. **Migration & Secret Gate**: Varredura anti-vazamento de segredos e verificação de ordem de migrations.
 4. **Deploy Staging (Render)**: Disparo do Deploy Hook autenticado e execução de smoke test (`scripts.staging_smoke`) contra os endpoints `/api/v1/health/live` e `/api/v1/health/ready`.
