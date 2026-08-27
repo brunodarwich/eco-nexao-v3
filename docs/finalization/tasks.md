@@ -858,6 +858,7 @@ descobertos com `supabase --help`; production nunca é usada sem aprovação.
 
 - **Resultado / prioridade / tamanho / executor:** public staging endpoint; P0; M;
   Codex + owner.
+- **Status:** `VERIFIED`
 - **Dependências/ADRs:** ECO-2002, ECO-1306.
 - **Contexto/leitura:** provider/domain decision, CORS/config/deep links.
 - **Arquivos:** hosting/DNS docs/config/CORS tests; no production DNS.
@@ -869,13 +870,21 @@ descobertos com `supabase --help`; production nunca é usada sem aprovação.
   works, health/build version visible; browser smoke and curl/Invoke-WebRequest.
 - **Evidência/riscos/rollback/DoD:** URLs/cert report; DNS risk; rollback record/config;
   DoD with owner confirmation.
+- **Evidências reais capturadas em staging:**
+  - Home: `docs/finalization/evidence/ECO-2003/01_home_screen.png`
+  - Rota Pindobal: `docs/finalization/evidence/ECO-2003/02_route_pindobal_screen.png`
+  - Mapa Leaflet: `docs/finalization/evidence/ECO-2003/03_leaflet_map_screen.png`
+  - Network/Console: `docs/finalization/evidence/ECO-2003/04_network_console_cors_evidence.png`
+- **Confirmação do Owner:**
+  > Owner confirmation:
+  > Eu, Bruno Darwich, confirmo a homologação da ECO-2003 em staging, incluindo deploy, CORS, browser smoke, rollback e restauração. Production e seu DNS permaneceram fora do escopo.
 - **Prompt de execução:**
   ```text
   Execute ECO-2003 only for staging with approved domains. Configure HTTPS, exact
   CORS, headers and web artifact; never use wildcard or expose backend secrets.
   Prove allowed/denied origins and rollback. Do not touch production DNS.
   ```
-- **Entrega:** Gate 4 partial.
+- **Entrega:** Gate 4 partial (`VERIFIED`).
 
 ### ECO-2004 — Observability, rate limits, runbooks and cost guards
 

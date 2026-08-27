@@ -173,6 +173,16 @@ Todas as 23 migrations oficiais estão registradas, ordenadas por timestamp e ap
 - **Proteção Anti-Wildcard:** **VERIFICADO** (fail-closed validator no backend rejeitando `*`).
 - **Smoke Remoto Staging (`staging_smoke.py`):** **VERIFICADO E HOMOLOGADO** (100% de sucesso contra `https://econexao-backend-staging.onrender.com`).
 
+### 4.1 Evidências Reais Capturadas no Navegador (Staging Web)
+- **Home Screen:** [`docs/finalization/evidence/ECO-2003/01_home_screen.png`](file:///c:/Users/Bruno/Downloads/eco-nexao-v3/docs/finalization/evidence/ECO-2003/01_home_screen.png)
+- **Rota Pindobal:** [`docs/finalization/evidence/ECO-2003/02_route_pindobal_screen.png`](file:///c:/Users/Bruno/Downloads/eco-nexao-v3/docs/finalization/evidence/ECO-2003/02_route_pindobal_screen.png)
+- **Mapa Territorial Leaflet:** [`docs/finalization/evidence/ECO-2003/03_leaflet_map_screen.png`](file:///c:/Users/Bruno/Downloads/eco-nexao-v3/docs/finalization/evidence/ECO-2003/03_leaflet_map_screen.png)
+- **Network / Console Audit:** [`docs/finalization/evidence/ECO-2003/04_network_console_cors_evidence.png`](file:///c:/Users/Bruno/Downloads/eco-nexao-v3/docs/finalization/evidence/ECO-2003/04_network_console_cors_evidence.png)
+
+### 4.2 Confirmação do Owner
+> **Owner confirmation:**
+> Eu, Bruno Darwich, confirmo a homologação da ECO-2003 em staging, incluindo deploy, CORS, browser smoke, rollback e restauração. Production e seu DNS permaneceram fora do escopo.
+
 ---
 
 ## 5. Mapeamento de Segredos e Variáveis para CI/CD (GitHub Actions)
