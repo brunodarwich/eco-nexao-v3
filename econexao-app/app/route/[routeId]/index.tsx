@@ -222,6 +222,17 @@ export default function RouteDetailScreen() {
     : null;
 
   const customBounds: MapBounds | null = previewData?.bounds ?? null;
+  const originSelector = route.origins && route.origins.length > 0 ? (
+    <OriginSelector
+      origins={route.origins}
+      selectedOriginId={effectiveOrigin}
+      onSelectOrigin={handleSelectOrigin}
+      onSelectCurrentLocation={handleSelectCurrentLocation}
+      onStartSelectOnMap={handleStartSelectOnMap}
+      isLoadingLocation={isPreviewLoading}
+      enableDynamicRouting={isDynamicRoutingEnabled}
+    />
+  ) : null;
 
   return (
     <View style={styles.container}>
@@ -230,44 +241,42 @@ export default function RouteDetailScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         {/* Header Hero Section */}
         {pindobalHeroImage ? (
-          <ImageBackground
-            source={pindobalHeroImage}
-            style={[styles.heroSection, styles.heroSectionWithImage]}
-            imageStyle={styles.heroImage}
-            resizeMode="cover"
-            accessible={false}
-          >
-            <View style={styles.heroOverlay}>
-              <Text style={[styles.title, styles.titleOnImage]}>{route.title}</Text>
-              <Text style={[styles.subtitle, styles.subtitleOnImage]}>
+          <View style={styles.pindobalHeroStack}>
+            <ImageBackground
+              source={pindobalHeroImage}
+              style={[styles.heroSection, styles.heroSectionWithImage]}
+              imageStyle={styles.heroImage}
+              resizeMode="contain"
+              accessible={false}
+            >
+              <View style={styles.heroOverlay}>
+                <Text style={[styles.title, styles.titleOnImage]}>{route.title}</Text>
+                <Text style={[styles.subtitle, styles.subtitleOnImage]}>
+                  {route.city}, {route.state_code}
+                  {route.is_verified && ' • Rota Verificada'}
+                </Text>
+                <Text style={[styles.description, styles.descriptionOnImage]}>{route.description ?? route.summary}</Text>
+              </View>
+              <View pointerEvents="none" style={styles.heroBottomGradient}>
+                <View style={styles.heroGradientStart} />
+                <View style={styles.heroGradientMiddle} />
+                <View style={styles.heroGradientEnd} />
+              </View>
+            </ImageBackground>
+            {originSelector ? <View style={styles.originSelectorOverlay}>{originSelector}</View> : null}
+          </View>
+        ) : (
+          <>
+            <View style={styles.heroSection}>
+              <Text style={styles.title}>{route.title}</Text>
+              <Text style={styles.subtitle}>
                 {route.city}, {route.state_code}
                 {route.is_verified && ' • Rota Verificada'}
               </Text>
-              <Text style={[styles.description, styles.descriptionOnImage]}>{route.description ?? route.summary}</Text>
+              <Text style={styles.description}>{route.description ?? route.summary}</Text>
             </View>
-          </ImageBackground>
-        ) : (
-          <View style={styles.heroSection}>
-            <Text style={styles.title}>{route.title}</Text>
-            <Text style={styles.subtitle}>
-              {route.city}, {route.state_code}
-              {route.is_verified && ' • Rota Verificada'}
-            </Text>
-            <Text style={styles.description}>{route.description ?? route.summary}</Text>
-          </View>
-        )}
-
-        {/* Origin Selector */}
-        {route.origins && route.origins.length > 0 && (
-          <OriginSelector
-            origins={route.origins}
-            selectedOriginId={effectiveOrigin}
-            onSelectOrigin={handleSelectOrigin}
-            onSelectCurrentLocation={handleSelectCurrentLocation}
-            onStartSelectOnMap={handleStartSelectOnMap}
-            isLoadingLocation={isPreviewLoading}
-            enableDynamicRouting={isDynamicRoutingEnabled}
-          />
+            {originSelector}
+          </>
         )}
 
         {/* Dynamic preview notice banner */}
@@ -417,8 +426,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   heroSectionWithImage: {
-    minHeight: 190,
-    justifyContent: 'flex-end',
+    height: 440,
+    backgroundColor: theme.colors.brandDeep,
     overflow: 'hidden',
   },
   heroImage: {
@@ -426,10 +435,37 @@ const styles = StyleSheet.create({
   },
   heroOverlay: {
     gap: 4,
-    backgroundColor: 'rgba(15, 33, 8, 0.58)',
+    backgroundColor: 'rgba(15, 33, 8, 0.48)',
     padding: theme.spacing.marginMobile,
-    minHeight: 190,
+    minHeight: 176,
+  },
+  pindobalHeroStack: {
+    position: 'relative',
+  },
+  originSelectorOverlay: {
+    marginTop: -228,
+    paddingHorizontal: 12,
+    zIndex: 1,
+  },
+  heroBottomGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 220,
     justifyContent: 'flex-end',
+  },
+  heroGradientStart: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 33, 8, 0.06)',
+  },
+  heroGradientMiddle: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 33, 8, 0.20)',
+  },
+  heroGradientEnd: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 33, 8, 0.46)',
   },
   titleOnImage: {
     color: theme.colors.surfaceWhite,
