@@ -98,10 +98,18 @@ describe('AuthSessionManager', () => {
     expect(manager.getAccessToken()).toBeNull();
   });
 
-  it('oferece vínculo por email sem trocar diretamente a identidade', async () => {
-    const fake = client();
+  it('rejeita refresh com erro sem disparar signInAnonymously', async () => {
+    const fake = client({
+      refreshSession: jest.fn().mockResolvedValue({
+        data: { session: null },
+        error: new Error('invalid_grant'),
+      }),
+    });
     const manager = new AuthSessionManager(fake.client);
-    await manager.linkEmail('pessoa@example.com');
-    expect(fake.auth.updateUser).toHaveBeenCalledWith({ email: 'pessoa@example.com' });
+    await manager.initialize();
+    fake.auth.signInAnonymously.mockClear();
+
+    await expect(manager.refresh()).rejects.toThrow('invalid_grant');
+    expect(fake.auth.signInAnonymously).not.toHaveBeenCalled();
   });
 });

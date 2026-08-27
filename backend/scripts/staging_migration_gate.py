@@ -54,27 +54,39 @@ def extract_project_ref_from_url(url: str | None) -> str:
 
 def validate_staging_project_ref(
     project_ref: str,
+    expected_staging_ref: str | None = None,
     dev_ref: str | None = None,
     test_ref: str | None = None,
+    prod_ref: str | None = None,
 ) -> str:
-    """Validate that the project ref is well-formed and distinct from dev/test/production."""
+    """Validate project ref is well-formed, matches expected ref, and is isolated."""
     ref = (project_ref or "").strip().lower()
     if not ref:
         raise ValueError("SUPABASE_PROJECT_REF is empty.")
+
+    if any(marker in ref for marker in ("replace", "your", "project", "prod")):
+        raise ValueError("SUPABASE_PROJECT_REF contains placeholder or production marker.")
 
     if not PROJECT_REF_PATTERN.fullmatch(ref):
         raise ValueError(
             "SUPABASE_PROJECT_REF must be exactly 20 lowercase alphanumeric characters."
         )
 
-    if any(marker in ref for marker in ("replace", "your", "project", "prod")):
-        raise ValueError("SUPABASE_PROJECT_REF contains placeholder or production marker.")
+    if expected_staging_ref:
+        exp = expected_staging_ref.strip().lower()
+        if exp and ref != exp:
+            raise ValueError(
+                f"SUPABASE_PROJECT_REF '{ref}' does not match EXPECTED_STAGING_PROJECT_REF '{exp}'."
+            )
 
     if dev_ref and ref == dev_ref.strip().lower():
         raise ValueError("Staging SUPABASE_PROJECT_REF collides with development project ref.")
 
     if test_ref and ref == test_ref.strip().lower():
         raise ValueError("Staging SUPABASE_PROJECT_REF collides with test project ref.")
+
+    if prod_ref and ref == prod_ref.strip().lower():
+        raise ValueError("Staging SUPABASE_PROJECT_REF collides with production project ref.")
 
     return ref
 
@@ -83,7 +95,7 @@ def run_cli_command(
     args: list[str],
     env_vars: dict[str, str],
     secrets_to_redact: list[str],
-    timeout_seconds: float = 60.0,
+    timeout_seconds: float = 120.0,
     cwd: Path | None = None,
 ) -> tuple[int, str]:
     """Execute a CLI command safely with sanitized output."""
@@ -137,21 +149,47 @@ def check_migration_drift(
         db_password,
     ]
 
-    code, output = run_cli_command(args, env_vars=env_vars, secrets_to_redact=secrets)
+    code, output = run_cli_command(
+        args,
+        env_vars=env_vars,
+        secrets_to_redact=secrets,
+        timeout_seconds=120.0,
+    )
     if code != 0:
         return False, f"supabase migration list failed (exit {code}):\n{output}", []
 
-    # Parse output to detect pending/unapplied migrations
     unapplied: list[str] = []
-    for line in output.splitlines():
-        # Typical table output has LOCAL | REMOTE or timestamp indicators
-        if "|" in line:
-            parts = [p.strip() for p in line.split("|")]
-            if len(parts) >= 2:
-                local_ver = parts[0]
-                remote_ver = parts[1]
-                if local_ver and not remote_ver:
-                    unapplied.append(local_ver)
+    migration_id_pattern = re.compile(r"^\d{14}")
+
+    for raw_line in output.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith(("+", "-", "=", "┌", "├", "└", "─", "╔", "╠", "╚")):
+            continue
+
+        if "|" in line or "│" in line:
+            delim = "│" if "│" in line else "|"
+            cells = [c.strip() for c in line.split(delim)]
+            content_cells = [c for c in cells if c]
+            if len(content_cells) >= 1:
+                local_ver = content_cells[0]
+                if local_ver.upper() in ("LOCAL", "MIGRATION ID", "VERSION", "NAME", "ID"):
+                    continue
+
+                if migration_id_pattern.match(local_ver) or (
+                    len(local_ver) >= 14 and local_ver[:14].isdigit()
+                ):
+                    remote_ver = content_cells[1] if len(content_cells) > 1 else ""
+                    if not remote_ver or remote_ver.lower() in (
+                        "-",
+                        "none",
+                        "not applied",
+                        "pending",
+                        "unapplied",
+                        "null",
+                    ):
+                        unapplied.append(local_ver)
+                    elif remote_ver != local_ver and not migration_id_pattern.match(remote_ver):
+                        unapplied.append(local_ver)
 
     return True, output, unapplied
 
@@ -170,15 +208,23 @@ def check_supabase_advisors(
         "supabase",
         "db",
         "advisors",
+        "--linked",
         "--project-ref",
         project_ref,
+        "--password",
+        db_password,
         "--type",
         "all",
         "--fail-on",
         "error",
     ]
 
-    code, output = run_cli_command(args, env_vars=env_vars, secrets_to_redact=secrets)
+    code, output = run_cli_command(
+        args,
+        env_vars=env_vars,
+        secrets_to_redact=secrets,
+        timeout_seconds=120.0,
+    )
     if code != 0:
         return False, f"supabase db advisors reported errors (exit {code}):\n{output}"
 
@@ -205,7 +251,12 @@ def apply_staging_migrations(
         db_password,
     ]
 
-    code, output = run_cli_command(args, env_vars=env_vars, secrets_to_redact=secrets)
+    code, output = run_cli_command(
+        args,
+        env_vars=env_vars,
+        secrets_to_redact=secrets,
+        timeout_seconds=180.0,
+    )
     if code != 0:
         return False, f"supabase db push failed (exit {code}):\n{output}"
 
@@ -216,6 +267,7 @@ def run_gate(
     project_ref: str,
     db_password: str,
     access_token: str,
+    expected_staging_ref: str | None = None,
     apply_migrations: bool = False,
 ) -> int:
     """Orchestrate staging migration gate verification."""
@@ -241,13 +293,27 @@ def run_gate(
         return 1
 
     # 2. Validate Project Ref Isolation
-    dev_env = dotenv_values(BACKEND_DIR / ".env")
-    test_env = dotenv_values(BACKEND_DIR / ".env.test")
-    dev_ref = extract_project_ref_from_url(dev_env.get("SUPABASE_URL"))
-    test_ref = extract_project_ref_from_url(test_env.get("SUPABASE_URL"))
+    dev_env = dotenv_values(BACKEND_DIR / ".env") if (BACKEND_DIR / ".env").exists() else {}
+    test_env = (
+        dotenv_values(BACKEND_DIR / ".env.test") if (BACKEND_DIR / ".env.test").exists() else {}
+    )
+    dev_ref = os.environ.get("DEV_PROJECT_REF") or extract_project_ref_from_url(
+        dev_env.get("SUPABASE_URL")
+    )
+    test_ref = os.environ.get("TEST_PROJECT_REF") or extract_project_ref_from_url(
+        test_env.get("SUPABASE_URL")
+    )
+    prod_ref = os.environ.get("PROD_PROJECT_REF")
+    expected_ref = expected_staging_ref or os.environ.get("EXPECTED_STAGING_PROJECT_REF")
 
     try:
-        valid_ref = validate_staging_project_ref(project_ref, dev_ref=dev_ref, test_ref=test_ref)
+        valid_ref = validate_staging_project_ref(
+            project_ref=project_ref,
+            expected_staging_ref=expected_ref,
+            dev_ref=dev_ref,
+            test_ref=test_ref,
+            prod_ref=prod_ref,
+        )
         print(f"[GATE] Staging project ref validated: {valid_ref[:6]}...{valid_ref[-4:]}")
     except ValueError as err:
         print(f"[GATE][ERROR] Project ref validation failed: {err}")
@@ -311,6 +377,11 @@ def main() -> None:
         help="Supabase staging project ref (20 lowercase alphanumeric characters)",
     )
     parser.add_argument(
+        "--expected-staging-ref",
+        default=os.environ.get("EXPECTED_STAGING_PROJECT_REF", ""),
+        help="Expected Supabase staging project ref to verify target identity",
+    )
+    parser.add_argument(
         "--db-password",
         default=os.environ.get("SUPABASE_DB_PASSWORD", ""),
         help="Supabase staging database password",
@@ -330,6 +401,7 @@ def main() -> None:
     args = parser.parse_args()
     exit_code = run_gate(
         project_ref=args.project_ref,
+        expected_staging_ref=args.expected_staging_ref,
         db_password=args.db_password,
         access_token=args.access_token,
         apply_migrations=args.apply_migrations,

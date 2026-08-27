@@ -27,7 +27,19 @@ describe('territorial query options', () => {
     expect(territorialQueries.routeGeometry('route', '').enabled).toBe(false);
     expect(territorialQueries.routes(undefined).enabled).toBe(false);
     expect(territorialQueries.routes('region', { saved: true }).enabled).toBe(false);
+    expect(territorialQueries.routes('region', { saved: true }, 'user-id').enabled).toBe(true);
+    expect(territorialQueries.bootstrap('').enabled).toBe(false);
+    expect(territorialQueries.bootstrap('user-id').enabled).toBe(true);
+
+    expect(userQueries.profile().enabled).toBe(false);
+    expect(userQueries.profile('user-id').enabled).toBe(true);
+    expect(userQueries.trips().enabled).toBe(false);
+    expect(userQueries.trips('user-id').enabled).toBe(true);
+    expect(userQueries.favoriteRoutes().enabled).toBe(false);
+    expect(userQueries.favoriteRoutes('user-id').enabled).toBe(true);
     expect(userQueries.favoriteActors().enabled).toBe(false);
     expect(userQueries.favoriteActors('user-id').enabled).toBe(true);
+    expect(userQueries.preferences().enabled).toBe(false);
+    expect(userQueries.preferences('user-id').enabled).toBe(true);
   });
 });

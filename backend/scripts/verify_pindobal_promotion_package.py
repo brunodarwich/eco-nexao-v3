@@ -32,7 +32,7 @@ def main() -> int:
     state = manifest["verified_test_state"]
     semantic_ok = (
         len(snapshot) == 9
-        and len(manifest["migrations"]) == 9
+        and len(manifest["migrations"]) == 23
         and state["second_load_created"] == 0
         and state["second_load_updated"] == 0
         and state["route_actors"] == 313
@@ -49,7 +49,7 @@ def main() -> int:
         return 1
     print("PINDOBAL_PACKAGE_VERIFY=OK")
     print(f"- package checksum: {expected}")
-    print("- snapshot files: 9; migrations: 9; route actors: 313")
+    print("- snapshot files: 9; migrations: 23; route actors: 313")
     print("- promotion remains blocked pending editorial acceptance")
     return 0
 
