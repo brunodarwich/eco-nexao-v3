@@ -171,6 +171,7 @@ export const userQueries = {
       queryKey: queryKeys.myProfile(userId),
       queryFn: () => apiClient.getMyProfile(),
       select: (e) => e.data,
+      enabled: Boolean(userId),
       meta: { authenticated: true },
     }),
   trips: (userId?: string) =>
@@ -178,6 +179,7 @@ export const userQueries = {
       queryKey: queryKeys.myTrips(userId),
       queryFn: () => apiClient.getMyTrips(),
       select: (e) => e.data,
+      enabled: Boolean(userId),
       meta: { authenticated: true },
     }),
   favoriteRoutes: (userId?: string) =>
@@ -185,6 +187,7 @@ export const userQueries = {
       queryKey: queryKeys.myFavoriteRoutes(userId),
       queryFn: () => apiClient.getMyFavoriteRoutes(),
       select: (e) => e.data,
+      enabled: Boolean(userId),
       meta: { authenticated: true },
     }),
   favoriteActors: (userId?: string) =>
@@ -200,6 +203,7 @@ export const userQueries = {
       queryKey: queryKeys.myPreferences(userId),
       queryFn: () => apiClient.getMyPreferences(),
       select: (e) => e.data,
+      enabled: Boolean(userId),
       meta: { authenticated: true },
     }),
   supportContent: () =>

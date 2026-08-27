@@ -187,3 +187,28 @@ def test_route_map_rejects_incompatible_spatial_filters(
     response = client.get(f"/api/v1/routes/{uuid.uuid4()}/map?{query}")
     assert response.status_code == 422
     service.get_route_map_payload.assert_not_awaited()
+
+
+def test_list_regions_ignores_invalid_auth_header(
+    api: tuple[TestClient, SimpleNamespace],
+) -> None:
+    client, service = api
+    response = client.get(
+        "/api/v1/regions", headers={"Authorization": "Bearer invalid-or-expired-token"}
+    )
+    assert response.status_code == 200
+    service.get_regions.assert_awaited_once()
+
+
+def test_list_routes_with_invalid_bearer_returns_401() -> None:
+    app.dependency_overrides[get_territorial_service] = lambda: SimpleNamespace()
+    try:
+        with TestClient(app) as client:
+            response = client.get(
+                "/api/v1/routes", headers={"Authorization": "Bearer invalid-token"}
+            )
+    finally:
+        app.dependency_overrides.clear()
+    assert response.status_code == 401
+    assert response.headers["www-authenticate"] == "Bearer"
+

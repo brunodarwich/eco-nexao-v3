@@ -1004,10 +1004,37 @@ Justificativa e evidências:
   - `docs/runbooks/assisted_operation_and_slo_guide.md` [NEW]
   - `docs/finalization/release_checklist.md` [MODIFY]
   - `docs/finalization/ai_coordination.md` [MODIFY]
+### Handoff ECO-2002 (Reforço) — Staging Migration Gate Fail-Closed & Secret Isolation (26/08/2026)
+
+- **Task:** ECO-2002 — CI/CD de staging com migration gate (Correção de Falso Positivo e Fail-Closed).
+- **Executor/branch/worktree:** Google Antigravity / raiz do repositório
+- **Resultado observável:**
+  - Pipeline `.github/workflows/staging-deploy.yml` corrigido:
+    - Removido o bypass complacente em shell (`if [ -z "$SUPABASE_..." ] ... echo "::warning::..."`), garantindo que a ausência de qualquer secret obrigatório resulte em falha imediata do job (`migration-and-security-gate`) com código de saída 1.
+    - O job downstream `deploy-staging` (webhook do Render) é estritamente bloqueado caso o gate não seja executado ou falhe.
+    - Nenhum segredo é exibido nos logs do GitHub Actions ou nas ferramentas de CLI.
+  - Script `backend/scripts/staging_migration_gate.py` aprimorado:
+    - Suporte a `EXPECTED_STAGING_PROJECT_REF` para validação de identidade do alvo além do regex de 20 caracteres e bloqueio de colisões com dev/test/prod.
+    - Parser robusto para saídas tabulares (`supabase migration list`) tratando bordas ASCII/Unicode, cabeçalhos e status unapplied (`-`, `none`, `pending`, `not applied`, `null`).
+    - Verificação de advisors de segurança e performance (`--type all --fail-on error`).
+    - Timeout padrão da CLI ajustado para 120s/180s para prevenir falhas espúrias.
+  - Suíte `backend/tests/test_staging_migration_gate.py` expandida (48 testes passando):
+    - Cenários negativos para ausência individual/combinada de secrets, whitespaces, colisões de projeto e mismatch com ref esperado.
+    - Falhas da CLI (binário inexistente, timeout `TimeoutExpired`, exit code != 0, exceções do SO).
+    - Drift não autorizado vs autorizado vs falha de apply.
+    - Falhas em advisors de segurança e performance.
+    - Sanitização de senhas DSN, tokens JWT e `sb_secret_*`.
+    - Prova de short-circuiting e sucesso estrito (exit code 0 apenas com todas as etapas 100% concluídas).
+- **Arquivos alterados:**
+  - `.github/workflows/staging-deploy.yml` [MODIFY]
+  - `backend/scripts/staging_migration_gate.py` [MODIFY]
+  - `backend/tests/test_staging_migration_gate.py` [MODIFY]
+  - `docs/finalization/ai_coordination.md` [MODIFY]
 - **Verificações e Testes:**
-  - Backend: 333 testes unitários e de integração passando (exit 0).
-  - Frontend: `npm run openapi:check` exit 0; suítes Jest 29/29 (130 testes) exit 0.
-- **Estado:** `VERIFIED` (Marco 22 concluído em 100% dos seus requisitos técnicos e operacionais).
+  - Backend: Ruff 0 erros, MyPy em 114 arquivos 0 erros, pytest 497 testes passando com cobertura 85,68% (>= 85%).
+  - Frontend: `openapi:check` exit 0, TypeScript `tsc --noEmit` exit 0, Jest 32/32 suítes (195 testes) exit 0.
+- **Estado:** `VERIFIED`.
+
 
 
 

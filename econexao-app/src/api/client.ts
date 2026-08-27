@@ -126,7 +126,8 @@ export class ApiClient {
   private async request<T>(
     endpoint: string,
     options: RequestInit = {},
-    hasRetriedAuth = false
+    hasRetriedAuth = false,
+    requiresAuth = false
   ): Promise<T> {
     const url = `${this.baseUrl.replace(/\/$/, "")}${endpoint}`;
     const requestId = this.generateRequestId();
@@ -149,9 +150,11 @@ export class ApiClient {
       ...(options.headers as Record<string, string>),
     };
 
-    const authToken = await this.getAccessToken();
-    if (authToken) {
-      headers["Authorization"] = `Bearer ${authToken}`;
+    if (requiresAuth) {
+      const authToken = await this.getAccessToken();
+      if (authToken) {
+        headers["Authorization"] = `Bearer ${authToken}`;
+      }
     }
 
     try {
@@ -166,13 +169,13 @@ export class ApiClient {
         response.headers.get("X-Request-ID") ||
         requestId;
 
-      if (response.status === 401 && !hasRetriedAuth && this.refreshAccessToken) {
+      if (requiresAuth && response.status === 401 && !hasRetriedAuth && this.refreshAccessToken) {
         if (!this.refreshFlight) {
           this.refreshFlight = this.refreshAccessToken().finally(() => {
             this.refreshFlight = null;
           });
         }
-        let refreshedToken: string | null;
+        let refreshedToken: string | null = null;
         try {
           refreshedToken = await this.refreshFlight;
         } catch {
@@ -184,7 +187,16 @@ export class ApiClient {
             responseRequestId
           );
         }
-        if (refreshedToken) return this.request<T>(endpoint, options, true);
+        if (!refreshedToken) {
+          await this.onAuthFailure?.();
+          throw new ApiClientError(
+            'Sua sessão expirou e não pôde ser renovada.',
+            401,
+            'AUTH_REFRESH_FAILED',
+            responseRequestId
+          );
+        }
+        return this.request<T>(endpoint, options, true, true);
       }
 
       if (!response.ok) {
@@ -230,11 +242,11 @@ export class ApiClient {
   // ---------------------------------------------------------------------------
 
   public async getBootstrap(): Promise<BootstrapResponseEnvelope> {
-    return this.request<BootstrapResponseEnvelope>("/bootstrap");
+    return this.request<BootstrapResponseEnvelope>("/bootstrap", {}, false, true);
   }
 
   public async getRegions(): Promise<RegionListEnvelope> {
-    return this.request<RegionListEnvelope>("/regions");
+    return this.request<RegionListEnvelope>("/regions", {}, false, false);
   }
 
   public async getRoutes(
@@ -251,15 +263,16 @@ export class ApiClient {
     if (params?.limit) query.append("limit", String(params.limit));
 
     const queryString = query.toString() ? `?${query.toString()}` : "";
-    return this.request<RouteListEnvelope>(`/routes${queryString}`, { signal: options?.signal });
+    const isSavedOnly = params?.saved === true;
+    return this.request<RouteListEnvelope>(`/routes${queryString}`, { signal: options?.signal }, false, isSavedOnly);
   }
 
   public async getRouteDetail(routeId: string): Promise<RouteDetailEnvelope> {
-    return this.request<RouteDetailEnvelope>(`/routes/${routeId}`);
+    return this.request<RouteDetailEnvelope>(`/routes/${routeId}`, {}, false, false);
   }
 
   public async getRouteOrigins(routeId: string): Promise<RouteOriginListEnvelope> {
-    return this.request<RouteOriginListEnvelope>(`/routes/${routeId}/origins`);
+    return this.request<RouteOriginListEnvelope>(`/routes/${routeId}/origins`, {}, false, false);
   }
 
   public async getRouteGeometry(
@@ -268,12 +281,15 @@ export class ApiClient {
   ): Promise<RouteGeometryEnvelope> {
     const query = `?origin_id=${encodeURIComponent(originId)}`;
     return this.request<RouteGeometryEnvelope>(
-      `/routes/${routeId}/geometry${query}`
+      `/routes/${routeId}/geometry${query}`,
+      {},
+      false,
+      false
     );
   }
 
   public async getRouteAlerts(routeId: string): Promise<RouteAlertListEnvelope> {
-    return this.request<RouteAlertListEnvelope>(`/routes/${routeId}/alerts`);
+    return this.request<RouteAlertListEnvelope>(`/routes/${routeId}/alerts`, {}, false, false);
   }
 
   public async getRouteActors(
@@ -291,7 +307,9 @@ export class ApiClient {
     const queryString = query.toString() ? `?${query.toString()}` : "";
     return this.request<ActorListEnvelope>(
       `/routes/${routeId}/actors${queryString}`,
-      { signal: options?.signal }
+      { signal: options?.signal },
+      false,
+      false
     );
   }
 
@@ -329,7 +347,9 @@ export class ApiClient {
     try {
       return await this.request<RouteMapPayloadEnvelope>(
         `/routes/${routeId}/map${queryString}`,
-        { signal: controller.signal }
+        { signal: controller.signal },
+        false,
+        false
       );
     } catch (error) {
       if (didTimeout) {
@@ -355,15 +375,15 @@ export class ApiClient {
       method: "POST",
       body: JSON.stringify(payload),
       signal: options?.signal,
-    });
+    }, false, false);
   }
 
   public async getActorCategories(): Promise<ActorCategoryListEnvelope> {
-    return this.request<ActorCategoryListEnvelope>("/actor-categories");
+    return this.request<ActorCategoryListEnvelope>("/actor-categories", {}, false, false);
   }
 
   public async getActorDetail(actorId: string): Promise<ActorDetailEnvelope> {
-    return this.request<ActorDetailEnvelope>(`/actors/${actorId}`);
+    return this.request<ActorDetailEnvelope>(`/actors/${actorId}`, {}, false, false);
   }
 
   public async updateMyPreferences(
@@ -372,7 +392,7 @@ export class ApiClient {
     return this.request<UserPreferencesEnvelope>("/me/preferences", {
       method: "PATCH",
       body: JSON.stringify(data),
-    });
+    }, false, true);
   }
 
   public async addFavoriteRoute(
@@ -380,7 +400,9 @@ export class ApiClient {
   ): Promise<StandardSuccessResponse> {
     return this.request<StandardSuccessResponse>(
       `/me/favorite-routes/${routeId}`,
-      { method: "PUT" }
+      { method: "PUT" },
+      false,
+      true
     );
   }
 
@@ -389,12 +411,14 @@ export class ApiClient {
   ): Promise<StandardSuccessResponse> {
     return this.request<StandardSuccessResponse>(
       `/me/favorite-routes/${routeId}`,
-      { method: "DELETE" }
+      { method: "DELETE" },
+      false,
+      true
     );
   }
 
   public async getMyFavoriteRoutes(): Promise<RouteListEnvelope> {
-    return this.request<RouteListEnvelope>("/me/favorite-routes");
+    return this.request<RouteListEnvelope>("/me/favorite-routes", {}, false, true);
   }
 
   public async addFavoriteActor(
@@ -402,7 +426,9 @@ export class ApiClient {
   ): Promise<StandardSuccessResponse> {
     return this.request<StandardSuccessResponse>(
       `/me/favorite-actors/${actorId}`,
-      { method: "PUT" }
+      { method: "PUT" },
+      false,
+      true
     );
   }
 
@@ -411,16 +437,18 @@ export class ApiClient {
   ): Promise<StandardSuccessResponse> {
     return this.request<StandardSuccessResponse>(
       `/me/favorite-actors/${actorId}`,
-      { method: "DELETE" }
+      { method: "DELETE" },
+      false,
+      true
     );
   }
 
   public async getMyFavoriteActors(): Promise<ActorListEnvelope> {
-    return this.request<ActorListEnvelope>("/me/favorite-actors");
+    return this.request<ActorListEnvelope>("/me/favorite-actors", {}, false, true);
   }
 
   public async getMyProfile(): Promise<UserProfileEnvelope> {
-    return this.request<UserProfileEnvelope>("/me");
+    return this.request<UserProfileEnvelope>("/me", {}, false, true);
   }
 
   public async updateMyProfile(
@@ -429,7 +457,7 @@ export class ApiClient {
     return this.request<UserProfileEnvelope>("/me", {
       method: "PATCH",
       body: JSON.stringify(data),
-    });
+    }, false, true);
   }
 
   public async uploadAvatar(file: {
@@ -462,34 +490,34 @@ export class ApiClient {
     return this.request<AvatarUploadResponseEnvelope>("/me/avatar", {
       method: "POST",
       body,
-    });
+    }, false, true);
   }
 
   public async deleteMyAccount(): Promise<StandardSuccessResponse> {
-    return this.request<StandardSuccessResponse>("/me/account", { method: "DELETE" });
+    return this.request<StandardSuccessResponse>("/me/account", { method: "DELETE" }, false, true);
   }
 
   public async getMyPreferences(): Promise<UserPreferencesEnvelope> {
-    return this.request<UserPreferencesEnvelope>("/me/preferences");
+    return this.request<UserPreferencesEnvelope>("/me/preferences", {}, false, true);
   }
 
   public async getMyTrips(): Promise<TripListEnvelope> {
-    return this.request<TripListEnvelope>("/me/trips");
+    return this.request<TripListEnvelope>("/me/trips", {}, false, true);
   }
 
   public async createTrip(routeId: string): Promise<TripEnvelope> {
     return this.request<TripEnvelope>("/me/trips", {
       method: "POST",
       body: JSON.stringify({ route_id: routeId }),
-    });
+    }, false, true);
   }
 
   public async getSupportContent(): Promise<SupportContentEnvelope> {
-    return this.request<SupportContentEnvelope>("/content/support");
+    return this.request<SupportContentEnvelope>("/content/support", {}, false, false);
   }
 
   public async getAdminContext(options?: { signal?: AbortSignal }): Promise<AdminContextEnvelope> {
-    return this.request<AdminContextEnvelope>("/admin/context", { signal: options?.signal });
+    return this.request<AdminContextEnvelope>("/admin/context", { signal: options?.signal }, false, true);
   }
 
   // ---------------------------------------------------------------------------
@@ -497,52 +525,52 @@ export class ApiClient {
   // ---------------------------------------------------------------------------
 
   public async getAdminRegions(options?: { signal?: AbortSignal }): Promise<AdminRegionListEnvelope> {
-    return this.request<AdminRegionListEnvelope>("/admin/territory/regions", { signal: options?.signal });
+    return this.request<AdminRegionListEnvelope>("/admin/territory/regions", { signal: options?.signal }, false, true);
   }
 
   public async createAdminRegion(data: AdminRegionCreateSchema): Promise<AdminRegionEnvelope> {
     return this.request<AdminRegionEnvelope>("/admin/territory/regions", {
       method: "POST",
       body: JSON.stringify(data),
-    });
+    }, false, true);
   }
 
   public async updateAdminRegion(regionId: string, data: AdminRegionUpdateSchema): Promise<AdminRegionEnvelope> {
     return this.request<AdminRegionEnvelope>(`/admin/territory/regions/${regionId}`, {
       method: "PUT",
       body: JSON.stringify(data),
-    });
+    }, false, true);
   }
 
   public async deleteAdminRegion(regionId: string): Promise<StandardSuccessResponse> {
     return this.request<StandardSuccessResponse>(`/admin/territory/regions/${regionId}`, {
       method: "DELETE",
-    });
+    }, false, true);
   }
 
   public async getAdminRoutes(params?: { region_id?: string }, options?: { signal?: AbortSignal }): Promise<AdminRouteListEnvelope> {
     const query = params?.region_id ? `?region_id=${encodeURIComponent(params.region_id)}` : "";
-    return this.request<AdminRouteListEnvelope>(`/admin/territory/routes${query}`, { signal: options?.signal });
+    return this.request<AdminRouteListEnvelope>(`/admin/territory/routes${query}`, { signal: options?.signal }, false, true);
   }
 
   public async createAdminRoute(data: AdminRouteCreateSchema): Promise<AdminRouteEnvelope> {
     return this.request<AdminRouteEnvelope>("/admin/territory/routes", {
       method: "POST",
       body: JSON.stringify(data),
-    });
+    }, false, true);
   }
 
   public async updateAdminRoute(routeId: string, data: AdminRouteUpdateSchema): Promise<AdminRouteEnvelope> {
     return this.request<AdminRouteEnvelope>(`/admin/territory/routes/${routeId}`, {
       method: "PUT",
       body: JSON.stringify(data),
-    });
+    }, false, true);
   }
 
   public async deleteAdminRoute(routeId: string): Promise<StandardSuccessResponse> {
     return this.request<StandardSuccessResponse>(`/admin/territory/routes/${routeId}`, {
       method: "DELETE",
-    });
+    }, false, true);
   }
 
   public async getAdminActors(params?: { route_id?: string; q?: string }, options?: { signal?: AbortSignal }): Promise<AdminActorListEnvelope> {
@@ -550,27 +578,27 @@ export class ApiClient {
     if (params?.route_id) query.append("route_id", params.route_id);
     if (params?.q) query.append("q", params.q);
     const queryString = query.toString() ? `?${query.toString()}` : "";
-    return this.request<AdminActorListEnvelope>(`/admin/actors${queryString}`, { signal: options?.signal });
+    return this.request<AdminActorListEnvelope>(`/admin/actors${queryString}`, { signal: options?.signal }, false, true);
   }
 
   public async createAdminActor(data: AdminActorCreateSchema): Promise<AdminActorEnvelope> {
     return this.request<AdminActorEnvelope>("/admin/actors", {
       method: "POST",
       body: JSON.stringify(data),
-    });
+    }, false, true);
   }
 
   public async updateAdminActor(actorId: string, data: AdminActorUpdateSchema): Promise<AdminActorEnvelope> {
     return this.request<AdminActorEnvelope>(`/admin/actors/${actorId}`, {
       method: "PUT",
       body: JSON.stringify(data),
-    });
+    }, false, true);
   }
 
   public async deleteAdminActor(actorId: string): Promise<StandardSuccessResponse> {
     return this.request<StandardSuccessResponse>(`/admin/actors/${actorId}`, {
       method: "DELETE",
-    });
+    }, false, true);
   }
 
   // ---------------------------------------------------------------------------
@@ -585,7 +613,7 @@ export class ApiClient {
     return this.request<StatusTransitionEnvelope>(`/admin/workflow/${resourceType}/${resourceId}/transition`, {
       method: "POST",
       body: JSON.stringify(data),
-    });
+    }, false, true);
   }
 
   public async getPublishGuardStatus(
@@ -595,7 +623,7 @@ export class ApiClient {
   ): Promise<PublishGuardResultEnvelope> {
     return this.request<PublishGuardResultEnvelope>(`/admin/workflow/${resourceType}/${resourceId}/publish-guard`, {
       signal: options?.signal,
-    });
+    }, false, true);
   }
 
   public async getReconciliationCandidates(
@@ -609,7 +637,7 @@ export class ApiClient {
     const queryString = query.toString() ? `?${query.toString()}` : "";
     return this.request<ReconciliationCandidateListEnvelope>(`/admin/reconciliation/candidates${queryString}`, {
       signal: options?.signal,
-    });
+    }, false, true);
   }
 
   public async decideReconciliationCandidate(
@@ -619,7 +647,7 @@ export class ApiClient {
     return this.request<ReconciliationDecisionEnvelope>(`/admin/reconciliation/${candidateId}/decision`, {
       method: "POST",
       body: JSON.stringify(data),
-    });
+    }, false, true);
   }
 
   public async compensateReconciliationMerge(
@@ -629,7 +657,7 @@ export class ApiClient {
     return this.request<ReconciliationDecisionEnvelope>(`/admin/reconciliation/${candidateId}/compensate`, {
       method: "POST",
       body: JSON.stringify(data),
-    });
+    }, false, true);
   }
 
   public async getEditorialAlerts(
@@ -645,14 +673,14 @@ export class ApiClient {
     const queryString = query.toString() ? `?${query.toString()}` : "";
     return this.request<EditorialAlertListEnvelope>(`/admin/alerts${queryString}`, {
       signal: options?.signal,
-    });
+    }, false, true);
   }
 
   public async createEditorialAlert(data: EditorialAlertCreateRequest): Promise<EditorialAlertEnvelope> {
     return this.request<EditorialAlertEnvelope>("/admin/alerts", {
       method: "POST",
       body: JSON.stringify(data),
-    });
+    }, false, true);
   }
 
   public async updateEditorialAlert(
@@ -662,7 +690,7 @@ export class ApiClient {
     return this.request<EditorialAlertEnvelope>(`/admin/alerts/${alertId}`, {
       method: "PUT",
       body: JSON.stringify(data),
-    });
+    }, false, true);
   }
 
   public async resolveEditorialAlert(
@@ -672,7 +700,7 @@ export class ApiClient {
     return this.request<EditorialAlertEnvelope>(`/admin/alerts/${alertId}/resolve`, {
       method: "POST",
       body: JSON.stringify(data),
-    });
+    }, false, true);
   }
 }
 

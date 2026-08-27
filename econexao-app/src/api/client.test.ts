@@ -23,17 +23,66 @@ describe('ApiClient auth', () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  it('envia o token atual', async () => {
+  it('omite o cabeçalho Authorization em endpoints territoriais públicos mesmo com token configurado', async () => {
     global.fetch = jest.fn().mockResolvedValue(
       new Response(JSON.stringify({ data: [] }), { status: 200 })
     );
     const client = new ApiClient('https://api.example/api/v1');
-    client.configureAuth(() => 'access-token', async () => null);
+    client.configureAuth(() => 'valid-token-123', async () => null);
+
     await client.getRegions();
-    expect(global.fetch).toHaveBeenCalledWith(
-      'https://api.example/api/v1/regions',
+    await client.getRoutes({ q: 'praia' });
+    await client.getRouteDetail('route-1');
+    await client.getRouteOrigins('route-1');
+    await client.getRouteGeometry('route-1', 'origin-1');
+    await client.getRouteAlerts('route-1');
+    await client.getRouteActors('route-1');
+    await client.getActorCategories();
+    await client.getActorDetail('actor-1');
+    await client.getSupportContent();
+
+    for (const call of (global.fetch as jest.Mock).mock.calls) {
+      const headers = call[1].headers;
+      expect(headers.Authorization).toBeUndefined();
+    }
+  });
+
+  it('anexa o cabeçalho Authorization em endpoints protegidos e rotas salvas', async () => {
+    global.fetch = jest.fn().mockResolvedValue(
+      new Response(JSON.stringify({ data: {} }), { status: 200 })
+    );
+    const client = new ApiClient('https://api.example/api/v1');
+    client.configureAuth(() => 'access-token-xyz', async () => null);
+
+    await client.getBootstrap();
+    expect(global.fetch).toHaveBeenLastCalledWith(
+      'https://api.example/api/v1/bootstrap',
       expect.objectContaining({
-        headers: expect.objectContaining({ Authorization: 'Bearer access-token' }),
+        headers: expect.objectContaining({ Authorization: 'Bearer access-token-xyz' }),
+      })
+    );
+
+    await client.getRoutes({ saved: true });
+    expect(global.fetch).toHaveBeenLastCalledWith(
+      'https://api.example/api/v1/routes?saved=true',
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer access-token-xyz' }),
+      })
+    );
+
+    await client.getMyProfile();
+    expect(global.fetch).toHaveBeenLastCalledWith(
+      'https://api.example/api/v1/me',
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer access-token-xyz' }),
+      })
+    );
+
+    await client.getMyPreferences();
+    expect(global.fetch).toHaveBeenLastCalledWith(
+      'https://api.example/api/v1/me/preferences',
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer access-token-xyz' }),
       })
     );
   });
@@ -211,13 +260,13 @@ describe('ApiClient auth', () => {
     await expect(promise).rejects.toMatchObject({ status: 0, code: 'NETWORK_ERROR' });
   });
 
-  it('coordena refresh concorrente e repete cada request uma vez', async () => {
+  it('coordena refresh concorrente e repete cada request protegido uma única vez', async () => {
     let token = 'old';
     const fetchMock = jest
       .fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ error: {} }), { status: 401 }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ error: {} }), { status: 401 }))
-      .mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+      .mockResolvedValue(new Response(JSON.stringify({ data: { user_id: '123' } }), { status: 200 }));
     global.fetch = fetchMock;
     const refresh = jest.fn(async () => {
       token = 'new';
@@ -225,26 +274,26 @@ describe('ApiClient auth', () => {
     });
     const client = new ApiClient('https://api.example/api/v1');
     client.configureAuth(() => token, refresh);
-    await Promise.all([client.getRegions(), client.getRegions()]);
+    await Promise.all([client.getMyProfile(), client.getMyPreferences()]);
     expect(refresh).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledTimes(4);
     const replayHeaders = fetchMock.mock.calls.slice(2).map((call) => call[1].headers);
     replayHeaders.forEach((headers) => expect(headers.Authorization).toBe('Bearer new'));
   });
 
-  it('não entra em loop quando o replay continua não autorizado', async () => {
+  it('não entra em loop quando o replay protegido continua não autorizado', async () => {
     global.fetch = jest.fn().mockResolvedValue(
       new Response(JSON.stringify({ error: { message: 'unauthorized' } }), { status: 401 })
     );
     const client = new ApiClient('https://api.example/api/v1');
     const refresh = jest.fn().mockResolvedValue('new');
     client.configureAuth(() => 'old', refresh);
-    await expect(client.getRegions()).rejects.toBeInstanceOf(ApiClientError);
+    await expect(client.getMyProfile()).rejects.toBeInstanceOf(ApiClientError);
     expect(global.fetch).toHaveBeenCalledTimes(2);
     expect(refresh).toHaveBeenCalledTimes(1);
   });
 
-  it('classifica falha de refresh como erro de autenticação', async () => {
+  it('classifica falha de refresh como erro de autenticação e não reexecuta', async () => {
     global.fetch = jest.fn().mockResolvedValue(
       new Response(JSON.stringify({ error: {} }), { status: 401 })
     );
@@ -257,7 +306,25 @@ describe('ApiClient auth', () => {
       },
       onAuthFailure
     );
-    await expect(client.getRegions()).rejects.toMatchObject({
+    await expect(client.getMyProfile()).rejects.toMatchObject({
+      status: 401,
+      code: 'AUTH_REFRESH_FAILED',
+    });
+    expect(onAuthFailure).toHaveBeenCalledTimes(1);
+  });
+
+  it('classifica retorno nulo de refresh como falha de autenticação', async () => {
+    global.fetch = jest.fn().mockResolvedValue(
+      new Response(JSON.stringify({ error: {} }), { status: 401 })
+    );
+    const client = new ApiClient('https://api.example/api/v1');
+    const onAuthFailure = jest.fn();
+    client.configureAuth(
+      () => 'old',
+      async () => null,
+      onAuthFailure
+    );
+    await expect(client.getBootstrap()).rejects.toMatchObject({
       status: 401,
       code: 'AUTH_REFRESH_FAILED',
     });
