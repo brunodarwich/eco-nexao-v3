@@ -211,8 +211,6 @@ def check_supabase_advisors(
         "--linked",
         "--project-ref",
         project_ref,
-        "--password",
-        db_password,
         "--type",
         "all",
         "--fail-on",
