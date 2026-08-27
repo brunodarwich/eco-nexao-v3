@@ -6,7 +6,11 @@ from unittest.mock import patch
 import pytest
 
 from scripts.staging_smoke import (
+    DEFAULT_REQUIRED_ORIGINS,
     DEFAULT_STAGING_HOST,
+    FORBIDDEN_TEST_ORIGIN,
+    check_cors_denied_origin,
+    check_cors_preflight_and_get,
     run_smoke_test,
     validate_map_payload,
     validate_staging_target,
@@ -150,20 +154,222 @@ def test_validate_map_payload_detects_missing_pins_or_bounds() -> None:
     assert any("Pin count out of bounds" in e for e in errors)
 
 
+def test_check_cors_preflight_and_get_success() -> None:
+    origin = "https://eco-nexao-v3-git-staging-bruno-darwichs-projects.vercel.app"
+
+    def mock_check_endpoint(
+        url: str,
+        timeout_seconds: float = 10.0,
+        headers: dict[str, str] | None = None,
+        method: str | None = None,
+    ) -> tuple[bool, int, dict[str, str], dict[str, Any]]:
+        return True, 200, {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+        }, {"status": "ok"}
+
+    with patch("scripts.staging_smoke.check_endpoint", side_effect=mock_check_endpoint):
+        ok, msg = check_cors_preflight_and_get("https://test-host", origin)
+        assert ok is True
+        assert "passed" in msg
+
+
+def test_check_cors_preflight_and_get_fails_on_missing_or_mismatched_origin() -> None:
+    origin = "https://eco-nexao-v3-git-staging-bruno-darwichs-projects.vercel.app"
+
+    def mock_check_endpoint(
+        url: str,
+        timeout_seconds: float = 10.0,
+        headers: dict[str, str] | None = None,
+        method: str | None = None,
+    ) -> tuple[bool, int, dict[str, str], dict[str, Any]]:
+        # Omit Access-Control-Allow-Origin
+        return True, 200, {}, {"status": "ok"}
+
+    with patch("scripts.staging_smoke.check_endpoint", side_effect=mock_check_endpoint):
+        ok, msg = check_cors_preflight_and_get("https://test-host", origin)
+        assert ok is False
+        assert "mismatch" in msg
+
+
+def test_check_cors_denied_origin_success() -> None:
+    def mock_check_endpoint(
+        url: str,
+        timeout_seconds: float = 10.0,
+        headers: dict[str, str] | None = None,
+        method: str | None = None,
+        body: bytes | None = None,
+    ) -> tuple[bool, int, dict[str, str], dict[str, Any]]:
+        if method == "OPTIONS":
+            return False, 400, {}, {"error": "Disallowed CORS origin"}
+        return True, 200, {}, {"status": "ok"}
+
+    with patch("scripts.staging_smoke.check_endpoint", side_effect=mock_check_endpoint):
+        ok, msg = check_cors_denied_origin("https://test-host", FORBIDDEN_TEST_ORIGIN)
+        assert ok is True
+        assert "rejected" in msg
+
+
+def test_check_cors_denied_origin_fails_when_header_erroneously_returned() -> None:
+    def mock_check_endpoint(
+        url: str,
+        timeout_seconds: float = 10.0,
+        headers: dict[str, str] | None = None,
+        method: str | None = None,
+        body: bytes | None = None,
+    ) -> tuple[bool, int, dict[str, str], dict[str, Any]]:
+        return False, 400, {"Access-Control-Allow-Origin": "https://evil.com"}, {"status": "ok"}
+
+    with patch("scripts.staging_smoke.check_endpoint", side_effect=mock_check_endpoint):
+        ok, msg = check_cors_denied_origin("https://test-host", "https://evil.com")
+        assert ok is False
+        assert "erroneously" in msg
+
+
+def test_check_cors_denied_origin_fails_on_timeout_and_transport_error() -> None:
+    def mock_check_endpoint(
+        url: str,
+        timeout_seconds: float = 10.0,
+        headers: dict[str, str] | None = None,
+        method: str | None = None,
+        body: bytes | None = None,
+    ) -> tuple[bool, int, dict[str, str], dict[str, Any]]:
+        return False, 0, {}, {"error": "timed out"}
+
+    with patch("scripts.staging_smoke.check_endpoint", side_effect=mock_check_endpoint):
+        ok, msg = check_cors_denied_origin("https://test-host", FORBIDDEN_TEST_ORIGIN)
+        assert ok is False
+        assert "transport error/timeout" in msg
+
+
+def test_check_cors_denied_origin_fails_on_5xx_server_error() -> None:
+    def mock_check_endpoint(
+        url: str,
+        timeout_seconds: float = 10.0,
+        headers: dict[str, str] | None = None,
+        method: str | None = None,
+        body: bytes | None = None,
+    ) -> tuple[bool, int, dict[str, str], dict[str, Any]]:
+        return False, 502, {}, {"error": "bad gateway"}
+
+    with patch("scripts.staging_smoke.check_endpoint", side_effect=mock_check_endpoint):
+        ok, msg = check_cors_denied_origin("https://test-host", FORBIDDEN_TEST_ORIGIN)
+        assert ok is False
+        assert "5xx error" in msg
+
+
+def test_check_cors_denied_origin_fails_on_unexpected_status_code() -> None:
+    def mock_check_endpoint(
+        url: str,
+        timeout_seconds: float = 10.0,
+        headers: dict[str, str] | None = None,
+        method: str | None = None,
+        body: bytes | None = None,
+    ) -> tuple[bool, int, dict[str, str], dict[str, Any]]:
+        # OPTIONS returns 200 without CORS header instead of 400/403
+        if method == "OPTIONS":
+            return True, 200, {}, {"status": "ok"}
+        return True, 200, {}, {"status": "ok"}
+
+    with patch("scripts.staging_smoke.check_endpoint", side_effect=mock_check_endpoint):
+        ok, msg = check_cors_denied_origin("https://test-host", FORBIDDEN_TEST_ORIGIN)
+        assert ok is False
+        assert "expected HTTP 400/403" in msg
+
+
+def test_check_cors_error_responses_success() -> None:
+    origin = "https://eco-nexao-v3-git-staging-bruno-darwichs-projects.vercel.app"
+
+    def mock_check_endpoint(
+        url: str,
+        timeout_seconds: float = 10.0,
+        headers: dict[str, str] | None = None,
+        method: str | None = None,
+        body: bytes | None = None,
+    ) -> tuple[bool, int, dict[str, str], dict[str, Any]]:
+        resp_headers = {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+            "X-Request-ID": "req_test",
+        }
+        if url.endswith("/api/v1/auth/session"):
+            return False, 401, resp_headers, {"error": "unauthorized"}
+        if url.endswith("/api/v1/smoke-probe-not-found-endpoint"):
+            return False, 404, resp_headers, {"error": "not found"}
+        if url.endswith("/api/v1/auth/verify"):
+            return False, 422, resp_headers, {"error": "validation"}
+        if url.endswith("/api/v1/health/error-probe"):
+            return False, 500, resp_headers, {"error": "internal"}
+        return False, 404, {}, {}
+
+    from scripts.staging_smoke import check_cors_error_responses
+
+    with patch("scripts.staging_smoke.check_endpoint", side_effect=mock_check_endpoint):
+        ok, msg = check_cors_error_responses("https://test-host", origin)
+        assert ok is True
+        assert "verified on 401, 404, 422, and 500" in msg
+
+
+def test_check_cors_error_responses_fails_on_missing_cors_header() -> None:
+    origin = "https://eco-nexao-v3-git-staging-bruno-darwichs-projects.vercel.app"
+
+    def mock_check_endpoint(
+        url: str,
+        timeout_seconds: float = 10.0,
+        headers: dict[str, str] | None = None,
+        method: str | None = None,
+        body: bytes | None = None,
+    ) -> tuple[bool, int, dict[str, str], dict[str, Any]]:
+        # 401 response without CORS header
+        if url.endswith("/api/v1/auth/session"):
+            return False, 401, {}, {"error": "unauthorized"}
+        return False, 404, {}, {}
+
+    from scripts.staging_smoke import check_cors_error_responses
+
+    with patch("scripts.staging_smoke.check_endpoint", side_effect=mock_check_endpoint):
+        ok, msg = check_cors_error_responses("https://test-host", origin)
+        assert ok is False
+        assert "missing or mismatched" in msg
+
+
 def test_run_smoke_test_complete_success() -> None:
     route_id = "55555555-5555-5555-5555-555555555555"
     origin_id = "66666666-6666-6666-6666-666666666666"
 
     def mock_check_endpoint(
-        url: str, timeout_seconds: float = 10.0
+        url: str,
+        timeout_seconds: float = 10.0,
+        headers: dict[str, str] | None = None,
+        method: str | None = None,
+        body: bytes | None = None,
     ) -> tuple[bool, int, dict[str, str], dict[str, Any]]:
+        req_origin = (headers or {}).get("Origin", "")
+        resp_headers: dict[str, str] = {}
+        if req_origin in DEFAULT_REQUIRED_ORIGINS:
+            resp_headers["Access-Control-Allow-Origin"] = req_origin
+            resp_headers["Access-Control-Allow-Credentials"] = "true"
+
+        if url.endswith("/api/v1/health") and method == "OPTIONS":
+            if req_origin in DEFAULT_REQUIRED_ORIGINS:
+                return True, 200, resp_headers, {}
+            return False, 400, {}, {"error": "Disallowed CORS origin"}
         if url.endswith("/api/v1/health/live"):
+            resp_headers["X-Commit-SHA"] = "abcdef12345"
             return (
                 True,
                 200,
-                {"X-Commit-SHA": "abcdef12345"},
+                resp_headers,
                 {"status": "ok", "version": "1.0.0", "commit_sha": "abcdef12345"},
             )
+        if url.endswith("/api/v1/auth/session"):
+            return False, 401, resp_headers, {"error": "unauthorized"}
+        if url.endswith("/api/v1/smoke-probe-not-found-endpoint"):
+            return False, 404, resp_headers, {"error": "not found"}
+        if url.endswith("/api/v1/auth/verify"):
+            return False, 422, resp_headers, {"error": "validation"}
+        if url.endswith("/api/v1/health/error-probe"):
+            return False, 500, resp_headers, {"error": "internal"}
         if url.endswith("/api/v1/health/ready"):
             return (
                 True,
@@ -208,7 +414,11 @@ def test_run_smoke_test_complete_success() -> None:
 
 def test_run_smoke_test_fails_closed_on_unready_database() -> None:
     def mock_check_endpoint(
-        url: str, timeout_seconds: float = 10.0
+        url: str,
+        timeout_seconds: float = 10.0,
+        headers: dict[str, str] | None = None,
+        method: str | None = None,
+        body: bytes | None = None,
     ) -> tuple[bool, int, dict[str, str], dict[str, Any]]:
         if url.endswith("/api/v1/health/live"):
             return True, 200, {}, {"status": "ok", "version": "1.0.0"}
@@ -219,6 +429,37 @@ def test_run_smoke_test_fails_closed_on_unready_database() -> None:
                 {},
                 {"status": "ok", "database": {"status": "unknown", "postgis": False}},
             )
+        return False, 404, {}, {}
+
+    with patch("scripts.staging_smoke.check_endpoint", side_effect=mock_check_endpoint):
+        exit_code = run_smoke_test(
+            base_url=f"https://{DEFAULT_STAGING_HOST}",
+            max_retries=1,
+            delay_seconds=0.01,
+        )
+        assert exit_code == 1
+
+
+def test_run_smoke_test_fails_closed_on_cors_rejection() -> None:
+    def mock_check_endpoint(
+        url: str,
+        timeout_seconds: float = 10.0,
+        headers: dict[str, str] | None = None,
+        method: str | None = None,
+        body: bytes | None = None,
+    ) -> tuple[bool, int, dict[str, str], dict[str, Any]]:
+        if url.endswith("/api/v1/health/live"):
+            return True, 200, {}, {"status": "ok", "version": "1.0.0"}
+        if url.endswith("/api/v1/health/ready"):
+            return (
+                True,
+                200,
+                {},
+                {"status": "ok", "database": {"status": "ok", "postgis": True}},
+            )
+        # Missing CORS allow-origin on OPTIONS preflight
+        if url.endswith("/api/v1/health") and method == "OPTIONS":
+            return True, 200, {}, {}
         return False, 404, {}, {}
 
     with patch("scripts.staging_smoke.check_endpoint", side_effect=mock_check_endpoint):

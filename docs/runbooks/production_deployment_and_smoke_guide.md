@@ -26,10 +26,10 @@ O arquivo [`render.yaml`](file:///c:/Users/Bruno/Downloads/eco-nexao-v3/render.y
 | `LOG_LEVEL` | Nível de log estruturado | `INFO` |
 | `SUPABASE_URL` | Endpoint da API Supabase | `https://<ID>.supabase.co` |
 | `SUPABASE_PUBLISHABLE_KEY` | Publishable Anon Key | `eyJ...` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service Role Key restrita | `eyJ...` (somente no backend) |
+| `SUPABASE_SECRET_KEY` | Secret Key restrita | `eyJ...` (somente no backend) |
 | `SUPABASE_JWT_SECRET` | Segredo para validação de JWTs | Segredo alfanumérico |
 | `DATABASE_URL` | DSN de conexão ao PostgreSQL | `postgresql://...` |
-| `CORS_ORIGINS` | Lista JSON de origens permitidas | `["https://econexao.app","https://staging.econexao.app"]` |
+| `CORS_ORIGINS` | Lista JSON de origens permitidas | `["https://econexao.app","https://staging.econexao.app","http://localhost:8081","https://eco-nexao-v3.vercel.app","https://eco-nexao-v3-git-staging-bruno-darwichs-projects.vercel.app"]` |
 
 ---
 

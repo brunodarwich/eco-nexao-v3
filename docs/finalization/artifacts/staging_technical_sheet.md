@@ -22,7 +22,7 @@
 | **Database Hostname** | `db.rgfuqmwxjuceqpxcraxm.supabase.co` | PostgreSQL 17 com PostGIS |
 | **Connection Pooler** | `aws-0-sa-east-1.pooler.supabase.com` | Porta `6543` (Transaction) / `5432` (Session) |
 | **Provedor Backend API**| Render Web Service (Nativo Python 3.13) | `https://econexao-backend-staging.onrender.com` |
-| **Frontend Web Host** | Cloudflare Pages / Vercel Staging | Origens permitidas estritas em CORS |
+| **Frontend Web Host** | Cloudflare Pages / Vercel Staging (`https://eco-nexao-v3-git-staging-bruno-darwichs-projects.vercel.app`) | Origens permitidas estritas em CORS |
 
 > [!IMPORTANT]
 > **Isolamento de Ambientes:**
@@ -51,12 +51,13 @@ EXPO_PUBLIC_APP_ENV=staging
 
 #### Backend (`backend/.env`):
 ```bash
-ENVIRONMENT=staging
+APP_ENV=staging
 SUPABASE_URL=https://rgfuqmwxjuceqpxcraxm.supabase.co
 SUPABASE_PUBLISHABLE_KEY=<SUA_ANON_PUBLISHABLE_KEY_AQUI>
-# AVISO: A chave service_role DEVE ser mantida apenas no .env local do backend e nas Secrets do GitHub Actions
-SUPABASE_SERVICE_ROLE_KEY=<SUA_SERVICE_ROLE_KEY_AQUI>
+# AVISO: A chave secret_key DEVE ser mantida apenas no .env local do backend e nas Secrets do GitHub Actions
+SUPABASE_SECRET_KEY=<SUA_SECRET_KEY_AQUI>
 DATABASE_URL=postgresql://postgres:[SENHA]@db.rgfuqmwxjuceqpxcraxm.supabase.co:5432/postgres
+CORS_ORIGINS=["https://econexao.app","https://staging.econexao.app","http://localhost:8081","http://localhost:19006","http://localhost:3000","exp://localhost:8081","https://eco-nexao-v3.vercel.app","https://eco-nexao-v3-git-staging-bruno-darwichs-projects.vercel.app"]
 ```
 
 > [!TIP]
@@ -159,45 +160,47 @@ Todas as 23 migrations oficiais estão registradas, ordenadas por timestamp e ap
     Testes de RLS, Storage, Auth Admin, Workflow Editorial, Taxonomia e Rotas: 100% OK
 
 [2] Verificador de Migrations (check_migrations.py):
-    MIGRATIONS_OK (23 migrations válidas, sem conflitos ou funções proibidas)
-
-[3] Scanner de Segredos (scan_secrets.py):
-    SECRET_SCAN=OK (Zero credenciais expostas no repositório)
-
-[4] Jest Frontend Suite:
-    32 suítes, 195 testes executados, 195 APROVADOS (exit code 0)
-    OpenAPI Synchronization (openapi:check): OK
-    TypeScript Typecheck (tsc --noEmit): OK
-```
+  - Template de Magic Link configurado sem tokens expostos.
 
 ---
 
-## 6. Mapeamento de Segredos e Variáveis para CI/CD (GitHub Actions)
+## 4. Status de Verificação de Segurança e CORS (ECO-2003)
 
-Para a automação segura de deploy e verificação no GitHub Actions, as seguintes variáveis e secrets devem ser configuradas no **Environment: `staging`**:
+- **CORS Preflight (OPTIONS):** **VERIFICADO** com status 200 e `Access-Control-Allow-Origin` exato para origens autorizadas.
+- **CORS GET & Handshake:** **VERIFICADO** com cabeçalhos `Access-Control-Allow-Credentials: true` e `X-Request-ID`.
+- **CORS em Respostas de Erro:** **VERIFICADO** para 401 Unauthorized, 404 Not Found, 422 Unprocessable Entity e 500 Internal Server Error.
+- **Rejeição de Origens Negadas:** **VERIFICADO** (rejeição com HTTP 400 em OPTIONS e sem `Access-Control-Allow-Origin` em GET/erros).
+- **Proteção Anti-Wildcard:** **VERIFICADO** (fail-closed validator no backend rejeitando `*`).
+- **Smoke Remoto Staging (`staging_smoke.py`):** **VERIFICADO E HOMOLOGADO** (100% de sucesso contra `https://econexao-backend-staging.onrender.com`).
 
-### 6.1 Variáveis de Ambiente (Environment Variables — Não Sensíveis)
+---
+
+## 5. Mapeamento de Segredos e Variáveis para CI/CD (GitHub Actions)
+
+Para a automação segura de deploy e verificação no GitHub Actions, as seguintes variáveis e secrets estão configuradas no **Environment: `staging`**:
+
+### 5.1 Variáveis de Ambiente (Environment Variables — Não Sensíveis)
 - `STAGING_SUPABASE_REF`: `rgfuqmwxjuceqpxcraxm`
 - `STAGING_SUPABASE_URL`: `https://rgfuqmwxjuceqpxcraxm.supabase.co`
 - `STAGING_BACKEND_URL`: `https://econexao-backend-staging.onrender.com`
 - `EXPO_PUBLIC_APP_ENV`: `staging`
 
-### 6.2 Segredos (Secrets — Estritamente Sigilosos)
+### 5.2 Segredos (Secrets — Estritamente Sigilosos)
 - `SUPABASE_ACCESS_TOKEN`: Token de gerenciamento da CLI do Supabase (para `supabase db push / advisors`).
 - `SUPABASE_DB_PASSWORD`: Senha do banco de dados PostgreSQL de Staging.
 - `SUPABASE_PUBLISHABLE_KEY`: Chave `anon` / `public` do projeto de Staging.
-- `SUPABASE_SERVICE_ROLE_KEY`: Chave de serviço do backend FastAPI para Staging.
+- `SUPABASE_SECRET_KEY`: Chave de serviço do backend FastAPI para Staging.
 - `RENDER_API_KEY`: Chave de deploy para o serviço backend no Render.
-- `RENDER_DEPLOY_HOOK_STAGING`: Webhook de trigger de deploy no Render.
+- `RENDER_STAGING_DEPLOY_HOOK_URL`: Webhook de trigger de deploy no Render.
 - `GOOGLE_ROUTES_API_KEY_STAGING`: Chave restrita da Google Routes API para cálculos de rotas.
 
 ---
 
-## 7. Pendências, Riscos Residuais e Próximos Passos
+## 6. Pendências, Riscos Residuais e Próximos Passos
 
 1. **Ingestão Pindobal:**
    - A ingestão e promoção em massa de dados do Pindobal para o banco de Staging permanece devidamente **bloqueada** até a emissão formal da autorização editorial no Gate 5 (conforme preconizado em `pindobal-v1/APPROVAL.md`).
 2. **Homologação E2E em Staging:**
-   - Próximo passo: Execução do script `staging_smoke.py` e `staging_routing_smoke.py` assim que o serviço FastAPI no Render for disparado pela pipeline do GitHub Actions.
+   - Script `staging_smoke.py` totalmente integrado à esteira de CI (`staging-deploy.yml`), validando liveness, readiness, CORS estrito, catálogo e mapa a cada deploy.
 3. **Produção Bloqueada:**
    - O projeto de produção (`hjtkcmbfndbgyurfhsuo`) permanece intocado e fora de escopo.

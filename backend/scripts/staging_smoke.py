@@ -22,6 +22,12 @@ from urllib.parse import urlparse
 DEFAULT_STAGING_HOST = "econexao-backend-staging.onrender.com"
 FORBIDDEN_HOST_PATTERNS = ("eco-nexao-v3.onrender.com", "econexao.app", "prod")
 
+DEFAULT_REQUIRED_ORIGINS = (
+    "https://eco-nexao-v3-git-staging-bruno-darwichs-projects.vercel.app",
+    "https://staging.econexao.app",
+)
+FORBIDDEN_TEST_ORIGIN = "https://evil.com"
+
 ALLOWED_PIN_ICONS = frozenset(
     {
         "utensils",
@@ -72,32 +78,256 @@ def validate_staging_target(
 def check_endpoint(
     url: str,
     timeout_seconds: float = 10.0,
+    headers: dict[str, str] | None = None,
+    method: str | None = None,
+    body: bytes | None = None,
 ) -> tuple[bool, int, dict[str, str], dict[str, Any]]:
-    """Perform an HTTP GET check on the given URL safely."""
-    req = urllib.request.Request(
-        url,
-        headers={"User-Agent": "econexao-staging-smoke/2.0", "Accept": "application/json"},
-    )
+    """Perform an HTTP check on the given URL safely."""
+    req_headers = {"User-Agent": "econexao-staging-smoke/2.0", "Accept": "application/json"}
+    if headers:
+        req_headers.update(headers)
+
+    req = urllib.request.Request(url, data=body, headers=req_headers, method=method)
     try:
         with urllib.request.urlopen(req, timeout=timeout_seconds) as response:
             status_code = response.status
-            headers = {k: v for k, v in response.headers.items()}
+            resp_headers = {k: v for k, v in response.headers.items()}
             body_raw = response.read().decode("utf-8")
             try:
                 body_json = json.loads(body_raw)
             except json.JSONDecodeError:
                 body_json = {"raw": body_raw[:200]}
-            return True, status_code, headers, body_json
+            return True, status_code, resp_headers, body_json
     except urllib.error.HTTPError as e:
-        headers = {k: v for k, v in e.headers.items()} if hasattr(e, "headers") else {}
+        resp_headers = {k: v for k, v in e.headers.items()} if hasattr(e, "headers") else {}
         body_raw = e.read().decode("utf-8", errors="replace")
         try:
             body_json = json.loads(body_raw)
         except json.JSONDecodeError:
             body_json = {"raw": body_raw[:200]}
-        return False, e.code, headers, body_json
+        return False, e.code, resp_headers, body_json
     except Exception as e:
         return False, 0, {}, {"error": str(e)}
+
+
+def check_cors_preflight_and_get(
+    target_url: str,
+    origin: str,
+    timeout_seconds: float = 10.0,
+) -> tuple[bool, str]:
+    """Validate CORS OPTIONS preflight and GET request for an authorized origin."""
+    # 1. Preflight OPTIONS
+    ok, status, headers, _ = check_endpoint(
+        f"{target_url}/api/v1/health",
+        timeout_seconds=timeout_seconds,
+        headers={
+            "Origin": origin,
+            "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Headers": "Authorization, Content-Type, X-Request-ID",
+        },
+        method="OPTIONS",
+    )
+    if not ok or status != 200:
+        return False, f"OPTIONS preflight failed with HTTP status {status}"
+
+    allow_origin = (
+        headers.get("access-control-allow-origin") or headers.get("Access-Control-Allow-Origin")
+    )
+    if allow_origin != origin:
+        return (
+            False,
+            f"OPTIONS preflight: Access-Control-Allow-Origin mismatch "
+            f"(expected '{origin}', got '{allow_origin}')",
+        )
+
+    allow_cred = (
+        headers.get("access-control-allow-credentials")
+        or headers.get("Access-Control-Allow-Credentials")
+    )
+    if allow_cred != "true":
+        return (
+            False,
+            f"OPTIONS preflight: Access-Control-Allow-Credentials mismatch "
+            f"(expected 'true', got '{allow_cred}')",
+        )
+
+    # 2. Simple GET with Origin
+    ok, status, headers, _ = check_endpoint(
+        f"{target_url}/api/v1/health/live",
+        timeout_seconds=timeout_seconds,
+        headers={"Origin": origin},
+        method="GET",
+    )
+    if not ok or status != 200:
+        return False, f"GET request with Origin failed with HTTP status {status}"
+
+    allow_origin = (
+        headers.get("access-control-allow-origin") or headers.get("Access-Control-Allow-Origin")
+    )
+    if allow_origin != origin:
+        return (
+            False,
+            f"GET request: Access-Control-Allow-Origin mismatch "
+            f"(expected '{origin}', got '{allow_origin}')",
+        )
+
+    return True, "CORS handshake passed"
+
+
+def check_cors_denied_origin(
+    target_url: str,
+    denied_origin: str = FORBIDDEN_TEST_ORIGIN,
+    timeout_seconds: float = 10.0,
+) -> tuple[bool, str]:
+    """Validate that unauthorized/malicious origins do NOT receive Access-Control-Allow-Origin."""
+    # Preflight OPTIONS on denied origin
+    _, status_opt, headers_opt, body_opt = check_endpoint(
+        f"{target_url}/api/v1/health",
+        timeout_seconds=timeout_seconds,
+        headers={
+            "Origin": denied_origin,
+            "Access-Control-Request-Method": "GET",
+        },
+        method="OPTIONS",
+    )
+    if status_opt == 0:
+        return (
+            False,
+            f"OPTIONS preflight on denied origin transport error/timeout: "
+            f"{body_opt.get('error')}",
+        )
+    if status_opt >= 500:
+        return (
+            False,
+            f"OPTIONS preflight on denied origin failed with 5xx error (HTTP {status_opt})",
+        )
+    if status_opt not in (400, 403):
+        return (
+            False,
+            f"OPTIONS preflight on denied origin expected HTTP 400/403, got HTTP {status_opt}",
+        )
+
+    allow_origin_opt = (
+        headers_opt.get("access-control-allow-origin")
+        or headers_opt.get("Access-Control-Allow-Origin")
+    )
+    if allow_origin_opt:
+        return (
+            False,
+            f"Denied origin '{denied_origin}' erroneously received "
+            f"Access-Control-Allow-Origin on OPTIONS: {allow_origin_opt}",
+        )
+
+    # GET on denied origin
+    _, status_get, headers_get, body_get = check_endpoint(
+        f"{target_url}/api/v1/health/live",
+        timeout_seconds=timeout_seconds,
+        headers={"Origin": denied_origin},
+        method="GET",
+    )
+    if status_get == 0:
+        return (
+            False,
+            f"GET request on denied origin transport error/timeout: "
+            f"{body_get.get('error')}",
+        )
+    if status_get >= 500:
+        return (
+            False,
+            f"GET request on denied origin failed with 5xx error (HTTP {status_get})",
+        )
+    if status_get != 200:
+        return (
+            False,
+            f"GET request on denied origin expected HTTP 200, got HTTP {status_get}",
+        )
+
+    allow_origin_get = (
+        headers_get.get("access-control-allow-origin")
+        or headers_get.get("Access-Control-Allow-Origin")
+    )
+    if allow_origin_get:
+        return (
+            False,
+            f"Denied origin '{denied_origin}' erroneously received "
+            f"Access-Control-Allow-Origin on GET: {allow_origin_get}",
+        )
+
+    return True, "Denied origin correctly rejected on preflight (400/403) and GET (200)"
+
+
+def check_cors_error_responses(
+    target_url: str,
+    origin: str,
+    timeout_seconds: float = 10.0,
+) -> tuple[bool, str]:
+    """Validate that controlled error responses (401, 404, 422, 500) preserve CORS headers."""
+    # 1. 401 Unauthorized
+    _, status_401, headers_401, _ = check_endpoint(
+        f"{target_url}/api/v1/auth/session",
+        timeout_seconds=timeout_seconds,
+        headers={"Origin": origin},
+        method="GET",
+    )
+    if status_401 != 401:
+        return False, f"401 probe: expected HTTP 401, got HTTP {status_401}"
+    cors_401 = (
+        headers_401.get("access-control-allow-origin")
+        or headers_401.get("Access-Control-Allow-Origin")
+    )
+    if cors_401 != origin:
+        return False, f"401 probe missing or mismatched Access-Control-Allow-Origin: {cors_401}"
+
+    # 2. 404 Not Found
+    _, status_404, headers_404, _ = check_endpoint(
+        f"{target_url}/api/v1/smoke-probe-not-found-endpoint",
+        timeout_seconds=timeout_seconds,
+        headers={"Origin": origin},
+        method="GET",
+    )
+    if status_404 != 404:
+        return False, f"404 probe: expected HTTP 404, got HTTP {status_404}"
+    cors_404 = (
+        headers_404.get("access-control-allow-origin")
+        or headers_404.get("Access-Control-Allow-Origin")
+    )
+    if cors_404 != origin:
+        return False, f"404 probe missing or mismatched Access-Control-Allow-Origin: {cors_404}"
+
+    # 3. 422 Unprocessable Entity
+    _, status_422, headers_422, _ = check_endpoint(
+        f"{target_url}/api/v1/auth/verify",
+        timeout_seconds=timeout_seconds,
+        headers={"Origin": origin, "Content-Type": "application/json"},
+        method="POST",
+        body=b"{}",
+    )
+    if status_422 != 422:
+        return False, f"422 probe: expected HTTP 422, got HTTP {status_422}"
+    cors_422 = (
+        headers_422.get("access-control-allow-origin")
+        or headers_422.get("Access-Control-Allow-Origin")
+    )
+    if cors_422 != origin:
+        return False, f"422 probe missing or mismatched Access-Control-Allow-Origin: {cors_422}"
+
+    # 4. 500 Controlled Internal Server Error
+    _, status_500, headers_500, _ = check_endpoint(
+        f"{target_url}/api/v1/health/error-probe",
+        timeout_seconds=timeout_seconds,
+        headers={"Origin": origin},
+        method="GET",
+    )
+    if status_500 != 500:
+        return False, f"500 probe: expected HTTP 500, got HTTP {status_500}"
+    cors_500 = (
+        headers_500.get("access-control-allow-origin")
+        or headers_500.get("Access-Control-Allow-Origin")
+    )
+    if cors_500 != origin:
+        return False, f"500 probe missing or mismatched Access-Control-Allow-Origin: {cors_500}"
+
+    return True, "CORS verified on 401, 404, 422, and 500 error responses"
 
 
 def validate_map_payload(
@@ -245,6 +475,7 @@ def run_smoke_test(
     base_url: str,
     allowed_host: str = DEFAULT_STAGING_HOST,
     expected_commit: str | None = None,
+    required_origins: tuple[str, ...] | list[str] = DEFAULT_REQUIRED_ORIGINS,
     max_retries: int = 18,
     delay_seconds: float = 8.0,
     timeout_per_request: float = 10.0,
@@ -349,7 +580,52 @@ def run_smoke_test(
         print("[SMOKE][ERROR] Staging readiness probe failed. Database/PostGIS is not operational.")
         return 1
 
-    # 3. Dynamic Territorial Verification: Regions
+    # 3. Active CORS Handshake & Preflight Verification
+    print(
+        f"[SMOKE] Verifying strict CORS enforcement on "
+        f"{len(required_origins)} required origin(s)..."
+    )
+    for origin in required_origins:
+        print(f"[SMOKE] Checking CORS OPTIONS preflight and GET for: {origin}")
+        cors_ok, cors_msg = check_cors_preflight_and_get(
+            target_url=target,
+            origin=origin,
+            timeout_seconds=timeout_per_request,
+        )
+        if not cors_ok:
+            print(f"[SMOKE][ERROR] CORS check failed for required origin '{origin}': {cors_msg}")
+            return 1
+        print(f"[SMOKE] CORS passed for {origin}.")
+
+        print(f"[SMOKE] Checking CORS on error responses (401, 404, 422, 500) for: {origin}")
+        err_cors_ok, err_cors_msg = check_cors_error_responses(
+            target_url=target,
+            origin=origin,
+            timeout_seconds=timeout_per_request,
+        )
+        if not err_cors_ok:
+            print(
+                f"[SMOKE][ERROR] CORS error responses check failed for '{origin}': {err_cors_msg}"
+            )
+            return 1
+        print(f"[SMOKE] CORS on error responses passed for {origin}.")
+
+    # Negative CORS Verification (Denied origin must never receive allow-origin)
+    print(
+        f"[SMOKE] Checking negative CORS rejection for "
+        f"unauthorized origin: {FORBIDDEN_TEST_ORIGIN}"
+    )
+    neg_ok, neg_msg = check_cors_denied_origin(
+        target_url=target,
+        denied_origin=FORBIDDEN_TEST_ORIGIN,
+        timeout_seconds=timeout_per_request,
+    )
+    if not neg_ok:
+        print(f"[SMOKE][ERROR] Negative CORS test failed: {neg_msg}")
+        return 1
+    print("[SMOKE] Negative CORS rejection verified successfully.")
+
+    # 4. Dynamic Territorial Verification: Regions
     print("[SMOKE] Querying /api/v1/regions...")
     ok, status, _headers, regions_payload = check_endpoint(
         f"{target}/api/v1/regions", timeout_seconds=timeout_per_request
@@ -363,7 +639,7 @@ def run_smoke_test(
         return 1
     print(f"[SMOKE] Regions query passed ({len(regions)} region(s) active).")
 
-    # 4. Dynamic Territorial Verification: Routes & Find Rota Pindobal
+    # 5. Dynamic Territorial Verification: Routes & Find Rota Pindobal
     print("[SMOKE] Querying /api/v1/routes to dynamically discover Rota Pindobal...")
     ok, status, _headers, routes_payload = check_endpoint(
         f"{target}/api/v1/routes", timeout_seconds=timeout_per_request
@@ -388,7 +664,7 @@ def run_smoke_test(
     route_id = str(pindobal_route["id"])
     print(f"[SMOKE] Discovered Rota Pindobal dynamically (slug: {pindobal_route.get('slug')}).")
 
-    # 5. Dynamic Territorial Verification: Origins
+    # 6. Dynamic Territorial Verification: Origins
     print(f"[SMOKE] Querying /api/v1/routes/{route_id}/origins...")
     ok, status, _headers, origins_payload = check_endpoint(
         f"{target}/api/v1/routes/{route_id}/origins", timeout_seconds=timeout_per_request
@@ -405,7 +681,7 @@ def run_smoke_test(
     origin_id = str(origins[0]["id"])
     print(f"[SMOKE] Origins query passed ({len(origins)} origin(s) registered).")
 
-    # 6. Dynamic Territorial Verification: Route Map Payload
+    # 7. Dynamic Territorial Verification: Route Map Payload
     print(f"[SMOKE] Querying /api/v1/routes/{route_id}/map?origin_id={origin_id}...")
     ok, status, _headers, map_payload = check_endpoint(
         f"{target}/api/v1/routes/{route_id}/map?origin_id={origin_id}",
@@ -434,7 +710,9 @@ def run_smoke_test(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Staging smoke verification tool for ECO-2002.")
+    parser = argparse.ArgumentParser(
+        description="Staging smoke verification tool for ECO-2002/ECO-2003."
+    )
     parser.add_argument(
         "--base-url",
         default=os.environ.get(
@@ -451,6 +729,12 @@ def main() -> None:
         "--expected-commit",
         default=os.environ.get("EXPECTED_COMMIT_SHA") or os.environ.get("GITHUB_SHA"),
         help="Expected git commit SHA for deployment revision verification",
+    )
+    parser.add_argument(
+        "--required-origin",
+        action="append",
+        dest="required_origins",
+        help="Required CORS origin(s) that must pass preflight and GET checks",
     )
     parser.add_argument(
         "--max-retries",
@@ -472,10 +756,12 @@ def main() -> None:
     )
 
     args = parser.parse_args()
+    required_origins = args.required_origins or list(DEFAULT_REQUIRED_ORIGINS)
     exit_code = run_smoke_test(
         base_url=args.base_url,
         allowed_host=args.allowed_host,
         expected_commit=args.expected_commit,
+        required_origins=required_origins,
         max_retries=args.max_retries,
         delay_seconds=args.delay,
         timeout_per_request=args.timeout,

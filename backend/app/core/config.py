@@ -30,6 +30,7 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "exp://localhost:8081",
         "https://eco-nexao-v3.vercel.app",
+        "https://eco-nexao-v3-git-staging-bruno-darwichs-projects.vercel.app",
         "https://econexao.app",
         "https://staging.econexao.app",
     ]
@@ -75,11 +76,17 @@ class Settings(BaseSettings):
     @field_validator("CORS_ORIGINS", "TRUSTED_PROXIES", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v: Any) -> Any:
+        origins = v
         if isinstance(v, str):
             if v.startswith("[") and v.endswith("]"):
-                return json.loads(v)
-            return [i.strip() for i in v.split(",") if i.strip()]
-        return v
+                origins = json.loads(v)
+            else:
+                origins = [i.strip() for i in v.split(",") if i.strip()]
+        if isinstance(origins, list) and "*" in origins:
+            raise ValueError(
+                "Wildcard '*' não é permitido em CORS_ORIGINS por política de segurança."
+            )
+        return origins
 
     @field_validator("DATABASE_URL", mode="before")
     @classmethod

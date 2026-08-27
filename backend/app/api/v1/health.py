@@ -74,3 +74,14 @@ async def health_ready(
         commit_sha=_get_commit_sha(),
         database=HealthDatabaseStatus(status="ok", postgis=True),
     )
+
+
+@router.get(
+    "/error-probe",
+    summary="Controlled 500 error probe for telemetry and CORS smoke tests",
+    description="Dispara erro controlado para testes sintéticos e verificação de CORS em 500.",
+    include_in_schema=False,
+)
+async def health_error_probe() -> None:
+    """Controlled error probe endpoint."""
+    raise RuntimeError("Controlled 500 probe for telemetry and CORS verification.")

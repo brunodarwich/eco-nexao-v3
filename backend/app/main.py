@@ -184,6 +184,17 @@ def _get_request_id(request: Request) -> str:
     return f"req_{uuid.uuid4().hex}"
 
 
+def _get_cors_headers(request: Request) -> dict[str, str]:
+    """Ensure explicit CORS headers are returned for allowed origins on exception responses."""
+    origin = request.headers.get("origin")
+    if origin and origin in settings.CORS_ORIGINS:
+        return {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+        }
+    return {}
+
+
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
     """Custom exception handler for Starlette/FastAPI HTTPExceptions."""
@@ -204,10 +215,11 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
         },
         "request_id": req_id,
     }
+    cors_headers = _get_cors_headers(request)
     return JSONResponse(
         status_code=exc.status_code,
         content=content,
-        headers={**(exc.headers or {}), "X-Request-ID": req_id},
+        headers={**(exc.headers or {}), "X-Request-ID": req_id, **cors_headers},
     )
 
 
@@ -229,10 +241,11 @@ async def validation_exception_handler(
         },
         "request_id": req_id,
     }
+    cors_headers = _get_cors_headers(request)
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
         content=content,
-        headers={"X-Request-ID": req_id},
+        headers={"X-Request-ID": req_id, **cors_headers},
     )
 
 
@@ -249,10 +262,11 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
         },
         "request_id": req_id,
     }
+    cors_headers = _get_cors_headers(request)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=content,
-        headers={"X-Request-ID": req_id},
+        headers={"X-Request-ID": req_id, **cors_headers},
     )
 
 
