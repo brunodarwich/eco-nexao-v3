@@ -143,14 +143,16 @@ jobs:
       - name: Trigger Render Staging Deploy Hook
         if: ${{ !inputs.trigger_smoke_only }}
         env:
-          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL || secrets.RENDER_DEPLOY_HOOK_STAGING }}
         run: |
-          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+          CLEAN_HOOK=$(echo "$RENDER_DEPLOY_HOOK" | tr -d '"' | tr -d "'" | tr -d '`' | tr -d ' ' | tr -d '\r' | tr -d '\n')
+          if [ -z "$CLEAN_HOOK" ]; then
             echo "::error::RENDER_STAGING_DEPLOY_HOOK_URL secret not configured in staging environment. Failing closed."
             exit 1
           else
             echo "Triggering Render staging deployment webhook..."
-            curl -f -X POST "$RENDER_DEPLOY_HOOK"
+            curl -g -fsS -X POST "$CLEAN_HOOK"
+            echo ""
             echo "Deployment webhook triggered successfully."
           fi
 
