@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert, ActivityIndicator, AccessibilityInfo, ImageBackground } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert, ActivityIndicator, AccessibilityInfo, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
@@ -242,13 +242,13 @@ export default function RouteDetailScreen() {
         {/* Header Hero Section */}
         {pindobalHeroImage ? (
           <View style={styles.pindobalHeroStack}>
-            <ImageBackground
-              source={pindobalHeroImage}
-              style={[styles.heroSection, styles.heroSectionWithImage]}
-              imageStyle={styles.heroImage}
-              resizeMode="contain"
-              accessible={false}
-            >
+            <View style={[styles.heroSection, styles.heroSectionWithImage]}>
+              <Image
+                source={pindobalHeroImage}
+                style={styles.heroImage}
+                resizeMode="contain"
+                accessible={false}
+              />
               <View style={styles.heroOverlay}>
                 <Text style={[styles.title, styles.titleOnImage]}>{route.title}</Text>
                 <Text style={[styles.subtitle, styles.subtitleOnImage]}>
@@ -262,7 +262,7 @@ export default function RouteDetailScreen() {
                 <View style={styles.heroGradientMiddle} />
                 <View style={styles.heroGradientEnd} />
               </View>
-            </ImageBackground>
+            </View>
             {originSelector ? <View style={styles.originSelectorOverlay}>{originSelector}</View> : null}
           </View>
         ) : (
@@ -432,10 +432,13 @@ const styles = StyleSheet.create({
   },
   heroImage: {
     borderRadius: theme.radii.xl,
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
   },
   heroOverlay: {
     gap: 4,
-    backgroundColor: 'rgba(15, 33, 8, 0.48)',
+    backgroundColor: 'rgba(15, 33, 8, 0.22)',
     padding: theme.spacing.marginMobile,
     minHeight: 176,
   },
@@ -452,29 +455,38 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: 220,
+    height: 150,
     justifyContent: 'flex-end',
   },
   heroGradientStart: {
     flex: 1,
-    backgroundColor: 'rgba(15, 33, 8, 0.06)',
+    backgroundColor: 'rgba(15, 33, 8, 0.03)',
   },
   heroGradientMiddle: {
     flex: 1,
-    backgroundColor: 'rgba(15, 33, 8, 0.20)',
+    backgroundColor: 'rgba(15, 33, 8, 0.10)',
   },
   heroGradientEnd: {
     flex: 1,
-    backgroundColor: 'rgba(15, 33, 8, 0.46)',
+    backgroundColor: 'rgba(15, 33, 8, 0.24)',
   },
   titleOnImage: {
     color: theme.colors.surfaceWhite,
+    textShadowColor: 'rgba(0, 0, 0, 0.60)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   subtitleOnImage: {
     color: 'rgba(255, 255, 255, 0.92)',
+    textShadowColor: 'rgba(0, 0, 0, 0.55)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   descriptionOnImage: {
     color: 'rgba(255, 255, 255, 0.94)',
+    textShadowColor: 'rgba(0, 0, 0, 0.55)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   title: {
     ...theme.typography.headlineLg,
