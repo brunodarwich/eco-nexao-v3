@@ -5,7 +5,7 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Dimensions,
+  ImageBackground,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -44,8 +44,11 @@ export default function HomeScreen() {
     <View style={styles.screenContainer}>
       <AppHeader />
 
-      <View
+      <ImageBackground
+        source={require('../../../assets/images/florestaencantada.png')}
         style={styles.fullScreenBackground}
+        resizeMode="cover"
+        accessible={false}
       >
         {/* Scrim Overlay contínuo com escurecimento progressivo para legibilidade AAA */}
         <View style={styles.scrimOverlay} />
@@ -240,7 +243,7 @@ export default function HomeScreen() {
             )}
           </View>
         </ScrollView>
-      </View>
+      </ImageBackground>
 
       <RegionSelectorModal
         visible={isRegionModalOpen}
