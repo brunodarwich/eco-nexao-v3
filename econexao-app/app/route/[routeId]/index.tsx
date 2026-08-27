@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert, ActivityIndicator, AccessibilityInfo } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert, ActivityIndicator, AccessibilityInfo, ImageBackground } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
@@ -9,6 +9,7 @@ import { EmptyStateView, ErrorStateView, LoadingView } from '../../../src/compon
 import { LocalCatalogPreview } from '../../../src/components/routes/LocalCatalogPreview';
 import { OriginSelector, MY_LOCATION_ORIGIN_ID, CHOOSE_ON_MAP_ORIGIN_ID } from '../../../src/components/routes/OriginSelector';
 import { RouteMapPreview } from '../../../src/components/routes/RouteMapPreview';
+import { getPindobalCoverImage } from '../../../src/components/routes/routeCoverImage';
 import { useRouteAlertsQuery, useRouteDetailQuery } from '../../../src/hooks/queries';
 import { theme, useAppTheme } from '../../../src/theme/theme';
 
@@ -206,6 +207,7 @@ export default function RouteDetailScreen() {
   }
 
   const route = detail.data;
+  const pindobalHeroImage = getPindobalCoverImage(route);
 
   const customGeometry: RouteGeometry | null = previewData
     ? {
@@ -227,14 +229,33 @@ export default function RouteDetailScreen() {
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* Header Hero Section */}
-        <View style={styles.heroSection}>
-          <Text style={styles.title}>{route.title}</Text>
-          <Text style={styles.subtitle}>
-            {route.city}, {route.state_code}
-            {route.is_verified && ' • Rota Verificada'}
-          </Text>
-          <Text style={styles.description}>{route.description ?? route.summary}</Text>
-        </View>
+        {pindobalHeroImage ? (
+          <ImageBackground
+            source={pindobalHeroImage}
+            style={[styles.heroSection, styles.heroSectionWithImage]}
+            imageStyle={styles.heroImage}
+            resizeMode="cover"
+            accessible={false}
+          >
+            <View style={styles.heroOverlay}>
+              <Text style={[styles.title, styles.titleOnImage]}>{route.title}</Text>
+              <Text style={[styles.subtitle, styles.subtitleOnImage]}>
+                {route.city}, {route.state_code}
+                {route.is_verified && ' • Rota Verificada'}
+              </Text>
+              <Text style={[styles.description, styles.descriptionOnImage]}>{route.description ?? route.summary}</Text>
+            </View>
+          </ImageBackground>
+        ) : (
+          <View style={styles.heroSection}>
+            <Text style={styles.title}>{route.title}</Text>
+            <Text style={styles.subtitle}>
+              {route.city}, {route.state_code}
+              {route.is_verified && ' • Rota Verificada'}
+            </Text>
+            <Text style={styles.description}>{route.description ?? route.summary}</Text>
+          </View>
+        )}
 
         {/* Origin Selector */}
         {route.origins && route.origins.length > 0 && (
@@ -394,6 +415,30 @@ const styles = StyleSheet.create({
   },
   heroSection: {
     gap: 4,
+  },
+  heroSectionWithImage: {
+    minHeight: 190,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
+  },
+  heroImage: {
+    borderRadius: theme.radii.xl,
+  },
+  heroOverlay: {
+    gap: 4,
+    backgroundColor: 'rgba(15, 33, 8, 0.58)',
+    padding: theme.spacing.marginMobile,
+    minHeight: 190,
+    justifyContent: 'flex-end',
+  },
+  titleOnImage: {
+    color: theme.colors.surfaceWhite,
+  },
+  subtitleOnImage: {
+    color: 'rgba(255, 255, 255, 0.92)',
+  },
+  descriptionOnImage: {
+    color: 'rgba(255, 255, 255, 0.94)',
   },
   title: {
     ...theme.typography.headlineLg,

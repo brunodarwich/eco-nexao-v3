@@ -8,7 +8,7 @@ type RouteCover = {
 
 const pindobalCoverImage = require('../../../assets/images/pindobal1.png');
 
-const isPindobalRoute = (route: RouteCover) =>
+export const isPindobalRoute = (route: RouteCover) =>
   route.id === 'route-pindobal' ||
   route.slug === 'rota-pindobal' ||
   route.slug === 'rota-santarem-pindobal';
@@ -21,3 +21,6 @@ export const getRouteCoverImage = (route: RouteCover): ImageSourcePropType | und
 
   return route.cover_image_url ? { uri: route.cover_image_url } : undefined;
 };
+
+export const getPindobalCoverImage = (route: RouteCover): ImageSourcePropType | undefined =>
+  isPindobalRoute(route) ? pindobalCoverImage : undefined;

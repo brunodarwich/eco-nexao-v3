@@ -1,9 +1,14 @@
-import { getRouteCoverImage } from './routeCoverImage';
+import { getPindobalCoverImage, getRouteCoverImage } from './routeCoverImage';
 
 describe('getRouteCoverImage', () => {
   it('uses the bundled pindobal1 image for the Pindobal route', () => {
     expect(getRouteCoverImage({ slug: 'rota-pindobal', cover_image_url: 'https://example.test/old.jpg' })).toBeDefined();
     expect(getRouteCoverImage({ id: 'route-pindobal' })).toBeDefined();
+  });
+
+  it('provides the bundled image only for Pindobal detail heroes', () => {
+    expect(getPindobalCoverImage({ slug: 'rota-pindobal' })).toBeDefined();
+    expect(getPindobalCoverImage({ slug: 'outra-rota', cover_image_url: 'https://example.test/route.jpg' })).toBeUndefined();
   });
 
   it('preserves the API image source for every other route', () => {

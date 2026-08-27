@@ -412,9 +412,12 @@ describe('RouteDetailScreen Integration (ECO-0901..0907)', () => {
       tree = renderer.create(<RouteDetailScreen />);
     });
 
-    const image = tree.root.findByType(Image);
-    expect(image.props.source).toEqual({ uri: 'https://cdn.example.com/pousada-card.webp' });
-    expect(image.props.accessibilityLabel).toBe('Fachada da Pousada Canto da Floresta');
+    const image = tree.root.findAllByType(Image).find(
+      (node) => node.props.accessibilityLabel === 'Fachada da Pousada Canto da Floresta'
+    );
+    expect(image).toBeDefined();
+    expect(image!.props.source).toEqual({ uri: 'https://cdn.example.com/pousada-card.webp' });
+    expect(image!.props.accessibilityLabel).toBe('Fachada da Pousada Canto da Floresta');
 
     const lodgingFilter = tree.root.find(
       (node) => node.type === TouchableOpacity && node.props.accessibilityLabel === 'Filtro Hospedagem'
