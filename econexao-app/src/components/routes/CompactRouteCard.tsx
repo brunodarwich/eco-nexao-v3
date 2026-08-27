@@ -5,6 +5,7 @@ import { theme } from '../../theme/theme';
 import type { RouteSummary } from '../../api/types';
 import { Badge } from '../common/Badge';
 import { makeAccessibleButton } from '../../utils/accessibility';
+import { getRouteCoverImage } from './routeCoverImage';
 
 interface CompactRouteCardProps {
   route: RouteSummary;
@@ -19,6 +20,8 @@ export const CompactRouteCard: React.FC<CompactRouteCardProps> = ({
   onToggleFavorite,
   isFavorite = false,
 }) => {
+  const coverImage = getRouteCoverImage(route);
+
   return (
     <View style={styles.card}>
       <Pressable
@@ -30,7 +33,7 @@ export const CompactRouteCard: React.FC<CompactRouteCardProps> = ({
         )}
       >
         <View style={styles.imageContainer}>
-          {route.cover_image_url ? <Image source={{ uri: route.cover_image_url }} style={styles.image} resizeMode="cover" accessibilityLabel={`Imagem da rota ${route.title}`} /> : <View style={styles.imagePlaceholder}><Ionicons name="map-outline" size={36} color={theme.colors.brandSage} /></View>}
+          {coverImage ? <Image source={coverImage} style={styles.image} resizeMode="cover" accessibilityLabel={`Imagem da rota ${route.title}`} /> : <View style={styles.imagePlaceholder}><Ionicons name="map-outline" size={36} color={theme.colors.brandSage} /></View>}
           <View style={styles.gradientOverlay} />
 
           <View style={styles.topRow}>
