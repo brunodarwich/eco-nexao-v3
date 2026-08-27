@@ -145,16 +145,25 @@ jobs:
         env:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL || secrets.RENDER_DEPLOY_HOOK_STAGING }}
         run: |
-          CLEAN_HOOK=$(echo "$RENDER_DEPLOY_HOOK" | tr -d '"' | tr -d "'" | tr -d '`' | tr -d ' ' | tr -d '\r' | tr -d '\n')
-          if [ -z "$CLEAN_HOOK" ]; then
-            echo "::error::RENDER_STAGING_DEPLOY_HOOK_URL secret not configured in staging environment. Failing closed."
-            exit 1
-          else
-            echo "Triggering Render staging deployment webhook..."
-            curl -g -fsS -X POST "$CLEAN_HOOK"
-            echo ""
-            echo "Deployment webhook triggered successfully."
-          fi
+          python -c "
+          import os, re, sys, urllib.request
+
+          raw_hook = os.environ.get('RENDER_DEPLOY_HOOK', '').strip()
+          match = re.search(r'https?://[^\s\"\'\[\]<>]+', raw_hook)
+          if not match:
+              print('::error::RENDER_STAGING_DEPLOY_HOOK_URL secret not configured or invalid URL. Failing closed.')
+              sys.exit(1)
+
+          clean_url = match.group(0)
+          print(f'Triggering Render staging deployment webhook (https://api.render.com/deploy/...)...')
+          req = urllib.request.Request(clean_url, data=b'', method='POST', headers={'User-Agent': 'econexao-ci/1.0'})
+          try:
+              with urllib.request.urlopen(req, timeout=30) as resp:
+                  print(f'Deployment webhook triggered successfully (HTTP {resp.status}).')
+          except Exception as exc:
+              print(f'::error::Failed to trigger Render deploy hook: {exc}')
+              sys.exit(1)
+          "
 
       - name: Set up Python for Smoke Test
         uses: actions/setup-python@v5
