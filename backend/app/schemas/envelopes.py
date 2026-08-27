@@ -455,8 +455,8 @@ class UserPreferencesSchema(SchemaBase):
     active_region_id: uuid.UUID | None = None
     screen_reader_mode: bool = False
     high_contrast: bool = False
-    text_scale: float = 1.0
-    locale: str = "pt-BR"
+    text_scale: float = Field(default=1.0, ge=0.5, le=3.0)
+    locale: str = Field(default="pt-BR", max_length=10)
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -469,8 +469,8 @@ class UserPreferencesUpdate(BaseModel):
     active_region_id: uuid.UUID | None = None
     screen_reader_mode: bool | None = None
     high_contrast: bool | None = None
-    text_scale: float | None = None
-    locale: str | None = None
+    text_scale: float | None = Field(default=None, ge=0.5, le=3.0)
+    locale: str | None = Field(default=None, max_length=10)
 
 
 class StandardSuccessData(SchemaBase):

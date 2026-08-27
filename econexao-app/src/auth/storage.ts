@@ -4,6 +4,17 @@ import { Platform } from 'react-native';
 
 const memory = new Map<string, string>();
 
+function getWebLocalStorage(): Storage | null {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      return window.localStorage;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 export const authStorage: SupportedStorage = {
   getItem: async (key: string): Promise<string | null> => {
     if (typeof Platform !== 'undefined' && Platform?.OS && Platform.OS !== 'web') {
@@ -11,6 +22,14 @@ export const authStorage: SupportedStorage = {
         return await SecureStore.getItemAsync(key);
       } catch {
         return null;
+      }
+    }
+    const storage = getWebLocalStorage();
+    if (storage) {
+      try {
+        return storage.getItem(key);
+      } catch {
+        return memory.get(key) ?? null;
       }
     }
     return memory.get(key) ?? null;
@@ -27,8 +46,18 @@ export const authStorage: SupportedStorage = {
       }
       return;
     }
-    memory.set(key, value);
+    const storage = getWebLocalStorage();
+    if (storage) {
+      try {
+        storage.setItem(key, value);
+      } catch {
+        memory.set(key, value);
+      }
+    } else {
+      memory.set(key, value);
+    }
   },
+
   removeItem: async (key: string): Promise<void> => {
     if (Platform.OS !== 'web') {
       try {
@@ -37,6 +66,14 @@ export const authStorage: SupportedStorage = {
         // ignore errors on deletion of missing key
       }
       return;
+    }
+    const storage = getWebLocalStorage();
+    if (storage) {
+      try {
+        storage.removeItem(key);
+      } catch {
+        memory.delete(key);
+      }
     }
     memory.delete(key);
   },

@@ -1,6 +1,7 @@
 """FastAPI application entry point with middleware, CORS, logging, and error handling."""
 
 import asyncio
+import logging
 import sys
 import uuid
 from collections.abc import AsyncGenerator
@@ -22,6 +23,7 @@ if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 setup_logging(settings.LOG_LEVEL)
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -238,6 +240,7 @@ async def validation_exception_handler(
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Custom exception handler for unhandled errors to avoid leaking internal details."""
     req_id = _get_request_id(request)
+    logger.exception("Unhandled server error processing request %s: %s", req_id, exc)
     content = {
         "error": {
             "code": "INTERNAL_SERVER_ERROR",

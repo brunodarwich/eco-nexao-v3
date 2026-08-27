@@ -5,6 +5,7 @@ from typing import Any
 
 from geoalchemy2.functions import ST_X, ST_Y
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -30,8 +31,14 @@ class UserRepository:
         if not profile:
             profile = Profile(id=user_id, status="active")
             self.db.add(profile)
-            await self.db.commit()
-            await self.db.refresh(profile)
+            try:
+                await self.db.commit()
+                await self.db.refresh(profile)
+            except IntegrityError:
+                await self.db.rollback()
+                profile = await self.db.scalar(stmt)
+                if not profile:
+                    raise
         return profile
 
     async def update_profile(
@@ -49,10 +56,24 @@ class UserRepository:
         stmt = select(UserPreference).where(UserPreference.user_id == user_id)
         pref = await self.db.scalar(stmt)
         if not pref:
-            pref = UserPreference(user_id=user_id)
+            await self.get_or_create_profile(user_id)
+            pref = UserPreference(
+                id=uuid.uuid4(),
+                user_id=user_id,
+                screen_reader_mode=False,
+                high_contrast=False,
+                text_scale=1.0,
+                locale="pt-BR",
+            )
             self.db.add(pref)
-            await self.db.commit()
-            await self.db.refresh(pref)
+            try:
+                await self.db.commit()
+                await self.db.refresh(pref)
+            except IntegrityError:
+                await self.db.rollback()
+                pref = await self.db.scalar(stmt)
+                if not pref:
+                    raise
         return pref
 
 
@@ -99,6 +120,7 @@ class UserRepository:
         if fav:
             return True
 
+        await self.get_or_create_profile(user_id)
         new_fav = FavoriteRoute(user_id=user_id, route_id=route_id)
         self.db.add(new_fav)
         await self.db.commit()
@@ -161,6 +183,7 @@ class UserRepository:
         if fav:
             return True
 
+        await self.get_or_create_profile(user_id)
         new_fav = FavoriteActor(user_id=user_id, actor_id=actor_id)
         self.db.add(new_fav)
         await self.db.commit()

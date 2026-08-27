@@ -39,10 +39,7 @@ export type ActorCategoryListEnvelope = Schemas['ActorCategoryListEnvelope'];
 export type ActorDetailEnvelope = Schemas['ActorDetailEnvelope'];
 export type RouteMapPayloadEnvelope = Schemas['RouteMapPayloadEnvelope'];
 export type UserPreferencesEnvelope = Schemas['UserPreferencesEnvelope'];
-export type UserPreferencesUpdate = Schemas['UserPreferencesUpdate'] & {
-  high_contrast?: boolean;
-  reader_mode?: boolean;
-};
+export type UserPreferencesUpdate = Schemas['UserPreferencesUpdate'];
 export type UserProfileEnvelope = Schemas['UserProfileEnvelope'];
 export type UserProfileSchema = Schemas['UserProfileSchema'];
 export type UserProfileUpdate = Schemas['UserProfileUpdate'];

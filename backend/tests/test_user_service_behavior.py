@@ -76,8 +76,9 @@ async def test_favorite_routes_management():
     user_id = uuid.uuid4()
     route_id = uuid.uuid4()
     route = Route(id=route_id, title="Rota Fav", status="active")
+    profile = Profile(id=user_id, status="active")
 
-    mock_db.scalar.side_effect = [route, None]
+    mock_db.scalar.side_effect = [route, None, profile]
     repo = UserRepository(mock_db)
 
     added = await repo.add_favorite_route(user_id, route_id)
@@ -107,8 +108,9 @@ async def test_favorite_actors_management():
     user_id = uuid.uuid4()
     actor_id = uuid.uuid4()
     actor = Actor(id=actor_id, name="Ator Fav")
+    profile = Profile(id=user_id, status="active")
 
-    mock_db.scalar.side_effect = [actor, None]
+    mock_db.scalar.side_effect = [actor, None, profile]
     repo = UserRepository(mock_db)
     added = await repo.add_favorite_actor(user_id, actor_id)
     assert added is True

@@ -59,24 +59,69 @@ describe('authStorage', () => {
     });
   });
 
-  describe('Web', () => {
+  describe('Web (ADR 0007)', () => {
+    let mockLocalStorageMap: Map<string, string>;
+
     beforeEach(() => {
       Platform.OS = 'web';
+      mockLocalStorageMap = new Map<string, string>();
+      const mockStorage: Storage = {
+        getItem: jest.fn((k: string) => mockLocalStorageMap.get(k) ?? null),
+        setItem: jest.fn((k: string, v: string) => mockLocalStorageMap.set(k, v)),
+        removeItem: jest.fn((k: string) => mockLocalStorageMap.delete(k)),
+        clear: jest.fn(() => mockLocalStorageMap.clear()),
+        key: jest.fn((i: number) => Array.from(mockLocalStorageMap.keys())[i] ?? null),
+        length: 0,
+      };
+      Object.defineProperty(global, 'window', {
+        value: { localStorage: mockStorage },
+        writable: true,
+        configurable: true,
+      });
     });
 
-    it('armazena e recupera valores em memória sem acessar SecureStore', async () => {
-      await authStorage.setItem('web-key', 'web-token-xyz');
+    afterEach(() => {
+      // @ts-expect-error cleanup window
+      delete global.window;
+    });
+
+    it('persiste no window.localStorage sem acessar SecureStore', async () => {
+      await authStorage.setItem('econexao-token', 'token-payload-xyz');
+      expect(window.localStorage.setItem).toHaveBeenCalledWith('econexao-token', 'token-payload-xyz');
       expect(SecureStore.setItemAsync).not.toHaveBeenCalled();
 
-      const retrieved = await authStorage.getItem('web-key');
-      expect(retrieved).toBe('web-token-xyz');
+      const retrieved = await authStorage.getItem('econexao-token');
+      expect(retrieved).toBe('token-payload-xyz');
+      expect(window.localStorage.getItem).toHaveBeenCalledWith('econexao-token');
+    });
+
+    it('recupera a sessão gravada em localStorage após simulação de reload (reset de memória)', async () => {
+      // 1. Grava no localStorage
+      mockLocalStorageMap.set('econexao-auth-session', 'persisted-session-12345');
+
+      // 2. Consulta via authStorage
+      const recovered = await authStorage.getItem('econexao-auth-session');
+      expect(recovered).toBe('persisted-session-12345');
+    });
+
+    it('remove chave do localStorage corretamente', async () => {
+      mockLocalStorageMap.set('econexao-auth-session', 'persisted-session-12345');
+      await authStorage.removeItem('econexao-auth-session');
+      expect(window.localStorage.removeItem).toHaveBeenCalledWith('econexao-auth-session');
+
+      const val = await authStorage.getItem('econexao-auth-session');
+      expect(val).toBeNull();
+    });
+
+    it('faz fallback para memória se window.localStorage não estiver disponível ou falhar', async () => {
+      // Simula ausência de window
+      // @ts-expect-error remove window
+      delete global.window;
+
+      await authStorage.setItem('fallback-key', 'mem-val');
+      const val = await authStorage.getItem('fallback-key');
+      expect(val).toBe('mem-val');
       expect(SecureStore.getItemAsync).not.toHaveBeenCalled();
-
-      await authStorage.removeItem('web-key');
-      expect(SecureStore.deleteItemAsync).not.toHaveBeenCalled();
-
-      const empty = await authStorage.getItem('web-key');
-      expect(empty).toBeNull();
     });
   });
 });
