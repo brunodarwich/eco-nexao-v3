@@ -426,8 +426,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   heroSectionWithImage: {
-    height: 440,
-    backgroundColor: theme.colors.brandDeep,
+    height: 400,
+    backgroundColor: '#9CC9DF',
     overflow: 'hidden',
   },
   heroImage: {
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   originSelectorOverlay: {
-    marginTop: -228,
+    marginTop: -180,
     paddingHorizontal: 12,
     zIndex: 1,
   },
@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: 150,
+    height: 130,
     justifyContent: 'flex-end',
   },
   heroGradientStart: {
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
   },
   heroGradientEnd: {
     flex: 1,
-    backgroundColor: 'rgba(15, 33, 8, 0.24)',
+    backgroundColor: 'rgba(15, 33, 8, 0.28)',
   },
   titleOnImage: {
     color: theme.colors.surfaceWhite,
