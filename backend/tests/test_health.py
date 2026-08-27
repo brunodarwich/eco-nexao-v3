@@ -1,5 +1,6 @@
 """Unit and integration tests for health endpoints, CORS, request IDs, and errors."""
 
+import pytest
 from fastapi import APIRouter
 from fastapi.testclient import TestClient
 
@@ -133,3 +134,14 @@ def test_internal_error_does_not_leak_exception_details() -> None:
     }
     assert "database-password" not in response.text
     assert response.headers["X-Request-ID"] == body["request_id"]
+
+
+def test_error_probe_restricted_in_production(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that /api/v1/health/error-probe returns 404 in production environment."""
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "APP_ENV", "production")
+    client = TestClient(app)
+    response = client.get("/api/v1/health/error-probe")
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "NOT_FOUND"

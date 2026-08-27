@@ -80,7 +80,7 @@ Se qualquer smoke test, probe de prontidão ou verificação de CORS falhar apó
 1. Identifique o último commit estável conhecido (ex: `06456398772af10a814b0d6cfbb6e927d70dde24`).
 2. Execute o rollback da branch ou cherry-pick de reversão:
    ```powershell
-   git revert <COMMIT_COM_REGRESSAO> -m "revert: rollback para versao estavel conhecida"
+   git revert --no-edit <COMMIT_COM_REGRESSAO>
    git push origin staging
    ```
 3. O GitHub Actions executará a esteira completa e disparará o webhook de deploy do Render.
