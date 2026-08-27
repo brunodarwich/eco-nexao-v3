@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert, ActivityIn
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { AppHeader } from '../../../src/components/common/AppHeader';
 import { EmptyStateView, ErrorStateView, LoadingView } from '../../../src/components/common/UIStateViews';
@@ -257,13 +258,18 @@ export default function RouteDetailScreen() {
                 </Text>
                 <Text style={[styles.description, styles.descriptionOnImage]}>{route.description ?? route.summary}</Text>
               </View>
-              <View pointerEvents="none" style={styles.heroBottomGradient}>
-                <View style={styles.heroGradientStart} />
-                <View style={styles.heroGradientSoft} />
-                <View style={styles.heroGradientMiddle} />
-                <View style={styles.heroGradientStrong} />
-                <View style={styles.heroGradientEnd} />
-              </View>
+              <LinearGradient
+                pointerEvents="none"
+                colors={[
+                  'rgba(249, 250, 247, 0)',
+                  'rgba(249, 250, 247, 0.12)',
+                  'rgba(249, 250, 247, 0.42)',
+                  'rgba(249, 250, 247, 0.76)',
+                  theme.colors.surfaceBackground,
+                ]}
+                locations={[0, 0.28, 0.56, 0.8, 1]}
+                style={styles.heroBottomGradient}
+              />
             </View>
             {originSelector ? <View style={styles.originSelectorOverlay}>{originSelector}</View> : null}
           </View>
@@ -458,27 +464,6 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     height: 118,
-    justifyContent: 'flex-end',
-  },
-  heroGradientStart: {
-    flex: 1,
-    backgroundColor: 'rgba(249, 250, 247, 0.02)',
-  },
-  heroGradientSoft: {
-    flex: 1,
-    backgroundColor: 'rgba(249, 250, 247, 0.18)',
-  },
-  heroGradientMiddle: {
-    flex: 1,
-    backgroundColor: 'rgba(249, 250, 247, 0.42)',
-  },
-  heroGradientStrong: {
-    flex: 1,
-    backgroundColor: 'rgba(249, 250, 247, 0.72)',
-  },
-  heroGradientEnd: {
-    flex: 1,
-    backgroundColor: theme.colors.surfaceBackground,
   },
   titleOnImage: {
     color: theme.colors.surfaceWhite,
