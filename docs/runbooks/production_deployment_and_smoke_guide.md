@@ -72,8 +72,38 @@ Executar verificação de saúde dos endpoints essenciais:
 
 ---
 
-## 5. Procedimento de Rollback Imediato da API
+## 5. Procedimento Determinístico de Rollback e Redeploy da API
 
-Se qualquer probe de prontidão falhar ou a taxa de erro 5xx exceder 0.1%:
-1. No dashboard do Render: Clicar no commit / deploy anterior e acionar **Rollback**.
-2. Revalidar `/api/v1/health/ready` até normalização.
+Se qualquer smoke test, probe de prontidão ou verificação de CORS falhar após um deploy:
+
+### 5.1. Rollback via Git / CI/CD (Recomendado e Determinístico)
+1. Identifique o último commit estável conhecido (ex: `06456398772af10a814b0d6cfbb6e927d70dde24`).
+2. Execute o rollback da branch ou cherry-pick de reversão:
+   ```powershell
+   git revert <COMMIT_COM_REGRESSAO> -m "revert: rollback para versao estavel conhecida"
+   git push origin staging
+   ```
+3. O GitHub Actions executará a esteira completa e disparará o webhook de deploy do Render.
+4. Execute o smoke test exigindo o commit de rollback:
+   ```powershell
+   python backend/scripts/staging_smoke.py --base-url "https://econexao-backend-staging.onrender.com" --expected-commit "<SHA_DO_ROLLBACK>"
+   ```
+
+### 5.2. Rollback via Render Dashboard / API
+1. Acesse o serviço `econexao-backend-staging` no Render.
+2. Na aba **Events / Deploys**, localize o deploy correspondente à revisão estável.
+3. Clique em **Rollback to this deploy**.
+4. O Render restaurará a imagem e o commit da revisão selecionada.
+5. Valide a conclusão do rollback via CLI:
+   ```powershell
+   python backend/scripts/staging_smoke.py --base-url "https://econexao-backend-staging.onrender.com" --expected-commit "<SHA_DO_DEPLOY_RESTAURADO>"
+   ```
+
+### 5.3. Redeploy e Validação Final Pós-Correção
+1. Após corrigir o defeito e comitar a nova revisão (ex: `76c826fe57b616af1a8c28469c9fda082ee7c9e4`), realize o push para `staging`.
+2. Acompanhe o workflow no GitHub Actions (`Staging Deployment & Migration Gate`).
+3. Execute o smoke test final:
+   ```powershell
+   python backend/scripts/staging_smoke.py --base-url "https://econexao-backend-staging.onrender.com" --expected-commit "76c826fe57b616af1a8c28469c9fda082ee7c9e4"
+   ```
+4. Confirme que o cabeçalho `X-Commit-SHA` e o payload `/health/live` apresentam o novo SHA.
