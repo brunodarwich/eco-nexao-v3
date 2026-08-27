@@ -105,7 +105,7 @@ def test_list_routes_passes_filters(api: tuple[TestClient, SimpleNamespace]) -> 
     client, service = api
     region_id = uuid.uuid4()
     response = client.get(
-        f"/api/v1/routes?region_id={region_id}&q=pindobal&verified=true&cursor=20&limit=10"
+        f"/api/v1/routes?region_id={region_id}&q=pindobal&verified=true&cursor=opaque&limit=10"
     )
     assert response.status_code == 200
     assert response.json()["meta"]["total"] == 0
@@ -116,7 +116,7 @@ def test_list_routes_passes_filters(api: tuple[TestClient, SimpleNamespace]) -> 
         user_id=None,
         verified=True,
         limit=10,
-        offset=20,
+        cursor="opaque",
     )
 
 
@@ -211,4 +211,3 @@ def test_list_routes_with_invalid_bearer_returns_401() -> None:
         app.dependency_overrides.clear()
     assert response.status_code == 401
     assert response.headers["www-authenticate"] == "Bearer"
-

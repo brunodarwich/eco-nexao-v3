@@ -9,12 +9,10 @@ import { SearchInput } from '../../../src/components/common/SearchInput';
 import { RouteCard } from '../../../src/components/routes/RouteCard';
 import { useApp } from '../../../src/hooks/useApp';
 import { useAuth } from '../../../src/hooks/useAuth';
-import { useInfiniteRoutesQuery, useRegionsQuery, useRoutesQuery } from '../../../src/hooks/queries';
+import { flattenUniquePages, useInfiniteRoutesQuery, useRegionsQuery, useRoutesQuery } from '../../../src/hooks/queries';
 import { useOptimisticFavoriteRoute } from '../../../src/hooks/useOptimisticFavoriteRoute';
 import { theme } from '../../../src/theme/theme';
 import type { RouteSummary } from '../../../src/api/types';
-
-type FilterType = 'all' | 'saved' | 'verified';
 
 export default function RoutesScreen() {
   const router = useRouter();
@@ -22,7 +20,8 @@ export default function RoutesScreen() {
   const { user } = useAuth();
   const regionsQuery = useRegionsQuery();
 
-  const [filter, setFilter] = useState<FilterType>('all');
+  const [savedOnly, setSavedOnly] = useState(false);
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
@@ -40,8 +39,8 @@ export default function RoutesScreen() {
     activeRegionId,
     {
       q: debouncedSearch || undefined,
-      saved: filter === 'saved' || undefined,
-      verified: filter === 'verified' || undefined,
+      saved: savedOnly || undefined,
+      verified: verifiedOnly || undefined,
     },
     user?.id
   );
@@ -49,13 +48,14 @@ export default function RoutesScreen() {
   const savedRoutesQuery = useRoutesQuery(activeRegionId, { saved: true }, user?.id);
   const { toggleFavorite } = useOptimisticFavoriteRoute();
 
-  const savedRouteIds = new Set(savedRoutesQuery.data?.data.map((r) => r.id));
-  const allRoutes: RouteSummary[] = routesQuery.data?.pages.flatMap((page) => page.data) ?? [];
+  const savedRouteIds = new Set(savedRoutesQuery.data?.data?.map((r) => r.id));
+  const allRoutes: RouteSummary[] = flattenUniquePages(routesQuery.data?.pages);
 
   const handleResetFilters = () => {
     setSearchQuery('');
     setDebouncedSearch('');
-    setFilter('all');
+    setSavedOnly(false);
+    setVerifiedOnly(false);
   };
 
   return (
@@ -74,18 +74,18 @@ export default function RoutesScreen() {
         <View style={styles.filters}>
           <FilterChip
             label="Todas"
-            isSelected={filter === 'all'}
-            onPress={() => setFilter('all')}
+            isSelected={!savedOnly && !verifiedOnly}
+            onPress={() => { setSavedOnly(false); setVerifiedOnly(false); }}
           />
           <FilterChip
             label="Salvas"
-            isSelected={filter === 'saved'}
-            onPress={() => setFilter('saved')}
+            isSelected={savedOnly}
+            onPress={() => setSavedOnly((value) => !value)}
           />
           <FilterChip
             label="Verificadas"
-            isSelected={filter === 'verified'}
-            onPress={() => setFilter('verified')}
+            isSelected={verifiedOnly}
+            onPress={() => setVerifiedOnly((value) => !value)}
           />
         </View>
 
@@ -103,7 +103,7 @@ export default function RoutesScreen() {
           />
         ) : routesQuery.isPending ? (
           <LoadingView message="Carregando rotas..." />
-        ) : routesQuery.isError ? (
+        ) : routesQuery.isError && allRoutes.length === 0 ? (
           <ErrorStateView
             message="Não foi possível carregar a lista de rotas."
             onRetry={() => void routesQuery.refetch()}
@@ -111,14 +111,16 @@ export default function RoutesScreen() {
         ) : allRoutes.length > 0 ? (
           <>
             {allRoutes.map((route) => {
-              const isFav = savedRouteIds.has(route.id);
+              const isFav =
+                (route as RouteSummary & { is_favorite?: boolean }).is_favorite ??
+                savedRouteIds.has(route.id);
               return (
                 <RouteCard
                   key={route.id}
                   route={route}
                   isFavorite={isFav}
                   onPress={() => router.push(`/route/${route.id}`)}
-                  onToggleFavorite={() => toggleFavorite(route.id, isFav)}
+                  onToggleFavorite={() => toggleFavorite(route, isFav)}
                 />
               );
             })}
@@ -130,6 +132,7 @@ export default function RoutesScreen() {
                 disabled={routesQuery.isFetchingNextPage}
                 accessibilityRole="button"
                 accessibilityLabel="Carregar mais rotas"
+                accessibilityState={{ disabled: routesQuery.isFetchingNextPage, busy: routesQuery.isFetchingNextPage }}
               >
                 {routesQuery.isFetchingNextPage ? (
                   <ActivityIndicator size="small" color="#059669" />
@@ -138,12 +141,15 @@ export default function RoutesScreen() {
                 )}
               </TouchableOpacity>
             )}
+            {routesQuery.isError && (
+              <ErrorStateView message="Não foi possível carregar mais rotas." onRetry={() => void routesQuery.fetchNextPage()} />
+            )}
           </>
         ) : (
           <EmptyStateView
             title="Nenhuma rota encontrada"
             message="Não encontramos rotas com os filtros selecionados."
-            onReset={searchQuery || filter !== 'all' ? handleResetFilters : undefined}
+            onReset={searchQuery || savedOnly || verifiedOnly ? handleResetFilters : undefined}
           />
         )}
       </ScrollView>
@@ -185,4 +191,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-

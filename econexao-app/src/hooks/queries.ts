@@ -4,6 +4,16 @@ import { apiClient } from '../api/client';
 import { normalizeQueryValue, queryKeys } from '../api/queryKeys';
 import type { GetRouteActorsQuery, GetRouteMapQuery, ListRoutesQuery } from '../api/types';
 
+export function flattenUniquePages<T extends { id: string }>(
+  pages: Array<{ data: T[] }> | undefined
+): T[] {
+  const unique = new Map<string, T>();
+  for (const page of pages ?? []) {
+    for (const item of page.data) unique.set(item.id, item);
+  }
+  return [...unique.values()];
+}
+
 export const adminQueries = {
   context: (isAuthenticated = true) =>
     queryOptions({

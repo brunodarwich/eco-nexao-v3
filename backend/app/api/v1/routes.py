@@ -11,6 +11,7 @@ from app.connectors.routing_connector import (
     RoutingQuotaExceededError,
     RoutingTimeoutError,
 )
+from app.core.pagination import InvalidCursorError
 from app.core.security import AuthenticatedUser, get_optional_current_user
 from app.core.taxonomy import get_canonical_category, is_canonical_category
 from app.schemas.envelopes import (
@@ -45,6 +46,10 @@ OptionalUserDep = Annotated[AuthenticatedUser | None, Depends(get_optional_curre
     response_model=RouteListEnvelope,
     summary="Listar rotas",
     description="Retorna lista paginada de rotas turísticas ativas com suporte a busca e filtros.",
+    responses={
+        401: {"model": ErrorResponse, "description": "Filtro saved exige autenticação."},
+        422: {"model": ErrorResponse, "description": "Filtro ou cursor inválido."},
+    },
 )
 async def list_routes(
     service: TerritorialServiceDep,
@@ -56,25 +61,27 @@ async def list_routes(
         bool | None, Query(description="Filtrar rotas verificadas com selo")
     ] = None,
     cursor: Annotated[
-        str | None, Query(description="Cursor de paginação (offset numérico)")
+        str | None, Query(description="Cursor opaco retornado em meta.next_cursor")
     ] = None,
     limit: Annotated[int, Query(ge=1, le=100, description="Quantidade máxima de itens")] = 20,
 ) -> RouteListEnvelope:
-    offset = int(cursor) if cursor and cursor.isdigit() else 0
     if saved and not current_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="É necessário autenticar para consultar rotas salvas.",
         )
-    return await service.list_routes(
-        region_id=region_id,
-        q=q,
-        saved=saved,
-        user_id=current_user.id if current_user else None,
-        verified=verified,
-        limit=limit,
-        offset=offset,
-    )
+    try:
+        return await service.list_routes(
+            region_id=region_id,
+            q=q,
+            saved=saved,
+            user_id=current_user.id if current_user else None,
+            verified=verified,
+            limit=limit,
+            cursor=cursor,
+        )
+    except (InvalidCursorError, ValueError):
+        raise HTTPException(status_code=422, detail="Cursor de paginação inválido.") from None
 
 
 @router.get(
@@ -82,12 +89,16 @@ async def list_routes(
     response_model=RouteDetailEnvelope,
     summary="Detalhes de uma rota",
     description="Retorna informações completas e origens de uma rota específica.",
+    responses={404: {"model": ErrorResponse, "description": "Rota não encontrada."}},
 )
 async def get_route_detail(
     route_id: uuid.UUID,
     service: TerritorialServiceDep,
+    current_user: OptionalUserDep,
 ) -> RouteDetailEnvelope:
-    detail = await service.get_route_detail(route_id)
+    detail = await service.get_route_detail(
+        route_id, user_id=current_user.id if current_user else None
+    )
     if not detail:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -159,27 +170,35 @@ async def get_route_alerts(
     response_model=ActorListEnvelope,
     summary="Atores associados a uma rota",
     description="Retorna lista paginada de estabelecimentos e pontos turísticos associados à rota.",
+    responses={
+        404: {"model": ErrorResponse, "description": "Rota não encontrada."},
+        422: {"model": ErrorResponse, "description": "Filtro ou cursor inválido."},
+    },
 )
 async def get_route_actors(
     route_id: uuid.UUID,
     service: TerritorialServiceDep,
+    current_user: OptionalUserDep,
     q: Annotated[str | None, Query(description="Termo de busca por nome de ator")] = None,
     category: Annotated[str | None, Query(description="Slug da categoria do ator")] = None,
     origin_id: Annotated[uuid.UUID | None, Query(description="UUID da origem")] = None,
     cursor: Annotated[
-        str | None, Query(description="Cursor de paginação (offset numérico)")
+        str | None, Query(description="Cursor opaco retornado em meta.next_cursor")
     ] = None,
     limit: Annotated[int, Query(ge=1, le=100, description="Quantidade máxima de itens")] = 20,
 ) -> ActorListEnvelope:
-    offset = int(cursor) if cursor and cursor.isdigit() else 0
-    actors = await service.list_route_actors(
-        route_id=route_id,
-        q=q,
-        category_slug=category,
-        limit=limit,
-        offset=offset,
-        origin_id=origin_id,
-    )
+    try:
+        actors = await service.list_route_actors(
+            route_id=route_id,
+            q=q,
+            category_slug=category,
+            limit=limit,
+            cursor=cursor,
+            origin_id=origin_id,
+            user_id=current_user.id if current_user else None,
+        )
+    except (InvalidCursorError, ValueError):
+        raise HTTPException(status_code=422, detail="Cursor de paginação inválido.") from None
     if actors is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

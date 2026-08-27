@@ -1,7 +1,8 @@
 openapi: 3.1.0
 info:
   title: ECOnexão API
-  description: API de domínio do aplicativo ECOnexão para turismo sustentável e rotas ecológicas.
+  description: API de domínio do aplicativo ECOnexão para turismo sustentável e rotas
+    ecológicas.
   version: 1.0.0
 paths:
   /api/v1/admin/context:
@@ -9,7 +10,8 @@ paths:
       tags:
       - Admin
       summary: Obter contexto administrativo
-      description: Expose only current editorial access; ordinary/anonymous users are denied.
+      description: Expose only current editorial access; ordinary/anonymous users
+        are denied.
       operationId: get_admin_context_api_v1_admin_context_get
       security:
       - HTTPBearer: []
@@ -1058,7 +1060,8 @@ paths:
                 type: object
                 additionalProperties:
                   type: string
-                title: Response Delete Route Link Api V1 Admin Actors Route Links  Link Id  Delete
+                title: Response Delete Route Link Api V1 Admin Actors Route Links  Link
+                  Id  Delete
         '401':
           description: JWT ausente ou inválido.
           content:
@@ -2058,7 +2061,8 @@ paths:
       tags:
       - Admin Workflow
       summary: Transicionar estado editorial
-      description: Transicionar o estado de um recurso na máquina de estados editorial com validação de publish guard e concorrência.
+      description: Transicionar o estado de um recurso na máquina de estados editorial
+        com validação de publish guard e concorrência.
       operationId: transition_resource_status_api_v1_admin_workflow__resource_type___resource_id__transition_post
       security:
       - HTTPBearer: []
@@ -2111,7 +2115,8 @@ paths:
       tags:
       - Admin Workflow
       summary: Consultar Publish Guard
-      description: Consultar os critérios e elegibilidade do Publish Guard para um recurso.
+      description: Consultar os critérios e elegibilidade do Publish Guard para um
+        recurso.
       operationId: get_publish_guard_status_api_v1_admin_workflow__resource_type___resource_id__publish_guard_get
       security:
       - HTTPBearer: []
@@ -2158,7 +2163,8 @@ paths:
       tags:
       - Admin Workflow
       summary: Listar alertas editoriais
-      description: Listar alertas editoriais ativos ou resolvidos com suporte a filtros de rota e severidade.
+      description: Listar alertas editoriais ativos ou resolvidos com suporte a filtros
+        de rota e severidade.
       operationId: list_editorial_alerts_api_v1_admin_alerts_get
       security:
       - HTTPBearer: []
@@ -2278,7 +2284,8 @@ paths:
       tags:
       - Admin Workflow
       summary: Resolver alerta editorial
-      description: Resolver um alerta editorial ativo fornecendo uma nota explicativa de resolução.
+      description: Resolver um alerta editorial ativo fornecendo uma nota explicativa
+        de resolução.
       operationId: resolve_editorial_alert_api_v1_admin_alerts__alert_id__resolve_post
       security:
       - HTTPBearer: []
@@ -2325,7 +2332,8 @@ paths:
       tags:
       - Admin Workflow
       summary: Listar candidatos de reconciliação
-      description: Listar candidatos a duplicata para revisão humana e reconciliação editorial.
+      description: Listar candidatos a duplicata para revisão humana e reconciliação
+        editorial.
       operationId: list_reconciliation_candidates_api_v1_admin_reconciliation_candidates_get
       security:
       - HTTPBearer: []
@@ -2384,7 +2392,8 @@ paths:
       tags:
       - Admin Workflow
       summary: Decidir reconciliação
-      description: Registrar decisão editorial (accept, reject, merge) sobre candidato de reconciliação com justificativa auditada.
+      description: Registrar decisão editorial (accept, reject, merge) sobre candidato
+        de reconciliação com justificativa auditada.
       operationId: decide_reconciliation_candidate_api_v1_admin_reconciliation__candidate_id__decision_post
       security:
       - HTTPBearer: []
@@ -2615,7 +2624,8 @@ paths:
       tags:
       - Health
       summary: Readiness check
-      description: Retorna status HTTP 200 se dependências de banco de dados e Supabase estiverem prontas.
+      description: Retorna status HTTP 200 se dependências de banco de dados e Supabase
+        estiverem prontas.
       operationId: healthReady
       responses:
         '200':
@@ -2651,7 +2661,8 @@ paths:
       tags:
       - Auth
       summary: Validar token JWT Supabase
-      description: Verifica a validade, emissor, audiência e assinatura assimétrica do token informado.
+      description: Verifica a validade, emissor, audiência e assinatura assimétrica
+        do token informado.
       operationId: verify_auth_token_api_v1_auth_verify_post
       requestBody:
         content:
@@ -2691,7 +2702,8 @@ paths:
       tags:
       - Territorial - Regions
       summary: Bootstrap do aplicativo
-      description: Retorna informações de inicialização do aplicativo, incluindo região ativa e feature flags.
+      description: Retorna informações de inicialização do aplicativo, incluindo região
+        ativa e feature flags.
       operationId: get_bootstrap_api_v1_bootstrap_get
       security:
       - HTTPBearer: []
@@ -2725,7 +2737,8 @@ paths:
       tags:
       - Territorial - Routes
       summary: Listar rotas
-      description: Retorna lista paginada de rotas turísticas ativas com suporte a busca e filtros.
+      description: Retorna lista paginada de rotas turísticas ativas com suporte a
+        busca e filtros.
       operationId: list_routes_api_v1_routes_get
       security:
       - HTTPBearer: []
@@ -2778,9 +2791,9 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          description: Cursor de paginação (offset numérico)
+          description: Cursor opaco retornado em meta.next_cursor
           title: Cursor
-        description: Cursor de paginação (offset numérico)
+        description: Cursor opaco retornado em meta.next_cursor
       - name: limit
         in: query
         required: false
@@ -2799,12 +2812,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RouteListEnvelope'
-        '422':
-          description: Validation Error
+        '401':
+          description: Filtro saved exige autenticação.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Filtro ou cursor inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/routes/{route_id}:
     get:
       tags:
@@ -2812,6 +2831,8 @@ paths:
       summary: Detalhes de uma rota
       description: Retorna informações completas e origens de uma rota específica.
       operationId: get_route_detail_api_v1_routes__route_id__get
+      security:
+      - HTTPBearer: []
       parameters:
       - name: route_id
         in: path
@@ -2827,6 +2848,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RouteDetailEnvelope'
+        '404':
+          description: Rota não encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: Validation Error
           content:
@@ -2866,7 +2893,8 @@ paths:
       tags:
       - Territorial - Routes
       summary: Geometria de uma rota por origem
-      description: Retorna a geometria GeoJSON e detalhes da rota a partir de uma origem específica.
+      description: Retorna a geometria GeoJSON e detalhes da rota a partir de uma
+        origem específica.
       operationId: get_route_geometry_api_v1_routes__route_id__geometry_get
       parameters:
       - name: route_id
@@ -2931,8 +2959,11 @@ paths:
       tags:
       - Territorial - Routes
       summary: Atores associados a uma rota
-      description: Retorna lista paginada de estabelecimentos e pontos turísticos associados à rota.
+      description: Retorna lista paginada de estabelecimentos e pontos turísticos
+        associados à rota.
       operationId: get_route_actors_api_v1_routes__route_id__actors_get
+      security:
+      - HTTPBearer: []
       parameters:
       - name: route_id
         in: path
@@ -2979,9 +3010,9 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          description: Cursor de paginação (offset numérico)
+          description: Cursor opaco retornado em meta.next_cursor
           title: Cursor
-        description: Cursor de paginação (offset numérico)
+        description: Cursor opaco retornado em meta.next_cursor
       - name: limit
         in: query
         required: false
@@ -3000,18 +3031,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ActorListEnvelope'
-        '422':
-          description: Validation Error
+        '404':
+          description: Rota não encontrada.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Filtro ou cursor inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/routes/{route_id}/map:
     get:
       tags:
       - Territorial - Routes
       summary: Payload otimizado para renderização do mapa
-      description: Retorna bounds da rota e da cidade, geometria, pins com camada canônica e metadados visuais, além da legenda com contagens dos pins retornados.
+      description: Retorna bounds da rota e da cidade, geometria, pins com camada
+        canônica e metadados visuais, além da legenda com contagens dos pins retornados.
       operationId: get_route_map_payload_api_v1_routes__route_id__map_get
       parameters:
       - name: route_id
@@ -3086,7 +3124,8 @@ paths:
       tags:
       - Territorial - Routes
       summary: Pré-visualização de rota dinâmica
-      description: Calcula trajeto efêmero entre a coordenada do usuário e o destino oficial da rota sem persistência.
+      description: Calcula trajeto efêmero entre a coordenada do usuário e o destino
+        oficial da rota sem persistência.
       operationId: preview_route_api_v1_routes__route_id__preview_post
       parameters:
       - name: route_id
@@ -3144,7 +3183,8 @@ paths:
       tags:
       - Territorial - Actors
       summary: Categorias de atores
-      description: Retorna a taxonomia oficial de categorias de estabelecimentos e atrações.
+      description: Retorna a taxonomia oficial de categorias de estabelecimentos e
+        atrações.
       operationId: list_actor_categories_api_v1_actor_categories_get
       responses:
         '200':
@@ -3160,6 +3200,8 @@ paths:
       summary: Detalhes de um ator
       description: Retorna informações completas de um ator ou estabelecimento específico.
       operationId: get_actor_detail_api_v1_actors__actor_id__get
+      security:
+      - HTTPBearer: []
       parameters:
       - name: actor_id
         in: path
@@ -3175,6 +3217,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ActorDetailEnvelope'
+        '404':
+          description: Ator não encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: Validation Error
           content:
@@ -3229,7 +3277,8 @@ paths:
       tags:
       - User - Profile & Preferences
       summary: Substituir avatar
-      description: Recebe uma imagem multipart, sanitiza e gera derivados WebP no backend, publicando-os no Supabase Storage sem expor credenciais privilegiadas.
+      description: Recebe uma imagem multipart, sanitiza e gera derivados WebP no
+        backend, publicando-os no Supabase Storage sem expor credenciais privilegiadas.
       operationId: replace_avatar_api_v1_me_avatar_post
       requestBody:
         content:
@@ -3263,7 +3312,8 @@ paths:
       tags:
       - User - Profile & Preferences
       summary: Excluir a conta atual
-      description: Remove avatares, dados de domínio e identidade Auth. É idempotente enquanto o JWT residual ainda for válido.
+      description: Remove avatares, dados de domínio e identidade Auth. É idempotente
+        enquanto o JWT residual ainda for válido.
       operationId: delete_my_account_api_v1_me_account_delete
       responses:
         '200':
@@ -3291,7 +3341,8 @@ paths:
       tags:
       - User - Profile & Preferences
       summary: Preferências do usuário atual
-      description: Retorna as preferências de acessibilidade, região e navegação do usuário.
+      description: Retorna as preferências de acessibilidade, região e navegação do
+        usuário.
       operationId: get_my_preferences_api_v1_me_preferences_get
       responses:
         '200':
@@ -3336,6 +3387,28 @@ paths:
       summary: Rotas salvas pelo usuário atual
       description: Retorna a lista paginada de rotas favoritadas pelo usuário autenticado.
       operationId: get_my_favorite_routes_api_v1_me_favorite_routes_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Cursor opaco retornado em meta.next_cursor
+          title: Cursor
+        description: Cursor opaco retornado em meta.next_cursor
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Limit
       responses:
         '200':
           description: Successful Response
@@ -3343,8 +3416,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RouteListEnvelope'
-      security:
-      - HTTPBearer: []
+        '401':
+          description: Autenticação obrigatória.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Cursor inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/me/favorite-routes/{route_id}:
     put:
       tags:
@@ -3369,6 +3452,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StandardSuccessResponse'
+        '401':
+          description: Autenticação obrigatória.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Rota não encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: Validation Error
           content:
@@ -3398,6 +3493,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StandardSuccessResponse'
+        '401':
+          description: Autenticação obrigatória.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: Validation Error
           content:
@@ -3411,6 +3512,28 @@ paths:
       summary: Atores salvos pelo usuário atual
       description: Retorna a lista paginada de atores favoritados pelo usuário autenticado.
       operationId: get_my_favorite_actors_api_v1_me_favorite_actors_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Cursor opaco retornado em meta.next_cursor
+          title: Cursor
+        description: Cursor opaco retornado em meta.next_cursor
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Limit
       responses:
         '200':
           description: Successful Response
@@ -3418,8 +3541,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ActorListEnvelope'
-      security:
-      - HTTPBearer: []
+        '401':
+          description: Autenticação obrigatória.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Cursor inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/me/favorite-actors/{actor_id}:
     put:
       tags:
@@ -3444,6 +3577,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StandardSuccessResponse'
+        '401':
+          description: Autenticação obrigatória.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Ator não encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: Validation Error
           content:
@@ -3473,6 +3618,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StandardSuccessResponse'
+        '401':
+          description: Autenticação obrigatória.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: Validation Error
           content:
@@ -3484,7 +3635,8 @@ paths:
       tags:
       - User - Profile & Preferences
       summary: Histórico de viagens do usuário
-      description: Retorna o histórico de viagens iniciadas e concluídas pelo usuário autenticado.
+      description: Retorna o histórico de viagens iniciadas e concluídas pelo usuário
+        autenticado.
       operationId: get_my_trips_api_v1_me_trips_get
       responses:
         '200':
@@ -3499,7 +3651,8 @@ paths:
       tags:
       - User - Profile & Preferences
       summary: Iniciar nova viagem
-      description: Cria um novo registro de viagem para o usuário autenticado na rota informada.
+      description: Cria um novo registro de viagem para o usuário autenticado na rota
+        informada.
       operationId: create_trip_api_v1_me_trips_post
       requestBody:
         content:
@@ -3699,6 +3852,10 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ResolvedMediaItemSchema'
           - type: 'null'
+        is_favorite:
+          type: boolean
+          title: Is Favorite
+          default: false
         gallery:
           items:
             $ref: '#/components/schemas/ResolvedMediaItemSchema'
@@ -3791,6 +3948,10 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ResolvedMediaItemSchema'
           - type: 'null'
+        is_favorite:
+          type: boolean
+          title: Is Favorite
+          default: false
       type: object
       required:
       - category_label
@@ -4518,7 +4679,8 @@ components:
           - type: 'null'
       type: object
       title: AdminContractSchema
-      description: Cross-cutting mutation contract for subsequent administrative CRUD tasks.
+      description: Cross-cutting mutation contract for subsequent administrative CRUD
+        tasks.
     AdminJobReferenceSchema:
       properties:
         job_id:
@@ -5421,7 +5583,8 @@ components:
           - type: string
           - type: 'null'
           title: Expected Version
-          description: Expected ISO string timestamp or version hash for optimistic concurrency
+          description: Expected ISO string timestamp or version hash for optimistic
+            concurrency
       type: object
       title: AdminRouteUpdateSchema
     AdminScopeAccessSchema:
@@ -5451,7 +5614,8 @@ components:
       - roles
       - capabilities
       title: AdminScopeAccessSchema
-      description: Roles and capabilities that are valid together in one authorization scope.
+      description: Roles and capabilities that are valid together in one authorization
+        scope.
     AdminUploadReferenceSchema:
       properties:
         upload_id:
@@ -5969,15 +6133,6 @@ components:
       - request_id
       title: ErrorResponse
       description: Standard error response envelope.
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
     FAQItemSchema:
       properties:
         id:
@@ -5999,6 +6154,15 @@ components:
       - question
       - answer
       title: FAQItemSchema
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
     HealthDatabaseStatus:
       properties:
         status:
@@ -6026,6 +6190,22 @@ components:
           format: date-time
           title: Timestamp
           example: '2026-08-11T15:00:00Z'
+        version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Version
+          example: 1.0.0
+        commit_sha:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Commit Sha
+          example: a1b2c3d4e5
+        database:
+          anyOf:
+          - $ref: '#/components/schemas/HealthDatabaseStatus'
+          - type: 'null'
       type: object
       required:
       - timestamp
@@ -6690,6 +6870,10 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ResolvedMediaItemSchema'
           - type: 'null'
+        is_favorite:
+          type: boolean
+          title: Is Favorite
+          default: false
         gallery:
           items:
             $ref: '#/components/schemas/ResolvedMediaItemSchema'
@@ -7018,6 +7202,10 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ResolvedMediaItemSchema'
           - type: 'null'
+        is_favorite:
+          type: boolean
+          title: Is Favorite
+          default: false
       type: object
       required:
       - id
@@ -7292,10 +7480,13 @@ components:
           default: false
         text_scale:
           type: number
+          maximum: 3.0
+          minimum: 0.5
           title: Text Scale
           default: 1.0
         locale:
           type: string
+          maxLength: 10
           title: Locale
           default: pt-BR
         created_at:
@@ -7336,11 +7527,14 @@ components:
         text_scale:
           anyOf:
           - type: number
+            maximum: 3.0
+            minimum: 0.5
           - type: 'null'
           title: Text Scale
         locale:
           anyOf:
           - type: string
+            maxLength: 10
           - type: 'null'
           title: Locale
       type: object

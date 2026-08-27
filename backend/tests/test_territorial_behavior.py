@@ -78,13 +78,14 @@ async def test_list_routes_filtered_and_paginated():
 
     repo = TerritorialRepository(mock_db)
     region_id = uuid.uuid4()
-    routes, total = await repo.list_routes(
-        region_id=region_id, q="Test", verified=True, limit=10, offset=0
+    routes, total, has_more = await repo.list_routes(
+        region_id=region_id, q="Test", verified=True, limit=10
     )
 
     assert total == 2
     assert len(routes) == 2
     assert routes[0].title == "Route 1"
+    assert has_more is False
 
 
 @pytest.mark.asyncio
@@ -174,13 +175,13 @@ async def test_list_actor_categories_and_actors():
     # Mock list_route_actors execute
     actor = Actor(id=uuid.uuid4(), name="Restaurante Pindobal", category_id=cat.id)
     mock_exec = MagicMock()
-    mock_exec.all.return_value = [(actor, "culinaria", "Culinária", -2.5, -48.0)]
+    mock_exec.all.return_value = [(actor, "culinaria", "Culinária", -2.5, -48.0, 0)]
     mock_db.execute.return_value = mock_exec
     mock_db.scalar.return_value = 1
 
     repo = TerritorialRepository(mock_db)
     cats = await repo.list_actor_categories()
-    actors, total = await repo.list_route_actors(
+    actors, total, has_more = await repo.list_route_actors(
         uuid.uuid4(), q="Pindobal", category_slug="culinaria"
     )
 
@@ -192,6 +193,7 @@ async def test_list_actor_categories_and_actors():
     assert slug == "culinaria"
     assert lat == -2.5
     assert lon == -48.0
+    assert has_more is False
 
 
 @pytest.mark.asyncio
@@ -334,7 +336,7 @@ async def test_route_map_payload_fallback_origin_and_bounds():
     service.repo.get_route_by_id = AsyncMock(return_value=route_mock)
     service.repo.get_route_geometry = AsyncMock(return_value=(geom_mock, None))
     # No actors with coords
-    service.repo.list_route_actors = AsyncMock(return_value=([], 0))
+    service.repo.list_route_actors = AsyncMock(return_value=([], 0, False))
     service.repo.list_region_essential_actors = AsyncMock(return_value=[])
     service.repo.get_region_bounds = AsyncMock(return_value=None)
 

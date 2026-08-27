@@ -106,7 +106,8 @@ export default function ActorDetailScreen() {
 
   const greenSeal = actor.green_badge_status === 'verified';
   const categoryLabel = actor.category.label;
-  const isFavorite = favoriteActorsQuery.data?.some((favorite) => favorite.id === actor.id) ?? false;
+  const isFavorite = actor.is_favorite
+    || (favoriteActorsQuery.data?.some((favorite) => favorite.id === actor.id) ?? false);
   const actorSummary: ActorSummary = {
     id: actor.id,
     slug: actor.slug,
@@ -121,6 +122,7 @@ export default function ActorDetailScreen() {
     google_rating: actor.google_rating,
     cover_image_url: actor.cover_image_url,
     cover_media: actor.cover_media,
+    is_favorite: isFavorite,
   };
   const coverImageUrl = actor.cover_media?.url ?? actor.cover_image_url;
 

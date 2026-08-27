@@ -1,10 +1,11 @@
 """Repository layer for user domain data access (ECO-0604, ECO-0605) with AsyncSession."""
 
 import uuid
+from datetime import datetime
 from typing import Any
 
 from geoalchemy2.functions import ST_X, ST_Y
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -89,10 +90,13 @@ class UserRepository:
         return pref
 
     async def get_favorite_routes(
-        self, user_id: uuid.UUID, limit: int = 20, offset: int = 0
-    ) -> tuple[list[Route], int]:
+        self,
+        user_id: uuid.UUID,
+        limit: int = 20,
+        after: tuple[datetime, uuid.UUID] | None = None,
+    ) -> tuple[list[Route], int, bool]:
         stmt = (
-            select(Route)
+            select(Route, FavoriteRoute.created_at)
             .join(
                 FavoriteRoute,
                 (FavoriteRoute.route_id == Route.id) & (FavoriteRoute.user_id == user_id),
@@ -103,9 +107,25 @@ class UserRepository:
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total = (await self.db.scalar(count_stmt)) or 0
 
-        stmt = stmt.order_by(FavoriteRoute.created_at.desc()).offset(offset).limit(limit)
-        res = await self.db.scalars(stmt)
-        return list(res.all()), total
+        if after is not None:
+            created_at, route_id = after
+            stmt = stmt.where(
+                or_(
+                    FavoriteRoute.created_at < created_at,
+                    and_(FavoriteRoute.created_at == created_at, Route.id < route_id),
+                )
+            )
+        rows = (
+            await self.db.execute(
+                stmt.order_by(FavoriteRoute.created_at.desc(), Route.id.desc()).limit(limit + 1)
+            )
+        ).all()
+        has_more = len(rows) > limit
+        routes = []
+        for route, created_at in rows[:limit]:
+            route._transient_favorite_created_at = created_at
+            routes.append(route)
+        return routes, total, has_more
 
     async def add_favorite_route(self, user_id: uuid.UUID, route_id: uuid.UUID) -> bool:
         route_stmt = select(Route).where(Route.id == route_id, Route.deleted_at.is_(None))
@@ -137,14 +157,18 @@ class UserRepository:
         return True
 
     async def get_favorite_actors(
-        self, user_id: uuid.UUID, limit: int = 20, offset: int = 0
-    ) -> tuple[list[tuple[Actor, str, float | None, float | None]], int]:
+        self,
+        user_id: uuid.UUID,
+        limit: int = 20,
+        after: tuple[datetime, uuid.UUID] | None = None,
+    ) -> tuple[list[tuple[Actor, str, float | None, float | None]], int, bool]:
         stmt = (
             select(
                 Actor,
                 ActorCategory.slug,
                 ST_Y(Actor.location).label("lat"),
                 ST_X(Actor.location).label("lon"),
+                FavoriteActor.created_at,
             )
             .join(
                 FavoriteActor,
@@ -156,19 +180,30 @@ class UserRepository:
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total = (await self.db.scalar(count_stmt)) or 0
 
-        stmt = stmt.order_by(FavoriteActor.created_at.desc()).offset(offset).limit(limit)
+        if after is not None:
+            created_at, actor_id = after
+            stmt = stmt.where(
+                or_(
+                    FavoriteActor.created_at < created_at,
+                    and_(FavoriteActor.created_at == created_at, Actor.id < actor_id),
+                )
+            )
+        stmt = stmt.order_by(FavoriteActor.created_at.desc(), Actor.id.desc()).limit(limit + 1)
         res = await self.db.execute(stmt)
         rows = res.all()
-        result: list[tuple[Actor, str, float | None, float | None]] = [
-            (
-                row[0],
-                row[1],
-                float(row[2]) if row[2] is not None else None,
-                float(row[3]) if row[3] is not None else None,
+        has_more = len(rows) > limit
+        result: list[tuple[Actor, str, float | None, float | None]] = []
+        for row in rows[:limit]:
+            row[0]._transient_favorite_created_at = row[4]
+            result.append(
+                (
+                    row[0],
+                    row[1],
+                    float(row[2]) if row[2] is not None else None,
+                    float(row[3]) if row[3] is not None else None,
+                )
             )
-            for row in rows
-        ]
-        return result, total
+        return result, total, has_more
 
     async def add_favorite_actor(self, user_id: uuid.UUID, actor_id: uuid.UUID) -> bool:
         actor_stmt = select(Actor).where(Actor.id == actor_id)

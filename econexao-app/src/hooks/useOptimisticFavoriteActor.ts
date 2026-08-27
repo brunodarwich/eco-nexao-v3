@@ -24,8 +24,23 @@ export function useOptimisticFavoriteActor() {
       }
     },
     onMutate: async ({ actor, isFavorite }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.routes.all() });
+      await queryClient.cancelQueries({ queryKey: queryKeys.actorDetail(actor.id) });
       await queryClient.cancelQueries({ queryKey: favoritesKey });
+      const previousActorQueries = queryClient.getQueriesData({ queryKey: queryKeys.routes.all() });
+      const previousActorDetail = queryClient.getQueryData(queryKeys.actorDetail(actor.id));
       const previousFavorites = queryClient.getQueryData<ActorListEnvelope>(favoritesKey);
+
+      queryClient.setQueriesData<any>({ queryKey: queryKeys.routes.all() }, (old: any) => {
+        if (!old) return old;
+        const update = (item: ActorSummary) => item.id === actor.id ? { ...item, is_favorite: isFavorite } : item;
+        if (Array.isArray(old.pages)) return { ...old, pages: old.pages.map((page: ActorListEnvelope) => ({ ...page, data: page.data.map(update) })) };
+        if (Array.isArray(old.data)) return { ...old, data: old.data.map(update) };
+        return old;
+      });
+      queryClient.setQueryData<any>(queryKeys.actorDetail(actor.id), (old: any) =>
+        old?.data ? { ...old, data: { ...old.data, is_favorite: isFavorite } } : old
+      );
 
       queryClient.setQueryData<ActorListEnvelope>(favoritesKey, (old) => {
         const current = old ?? { data: [], meta: { total: 0, limit: 20 } };
@@ -42,7 +57,7 @@ export function useOptimisticFavoriteActor() {
         };
       });
 
-      return { previousFavorites };
+      return { previousFavorites, previousActorQueries, previousActorDetail };
     },
     onSuccess: (_data, { isFavorite }) => {
       AccessibilityInfo.announceForAccessibility(
@@ -55,12 +70,18 @@ export function useOptimisticFavoriteActor() {
       } else {
         queryClient.removeQueries({ queryKey: favoritesKey, exact: true });
       }
+      context?.previousActorQueries?.forEach(([queryKey, data]) => queryClient.setQueryData(queryKey, data));
+      if (context?.previousActorDetail !== undefined) {
+        queryClient.setQueryData(queryKeys.actorDetail(_variables.actor.id), context.previousActorDetail);
+      }
       AccessibilityInfo.announceForAccessibility(
         'Falha ao atualizar favorito do ator. Alteração desfeita.'
       );
     },
-    onSettled: () => {
+    onSettled: (_data, _error, variables) => {
       void queryClient.invalidateQueries({ queryKey: favoritesKey });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.routes.all() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.actorDetail(variables.actor.id) });
     },
   });
 

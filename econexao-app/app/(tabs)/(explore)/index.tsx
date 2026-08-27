@@ -5,7 +5,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  ImageBackground,
   Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -21,8 +20,6 @@ import { useRegionsQuery, useRoutesQuery } from '../../../src/hooks/queries';
 import { useOptimisticFavoriteRoute } from '../../../src/hooks/useOptimisticFavoriteRoute';
 import { theme } from '../../../src/theme/theme';
 import { makeAccessibleButton } from '../../../src/utils/accessibility';
-
-const HERO_FULL_BG = require('../../../assets/images/alter_do_chao_hero.jpg');
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -47,11 +44,8 @@ export default function HomeScreen() {
     <View style={styles.screenContainer}>
       <AppHeader />
 
-      <ImageBackground
-        source={HERO_FULL_BG}
+      <View
         style={styles.fullScreenBackground}
-        imageStyle={styles.fullScreenBackgroundImage}
-        resizeMode="cover"
       >
         {/* Scrim Overlay contínuo com escurecimento progressivo para legibilidade AAA */}
         <View style={styles.scrimOverlay} />
@@ -80,13 +74,13 @@ export default function HomeScreen() {
                 style={styles.regionSelectorPill}
                 onPress={() => setIsRegionModalOpen(true)}
                 {...makeAccessibleButton(
-                  `Região atual: ${activeRegion?.name ?? 'Santarém / Alter do Chão'}`,
+                  `Região atual: ${activeRegion?.name ?? 'indisponível'}`,
                   'Toque para selecionar outra região'
                 )}
               >
                 <Ionicons name="location-sharp" size={17} color={theme.colors.surfaceWhite} />
                 <Text style={styles.regionPillText} numberOfLines={1}>
-                  {activeRegion?.name ?? 'Santarém / Alter do Chão'}
+                  {activeRegion?.name ?? 'Região indisponível'}
                 </Text>
                 <Ionicons name="chevron-down" size={16} color={theme.colors.surfaceWhite} />
               </TouchableOpacity>
@@ -153,14 +147,14 @@ export default function HomeScreen() {
                 contentContainerStyle={styles.carouselScroll}
               >
                 {featuredQuery.data.data.map((route) => {
-                  const isFav = savedRouteIds.has(route.id);
+                  const isFav = (route as typeof route & { is_favorite?: boolean }).is_favorite ?? savedRouteIds.has(route.id);
                   return (
                     <CompactRouteCard
                       key={route.id}
                       route={route}
                       isFavorite={isFav}
                       onPress={() => router.push(`/route/${route.id}`)}
-                      onToggleFavorite={() => toggleFavorite(route.id, isFav)}
+                      onToggleFavorite={() => toggleFavorite(route, isFav)}
                     />
                   );
                 })}
@@ -232,7 +226,7 @@ export default function HomeScreen() {
                     route={route}
                     isFavorite={true}
                     onPress={() => router.push(`/route/${route.id}`)}
-                    onToggleFavorite={() => toggleFavorite(route.id, true)}
+                    onToggleFavorite={() => toggleFavorite(route, true)}
                   />
                 ))}
               </ScrollView>
@@ -246,7 +240,7 @@ export default function HomeScreen() {
             )}
           </View>
         </ScrollView>
-      </ImageBackground>
+      </View>
 
       <RegionSelectorModal
         visible={isRegionModalOpen}
@@ -263,10 +257,6 @@ const styles = StyleSheet.create({
   },
   fullScreenBackground: {
     flex: 1,
-    width: '100%',
-    height: '100%',
-  },
-  fullScreenBackgroundImage: {
     width: '100%',
     height: '100%',
   },

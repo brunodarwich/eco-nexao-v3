@@ -8,7 +8,7 @@ from typing import cast as typing_cast
 
 from geoalchemy2 import Geography, Geometry
 from geoalchemy2.functions import ST_X, ST_Y, ST_AsGeoJSON
-from sqlalchemy import cast, func, or_, select
+from sqlalchemy import and_, cast, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -19,6 +19,7 @@ from app.models.domain import (
     ActorCategory,
     ActorExternalRef,
     ExternalSource,
+    FavoriteActor,
     FavoriteRoute,
     Region,
     Route,
@@ -65,8 +66,8 @@ class TerritorialRepository:
         user_id: uuid.UUID | None = None,
         verified: bool | None = None,
         limit: int = 20,
-        offset: int = 0,
-    ) -> tuple[list[Route], int]:
+        after: tuple[str, uuid.UUID] | None = None,
+    ) -> tuple[list[Route], int, bool]:
         """List active routes with filtering, search and pagination."""
         stmt = select(Route).where(Route.deleted_at.is_(None), Route.status == "active")
 
@@ -93,12 +94,28 @@ class TerritorialRepository:
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total = (await self.db.scalar(count_stmt)) or 0
 
-        # Paginate
-        stmt = stmt.order_by(Route.title.asc()).offset(offset).limit(limit)
+        if after is not None:
+            title, route_id = after
+            stmt = stmt.where(
+                or_(Route.title > title, and_(Route.title == title, Route.id > route_id))
+            )
+        stmt = stmt.order_by(Route.title.asc(), Route.id.asc()).limit(limit + 1)
         res = await self.db.scalars(stmt)
         routes = list(res.all())
+        has_more = len(routes) > limit
+        return routes[:limit], total, has_more
 
-        return routes, total
+    async def get_favorite_route_ids(
+        self, user_id: uuid.UUID, route_ids: list[uuid.UUID]
+    ) -> set[uuid.UUID]:
+        if not route_ids:
+            return set()
+        rows = await self.db.scalars(
+            select(FavoriteRoute.route_id).where(
+                FavoriteRoute.user_id == user_id, FavoriteRoute.route_id.in_(route_ids)
+            )
+        )
+        return set(rows.all())
 
     async def get_route_by_id(self, route_id: uuid.UUID) -> Route | None:
         """Fetch route detail by ID with preloaded origins."""
@@ -202,8 +219,8 @@ class TerritorialRepository:
         category_slug: str | None = None,
         origin_id: uuid.UUID | None = None,
         limit: int = 20,
-        offset: int = 0,
-    ) -> tuple[list[tuple[Actor, str, float | None, float | None]], int]:
+        after: tuple[int, str, uuid.UUID] | None = None,
+    ) -> tuple[list[tuple[Actor, str, float | None, float | None]], int, bool]:
         """List route actors with PostGIS coordinates, search and pagination."""
         stmt = (
             select(
@@ -212,6 +229,7 @@ class TerritorialRepository:
                 ActorCategory.label.label("category_label"),
                 ST_Y(cast(Actor.location, Geometry)).label("latitude"),
                 ST_X(cast(Actor.location, Geometry)).label("longitude"),
+                RouteActor.sort_order.label("route_sort_order"),
             )
             .join(RouteActor, Actor.id == RouteActor.actor_id)
             .join(ActorCategory, Actor.category_id == ActorCategory.id)
@@ -237,6 +255,7 @@ class TerritorialRepository:
                 or_(
                     Actor.name.ilike(search_term),
                     Actor.description.ilike(search_term),
+                    Actor.sub_category.ilike(search_term),
                     Actor.city.ilike(search_term),
                 )
             )
@@ -245,15 +264,29 @@ class TerritorialRepository:
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total = (await self.db.scalar(count_stmt)) or 0
 
-        # Paginate
+        if after is not None:
+            sort_order, name, actor_id = after
+            stmt = stmt.where(
+                or_(
+                    RouteActor.sort_order > sort_order,
+                    and_(RouteActor.sort_order == sort_order, Actor.name > name),
+                    and_(
+                        RouteActor.sort_order == sort_order,
+                        Actor.name == name,
+                        Actor.id > actor_id,
+                    ),
+                )
+            )
         stmt = (
-            stmt.order_by(RouteActor.sort_order.asc(), Actor.name.asc()).offset(offset).limit(limit)
+            stmt.order_by(RouteActor.sort_order.asc(), Actor.name.asc(), Actor.id.asc())
+            .limit(limit + 1)
         )
         exec_res = await self.db.execute(stmt)
         results = exec_res.all()
 
+        has_more = len(results) > limit
         formatted_actors = []
-        for row in results:
+        for row in results[:limit]:
             actor = row[0]
             cat_slug = row[1]
             cat_label = row[2]
@@ -263,9 +296,21 @@ class TerritorialRepository:
             actor._transient_cat_label = cat_label
             actor._transient_lat = lat
             actor._transient_lon = lon
+            actor._transient_route_sort_order = int(row[5])
             formatted_actors.append((actor, cat_slug, lat, lon))
+        return formatted_actors, total, has_more
 
-        return formatted_actors, total
+    async def get_favorite_actor_ids(
+        self, user_id: uuid.UUID, actor_ids: list[uuid.UUID]
+    ) -> set[uuid.UUID]:
+        if not actor_ids:
+            return set()
+        rows = await self.db.scalars(
+            select(FavoriteActor.actor_id).where(
+                FavoriteActor.user_id == user_id, FavoriteActor.actor_id.in_(actor_ids)
+            )
+        )
+        return set(rows.all())
 
     async def find_route_corridor_actors(
         self,

@@ -3,29 +3,37 @@ import { AccessibilityInfo } from 'react-native';
 import { apiClient } from '../api/client';
 import { queryKeys } from '../api/queryKeys';
 import type { RouteListEnvelope, RouteDetailEnvelope, RouteSummary } from '../api/types';
+import { useAuth } from './useAuth';
 
 interface FavoriteRouteVariables {
-  routeId: string;
+  route?: RouteSummary | string;
+  routeId?: string;
   isFavorite: boolean;
 }
 
 export function useOptimisticFavoriteRoute() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const favoritesKey = queryKeys.myFavoriteRoutes(user?.id);
 
   const mutation = useMutation({
-    mutationFn: async ({ routeId, isFavorite }: FavoriteRouteVariables) => {
+    mutationFn: async ({ route, routeId: legacyRouteId, isFavorite }: FavoriteRouteVariables) => {
+      const routeId = legacyRouteId ?? (typeof route === 'string' ? route : route?.id);
+      if (!routeId) throw new Error('Rota inválida para favorito.');
       if (isFavorite) {
         return apiClient.addFavoriteRoute(routeId);
       } else {
         return apiClient.removeFavoriteRoute(routeId);
       }
     },
-    onMutate: async ({ routeId, isFavorite }) => {
+    onMutate: async ({ route, routeId: legacyRouteId, isFavorite }) => {
+      const routeId = legacyRouteId ?? (typeof route === 'string' ? route : route?.id);
+      if (!routeId) return {};
       await queryClient.cancelQueries({ queryKey: queryKeys.routes.all() });
-      await queryClient.cancelQueries({ queryKey: queryKeys.myFavoriteRoutes() });
+      await queryClient.cancelQueries({ queryKey: favoritesKey });
 
       const previousRoutesQueries = queryClient.getQueriesData({ queryKey: queryKeys.routes.all() });
-      const previousFavoriteQueries = queryClient.getQueriesData({ queryKey: queryKeys.myFavoriteRoutes() });
+      const previousFavoriteQueries = queryClient.getQueriesData({ queryKey: favoritesKey });
 
       // Atualiza otimista todas as listagens de rotas no cache (simples ou infinitas)
       queryClient.setQueriesData<any>(
@@ -67,6 +75,18 @@ export function useOptimisticFavoriteRoute() {
         }
       );
 
+      queryClient.setQueryData<RouteListEnvelope>(favoritesKey, (old) => {
+        const current = old ?? { data: [], meta: { total: 0, limit: 20 } };
+        const existed = current.data.some((item) => item.id === routeId);
+        const remaining = current.data.filter((item) => item.id !== routeId);
+        const delta = isFavorite && !existed ? 1 : !isFavorite && existed ? -1 : 0;
+        return {
+          ...current,
+          data: isFavorite && route && typeof route !== 'string' ? [{ ...route, is_favorite: true } as RouteSummary, ...remaining] : remaining,
+          meta: { ...current.meta, total: Math.max(0, current.meta.total + delta) },
+        };
+      });
+
       return { previousRoutesQueries, previousFavoriteQueries };
     },
     onSuccess: (_data, { isFavorite }) => {
@@ -91,13 +111,13 @@ export function useOptimisticFavoriteRoute() {
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.routes.all() });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.myFavoriteRoutes() });
+      void queryClient.invalidateQueries({ queryKey: favoritesKey });
     },
   });
 
-  const toggleFavorite = (routeId: string, currentIsFavorite: boolean) => {
+  const toggleFavorite = (route: RouteSummary | string, currentIsFavorite: boolean) => {
     if (mutation.isPending) return;
-    mutation.mutate({ routeId, isFavorite: !currentIsFavorite });
+    mutation.mutate({ route, isFavorite: !currentIsFavorite });
   };
 
   return {
@@ -108,4 +128,3 @@ export function useOptimisticFavoriteRoute() {
     mutate: mutation.mutate,
   };
 }
-

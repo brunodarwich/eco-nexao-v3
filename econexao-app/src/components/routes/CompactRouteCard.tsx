@@ -1,13 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Pressable, Image, ImageSourcePropType } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Pressable, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
 import type { RouteSummary } from '../../api/types';
 import { Badge } from '../common/Badge';
 import { makeAccessibleButton } from '../../utils/accessibility';
-
-// Fallback local image if cover_image_url is not set
-const DEFAULT_ROUTE_IMAGE: ImageSourcePropType = require('../../../assets/images/pindobal_route_hero.jpg');
 
 interface CompactRouteCardProps {
   route: RouteSummary;
@@ -22,10 +19,6 @@ export const CompactRouteCard: React.FC<CompactRouteCardProps> = ({
   onToggleFavorite,
   isFavorite = false,
 }) => {
-  const imageSource = route.cover_image_url
-    ? { uri: route.cover_image_url }
-    : DEFAULT_ROUTE_IMAGE;
-
   return (
     <View style={styles.card}>
       <Pressable
@@ -37,12 +30,7 @@ export const CompactRouteCard: React.FC<CompactRouteCardProps> = ({
         )}
       >
         <View style={styles.imageContainer}>
-          <Image
-            source={imageSource}
-            style={styles.image}
-            resizeMode="cover"
-            accessibilityLabel={`Imagem da rota ${route.title}`}
-          />
+          {route.cover_image_url ? <Image source={{ uri: route.cover_image_url }} style={styles.image} resizeMode="cover" accessibilityLabel={`Imagem da rota ${route.title}`} /> : <View style={styles.imagePlaceholder}><Ionicons name="map-outline" size={36} color={theme.colors.brandSage} /></View>}
           <View style={styles.gradientOverlay} />
 
           <View style={styles.topRow}>
@@ -57,7 +45,7 @@ export const CompactRouteCard: React.FC<CompactRouteCardProps> = ({
         <View style={styles.contentContainer}>
           <View style={styles.categoryRow}>
             <Text style={styles.categoryText} numberOfLines={1}>
-              {route.best_season ? route.best_season : 'Trilha & Rio'}
+              {route.best_season ?? ''}
             </Text>
           </View>
 
@@ -69,7 +57,7 @@ export const CompactRouteCard: React.FC<CompactRouteCardProps> = ({
             <View style={styles.infoBadge}>
               <Ionicons name="navigate-outline" size={13} color={theme.colors.brandSage} />
               <Text style={styles.infoText} numberOfLines={1}>
-                {route.city ? `${route.city}, ${route.state_code}` : 'Distância verificada'}
+                {[route.city, route.state_code].filter(Boolean).join(', ')}
               </Text>
             </View>
           </View>
@@ -130,6 +118,12 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  imagePlaceholder: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.surfaceContainerLow,
+  },
   gradientOverlay: {
     position: 'absolute',
     top: 0,
@@ -171,7 +165,7 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     ...theme.typography.labelSm,
-    color: theme.colors.brandSage,
+    color: theme.colors.brandForest,
     textTransform: 'uppercase',
     fontWeight: '700',
     letterSpacing: 0.5,

@@ -1134,6 +1134,11 @@ export interface components {
             /** Cover Image Url */
             cover_image_url?: string | null;
             cover_media?: components["schemas"]["ResolvedMediaItemSchema"] | null;
+            /**
+             * Is Favorite
+             * @default false
+             */
+            is_favorite: boolean;
             /** Gallery */
             gallery?: components["schemas"]["ResolvedMediaItemSchema"][];
             /** Accessibility Features */
@@ -1183,6 +1188,11 @@ export interface components {
             /** Cover Image Url */
             cover_image_url?: string | null;
             cover_media?: components["schemas"]["ResolvedMediaItemSchema"] | null;
+            /**
+             * Is Favorite
+             * @default false
+             */
+            is_favorite: boolean;
         };
         /**
          * AdminAccessSchema
@@ -2352,11 +2362,6 @@ export interface components {
              */
             request_id: string;
         };
-        /** HTTPValidationError */
-        HTTPValidationError: {
-            /** Detail */
-            detail?: components["schemas"]["ValidationError"][];
-        };
         /** FAQItemSchema */
         FAQItemSchema: {
             /** Id */
@@ -2370,6 +2375,11 @@ export interface components {
              * @default Geral
              */
             category: string;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
         };
         /**
          * HealthDatabaseStatus
@@ -2406,6 +2416,17 @@ export interface components {
              * @example 2026-08-11T15:00:00Z
              */
             timestamp: string;
+            /**
+             * Version
+             * @example 1.0.0
+             */
+            version?: string | null;
+            /**
+             * Commit Sha
+             * @example a1b2c3d4e5
+             */
+            commit_sha?: string | null;
+            database?: components["schemas"]["HealthDatabaseStatus"] | null;
         };
         /** HelpLinkSchema */
         HelpLinkSchema: {
@@ -2814,6 +2835,11 @@ export interface components {
             /** Cover Image Url */
             cover_image_url?: string | null;
             cover_media?: components["schemas"]["ResolvedMediaItemSchema"] | null;
+            /**
+             * Is Favorite
+             * @default false
+             */
+            is_favorite: boolean;
             /** Gallery */
             gallery?: components["schemas"]["ResolvedMediaItemSchema"][];
             /** Origins */
@@ -3006,6 +3032,11 @@ export interface components {
             /** Cover Image Url */
             cover_image_url?: string | null;
             cover_media?: components["schemas"]["ResolvedMediaItemSchema"] | null;
+            /**
+             * Is Favorite
+             * @default false
+             */
+            is_favorite: boolean;
         };
         /** StandardSuccessData */
         StandardSuccessData: {
@@ -5913,7 +5944,7 @@ export interface operations {
                 saved?: boolean | null;
                 /** @description Filtrar rotas verificadas com selo */
                 verified?: boolean | null;
-                /** @description Cursor de paginação (offset numérico) */
+                /** @description Cursor opaco retornado em meta.next_cursor */
                 cursor?: string | null;
                 /** @description Quantidade máxima de itens */
                 limit?: number;
@@ -5933,13 +5964,22 @@ export interface operations {
                     "application/json": components["schemas"]["RouteListEnvelope"];
                 };
             };
-            /** @description Validation Error */
+            /** @description Filtro saved exige autenticação. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Filtro ou cursor inválido. */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -5962,6 +6002,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RouteDetailEnvelope"];
+                };
+            };
+            /** @description Rota não encontrada. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Validation Error */
@@ -6080,7 +6129,7 @@ export interface operations {
                 category?: string | null;
                 /** @description UUID da origem */
                 origin_id?: string | null;
-                /** @description Cursor de paginação (offset numérico) */
+                /** @description Cursor opaco retornado em meta.next_cursor */
                 cursor?: string | null;
                 /** @description Quantidade máxima de itens */
                 limit?: number;
@@ -6102,13 +6151,22 @@ export interface operations {
                     "application/json": components["schemas"]["ActorListEnvelope"];
                 };
             };
-            /** @description Validation Error */
+            /** @description Rota não encontrada. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Filtro ou cursor inválido. */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -6278,6 +6336,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ActorDetailEnvelope"];
+                };
+            };
+            /** @description Ator não encontrado. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Validation Error */
@@ -6479,7 +6546,11 @@ export interface operations {
     };
     get_my_favorite_routes_api_v1_me_favorite_routes_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Cursor opaco retornado em meta.next_cursor */
+                cursor?: string | null;
+                limit?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -6493,6 +6564,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RouteListEnvelope"];
+                };
+            };
+            /** @description Autenticação obrigatória. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Cursor inválido. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -6515,6 +6604,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StandardSuccessResponse"];
+                };
+            };
+            /** @description Autenticação obrigatória. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rota não encontrada. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Validation Error */
@@ -6548,6 +6655,15 @@ export interface operations {
                     "application/json": components["schemas"]["StandardSuccessResponse"];
                 };
             };
+            /** @description Autenticação obrigatória. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -6561,7 +6677,11 @@ export interface operations {
     };
     get_my_favorite_actors_api_v1_me_favorite_actors_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Cursor opaco retornado em meta.next_cursor */
+                cursor?: string | null;
+                limit?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -6575,6 +6695,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ActorListEnvelope"];
+                };
+            };
+            /** @description Autenticação obrigatória. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Cursor inválido. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -6597,6 +6735,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StandardSuccessResponse"];
+                };
+            };
+            /** @description Autenticação obrigatória. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Ator não encontrado. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Validation Error */
@@ -6628,6 +6784,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StandardSuccessResponse"];
+                };
+            };
+            /** @description Autenticação obrigatória. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Validation Error */

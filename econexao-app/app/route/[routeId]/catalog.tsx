@@ -7,7 +7,7 @@ import { CategoryFilters } from '../../../src/components/catalog/CategoryFilters
 import { AppHeader } from '../../../src/components/common/AppHeader';
 import { EmptyStateView, ErrorStateView, LoadingView } from '../../../src/components/common/UIStateViews';
 import { SearchInput } from '../../../src/components/common/SearchInput';
-import { useActorCategoriesQuery, useInfiniteRouteActorsQuery } from '../../../src/hooks/queries';
+import { flattenUniquePages, useActorCategoriesQuery, useInfiniteRouteActorsQuery } from '../../../src/hooks/queries';
 import { useMyFavoriteActorsQuery } from '../../../src/hooks/queries';
 import { useOptimisticFavoriteActor } from '../../../src/hooks/useOptimisticFavoriteActor';
 import { useAuth } from '../../../src/hooks/useAuth';
@@ -46,7 +46,7 @@ export default function CatalogScreen() {
     origin_id: originId,
   });
 
-  const allActors: ActorSummary[] = actorsQuery.data?.pages.flatMap((page) => page.data) ?? [];
+  const allActors: ActorSummary[] = flattenUniquePages(actorsQuery.data?.pages);
   const favoriteActorIds = new Set(favoriteActorsQuery.data?.map((actor) => actor.id) ?? []);
 
   return (
@@ -65,12 +65,15 @@ export default function CatalogScreen() {
           selectedCategory={category}
           onSelectCategory={setCategory}
         />
+        {categories.isPending && <LoadingView message="Carregando categorias..." />}
+        {categories.isError && <ErrorStateView message="Não foi possível carregar as categorias." onRetry={() => void categories.refetch()} />}
+        {favoriteActorsQuery.isError && <ErrorStateView message="Não foi possível carregar seus favoritos." onRetry={() => void favoriteActorsQuery.refetch()} />}
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         {actorsQuery.isPending ? (
           <LoadingView message="Carregando catálogo..." />
-        ) : actorsQuery.isError ? (
+        ) : actorsQuery.isError && allActors.length === 0 ? (
           <ErrorStateView
             title="Erro ao carregar catálogo"
             message="Não foi possível obter a lista de atores para esta rota."
@@ -79,7 +82,7 @@ export default function CatalogScreen() {
         ) : allActors.length > 0 ? (
           <>
             {allActors.map((summary) => {
-              const isFav = favoriteActorIds.has(summary.id);
+	              const isFav = (summary as ActorSummary & { is_favorite?: boolean }).is_favorite ?? favoriteActorIds.has(summary.id);
 
               return (
                 <ActorCard
@@ -109,6 +112,7 @@ export default function CatalogScreen() {
                 disabled={actorsQuery.isFetchingNextPage}
                 accessibilityRole="button"
                 accessibilityLabel="Carregar mais atores da rota"
+                accessibilityState={{ disabled: actorsQuery.isFetchingNextPage, busy: actorsQuery.isFetchingNextPage }}
               >
                 {actorsQuery.isFetchingNextPage ? (
                   <ActivityIndicator size="small" color="#059669" />
@@ -116,6 +120,9 @@ export default function CatalogScreen() {
                   <Text style={styles.loadMoreText}>Carregar Mais Estabelecimentos</Text>
                 )}
               </TouchableOpacity>
+            )}
+            {actorsQuery.isError && (
+              <ErrorStateView message="Não foi possível carregar mais estabelecimentos." onRetry={() => void actorsQuery.fetchNextPage()} />
             )}
           </>
         ) : (

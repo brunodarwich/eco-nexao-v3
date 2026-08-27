@@ -30,6 +30,14 @@ jest.mock('../../hooks/useAuth', () => ({
 }));
 
 jest.mock('../../hooks/queries', () => ({
+  flattenUniquePages: (pages?: Array<{ data: Array<{ id: string }> }>) => {
+    const seen = new Set<string>();
+    return (pages ?? []).flatMap((page) => page.data).filter((item) => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+  },
   useRegionsQuery: jest.fn().mockReturnValue({ data: [] }),
   useActorCategoriesQuery: jest.fn(),
   useInfiniteRouteActorsQuery: jest.fn(),

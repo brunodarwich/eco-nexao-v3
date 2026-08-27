@@ -117,6 +117,7 @@ describe('ECO-1901 — Dados reais, paginação e favoritos consistentes no App 
       category_label: 'Hospedagem',
       green_badge_status: 'verified',
       verification_status: 'verified',
+      is_favorite: false,
     };
     const initialActorList = {
       data: [],

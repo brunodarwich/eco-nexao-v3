@@ -95,6 +95,7 @@ class RouteSummarySchema(SchemaBase):
     best_season: str | None = None
     cover_image_url: str | None = None
     cover_media: ResolvedMediaItemSchema | None = None
+    is_favorite: bool = False
 
 
 class RouteListEnvelope(SchemaBase):
@@ -153,6 +154,7 @@ class RouteDetailSchema(SchemaBase):
     payment_info: str | None = None
     cover_image_url: str | None = None
     cover_media: ResolvedMediaItemSchema | None = None
+    is_favorite: bool = False
     gallery: list[ResolvedMediaItemSchema] = Field(default_factory=list)
     origins: list[RouteOriginSchema] = Field(default_factory=list)
 
@@ -368,6 +370,7 @@ class ActorSummarySchema(SchemaBase):
     google_rating: float | None = None
     cover_image_url: str | None = None
     cover_media: ResolvedMediaItemSchema | None = None
+    is_favorite: bool = False
 
 
 class ActorListEnvelope(SchemaBase):
@@ -416,6 +419,7 @@ class ActorDetailSchema(SchemaBase):
     google_review_count: int | None = None
     cover_image_url: str | None = None
     cover_media: ResolvedMediaItemSchema | None = None
+    is_favorite: bool = False
     gallery: list[ResolvedMediaItemSchema] = Field(default_factory=list)
     accessibility_features: list[dict[str, Any]] = Field(default_factory=list)
 

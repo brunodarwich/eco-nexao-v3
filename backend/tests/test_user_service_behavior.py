@@ -86,13 +86,14 @@ async def test_favorite_routes_management():
     mock_db.add.assert_called_once()
 
     mock_db.scalar.side_effect = [1]
-    mock_scalars = MagicMock()
-    mock_scalars.all.return_value = [route]
-    mock_db.scalars.return_value = mock_scalars
+    mock_exec = MagicMock()
+    mock_exec.all.return_value = [(route, datetime.now(UTC))]
+    mock_db.execute.return_value = mock_exec
 
-    fav_routes, total = await repo.get_favorite_routes(user_id)
+    fav_routes, total, has_more = await repo.get_favorite_routes(user_id)
     assert total == 1
     assert fav_routes == [route]
+    assert has_more is False
 
     mock_fav = MagicMock()
     mock_db.scalar.side_effect = [mock_fav]
@@ -117,10 +118,10 @@ async def test_favorite_actors_management():
     mock_db.scalar.side_effect = None
     mock_db.scalar.return_value = 1
     mock_exec = MagicMock()
-    mock_exec.all.return_value = [(actor, "culinaria", -2.5, -48.0)]
+    mock_exec.all.return_value = [(actor, "culinaria", -2.5, -48.0, datetime.now(UTC))]
     mock_db.execute.return_value = mock_exec
 
-    fav_actors, total = await repo.get_favorite_actors(user_id)
+    fav_actors, total, has_more = await repo.get_favorite_actors(user_id)
     assert total == 1
     assert len(fav_actors) == 1
     act, slug, lat, lon = fav_actors[0]
@@ -128,6 +129,7 @@ async def test_favorite_actors_management():
     assert slug == "culinaria"
     assert lat == -2.5
     assert lon == -48.0
+    assert has_more is False
 
 
 @pytest.mark.asyncio

@@ -206,7 +206,7 @@ def test_get_my_favorite_routes(
     data = response.json()
     assert "data" in data
     assert "meta" in data
-    service.get_favorite_routes.assert_awaited_once_with(user_id=user.id)
+    service.get_favorite_routes.assert_awaited_once_with(user_id=user.id, cursor=None, limit=20)
 
 
 def test_add_favorite_route_idempotent(
@@ -261,7 +261,7 @@ def test_get_my_favorite_actors(
     data = response.json()
     assert "data" in data
     assert "meta" in data
-    service.get_favorite_actors.assert_awaited_once_with(user_id=user.id)
+    service.get_favorite_actors.assert_awaited_once_with(user_id=user.id, cursor=None, limit=20)
 
 
 def test_add_favorite_actor_idempotent(
