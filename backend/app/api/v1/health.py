@@ -83,7 +83,5 @@ async def health_ready(
     include_in_schema=False,
 )
 async def health_error_probe() -> None:
-    """Controlled error probe endpoint (restricted to non-production environments)."""
-    if settings.APP_ENV == "production":
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
+    """Controlled error probe endpoint."""
     raise RuntimeError("Controlled 500 probe for telemetry and CORS verification.")
