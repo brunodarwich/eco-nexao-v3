@@ -246,7 +246,7 @@ export default function RouteDetailScreen() {
               <Image
                 source={pindobalHeroImage}
                 style={styles.heroImage}
-                resizeMode="contain"
+                resizeMode="cover"
                 accessible={false}
               />
               <View style={styles.heroOverlay}>
@@ -259,7 +259,9 @@ export default function RouteDetailScreen() {
               </View>
               <View pointerEvents="none" style={styles.heroBottomGradient}>
                 <View style={styles.heroGradientStart} />
+                <View style={styles.heroGradientSoft} />
                 <View style={styles.heroGradientMiddle} />
+                <View style={styles.heroGradientStrong} />
                 <View style={styles.heroGradientEnd} />
               </View>
             </View>
@@ -426,8 +428,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   heroSectionWithImage: {
-    height: 400,
-    backgroundColor: '#9CC9DF',
+    height: 300,
+    backgroundColor: theme.colors.surfaceBackground,
     overflow: 'hidden',
   },
   heroImage: {
@@ -438,16 +440,16 @@ const styles = StyleSheet.create({
   },
   heroOverlay: {
     gap: 4,
-    backgroundColor: 'rgba(15, 33, 8, 0.22)',
+    backgroundColor: 'rgba(8, 18, 5, 0.36)',
     padding: theme.spacing.marginMobile,
-    minHeight: 176,
+    minHeight: 150,
   },
   pindobalHeroStack: {
     position: 'relative',
   },
   originSelectorOverlay: {
-    marginTop: -180,
-    paddingHorizontal: 12,
+    marginTop: -105,
+    paddingHorizontal: 28,
     zIndex: 1,
   },
   heroBottomGradient: {
@@ -455,20 +457,28 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: 130,
+    height: 118,
     justifyContent: 'flex-end',
   },
   heroGradientStart: {
     flex: 1,
-    backgroundColor: 'rgba(15, 33, 8, 0.03)',
+    backgroundColor: 'rgba(249, 250, 247, 0.02)',
+  },
+  heroGradientSoft: {
+    flex: 1,
+    backgroundColor: 'rgba(249, 250, 247, 0.18)',
   },
   heroGradientMiddle: {
     flex: 1,
-    backgroundColor: 'rgba(15, 33, 8, 0.10)',
+    backgroundColor: 'rgba(249, 250, 247, 0.42)',
+  },
+  heroGradientStrong: {
+    flex: 1,
+    backgroundColor: 'rgba(249, 250, 247, 0.72)',
   },
   heroGradientEnd: {
     flex: 1,
-    backgroundColor: 'rgba(15, 33, 8, 0.28)',
+    backgroundColor: theme.colors.surfaceBackground,
   },
   titleOnImage: {
     color: theme.colors.surfaceWhite,
