@@ -349,7 +349,13 @@ class TerritorialService:
             actor_layer = str(get_canonical_category(cat_slug)["spatial_scope"])
             if layer is None or layer == actor_layer:
                 combined_actors[actor.id] = (
-                    actor, cat_slug, lat, lon, actor_layer, is_featured, sort_order
+                    actor,
+                    cat_slug,
+                    lat,
+                    lon,
+                    actor_layer,
+                    is_featured,
+                    sort_order,
                 )
 
         for actor, cat_slug, lat, lon in essential_actors_data:
@@ -525,9 +531,7 @@ class TerritorialService:
             return None
 
         decoded = decode_cursor(cursor, "route_actors", 3)
-        after = (
-            (int(decoded[0]), str(decoded[1]), uuid.UUID(str(decoded[2]))) if decoded else None
-        )
+        after = (int(decoded[0]), str(decoded[1]), uuid.UUID(str(decoded[2]))) if decoded else None
         actors_data, total, has_more = await self.repo.list_route_actors(
             route_id=route_id,
             q=q,

@@ -32,9 +32,7 @@ def test_complete_supabase_secret_is_reported_without_its_value() -> None:
 
     findings = scan_text(f"SUPABASE_SECRET_KEY={secret}", Path("config.env"))
 
-    assert [(finding.line, finding.kind) for finding in findings] == [
-        (1, "Supabase secret key")
-    ]
+    assert [(finding.line, finding.kind) for finding in findings] == [(1, "Supabase secret key")]
     assert secret not in repr(findings)
 
 

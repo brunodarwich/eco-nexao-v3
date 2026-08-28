@@ -1,0 +1,18 @@
+{
+  "places": [
+    {
+      "id": "ChIJc_y_page2_002",
+      "types": ["store", "point_of_interest", "establishment"],
+      "formattedAddress": "Av. Rui Barbosa, 850, Santarém - PA, Brasil",
+      "location": {
+        "latitude": -2.4398,
+        "longitude": -54.7121
+      },
+      "displayName": {
+        "text": "Feira de Artesanato da Orla",
+        "languageCode": "pt-BR"
+      },
+      "primaryType": "store"
+    }
+  ]
+}

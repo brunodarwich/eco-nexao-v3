@@ -36,10 +36,7 @@ def parse_google_routes_response(data: dict[str, Any]) -> RouteCalculationResult
     """Transforma resposta bruta da Google Routes API para RouteCalculationResult."""
     if "error" in data:
         code = data["error"].get("status")
-        if (
-            code in ("NOT_FOUND", "ZERO_RESULTS")
-            or "No route" in data["error"].get("message", "")
-        ):
+        if code in ("NOT_FOUND", "ZERO_RESULTS") or "No route" in data["error"].get("message", ""):
             raise RoutingNoRouteFoundError()
         raise RoutingProviderUnavailableError(
             f"Google Routes error: {data['error'].get('message')}"
@@ -171,17 +168,13 @@ class TestRoutingBenchmarkHarness:
 
         # Comparativo de convergência (diferença de distância < 2%)
         diff_pct = abs(google_res.distance_m - osrm_res.distance_m) / google_res.distance_m
-        assert diff_pct < 0.02, (
-            f"Diferença de distância excessiva entre provedores: {diff_pct:.2%}"
-        )
+        assert diff_pct < 0.02, f"Diferença de distância excessiva entre provedores: {diff_pct:.2%}"
 
     def test_rural_ramal_ingestion_and_normalization(self) -> None:
         google_raw = json.loads(
             (FIXTURES_DIR / "google_routes_rural_ramal.json").read_text(encoding="utf-8")
         )
-        osrm_raw = json.loads(
-            (FIXTURES_DIR / "osrm_rural_ramal.json").read_text(encoding="utf-8")
-        )
+        osrm_raw = json.loads((FIXTURES_DIR / "osrm_rural_ramal.json").read_text(encoding="utf-8"))
 
         google_res = parse_google_routes_response(google_raw)
         osrm_res = parse_osrm_response(osrm_raw)
@@ -244,9 +237,7 @@ class TestRoutingBenchmarkHarness:
         google_raw_str = (FIXTURES_DIR / "google_routes_urban_airport.json").read_text(
             encoding="utf-8"
         )
-        osrm_raw_str = (FIXTURES_DIR / "osrm_urban_airport.json").read_text(
-            encoding="utf-8"
-        )
+        osrm_raw_str = (FIXTURES_DIR / "osrm_urban_airport.json").read_text(encoding="utf-8")
 
         # Payload size
         google_size = len(google_raw_str.encode("utf-8"))

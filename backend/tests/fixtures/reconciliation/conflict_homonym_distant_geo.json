@@ -1,0 +1,24 @@
+{
+  "semtur_record": {
+    "external_id": "semtur-poi-005",
+    "titulo": "Hadouken Sushi Santarém Centro",
+    "categoria": "Alimentos e Bebidas",
+    "tipo_normalizado": "restaurante",
+    "telefone": "(93) 3522-1234",
+    "website": "https://hadoukensushi.com.br",
+    "latitude": -2.4410,
+    "longitude": -54.7100,
+    "known_place_id": null
+  },
+  "google_candidate": {
+    "place_id": "ChIJ_hadouken_alter_branch_005",
+    "name": "Hadouken Sushi Alter do Chão",
+    "types": ["restaurant", "food", "point_of_interest"],
+    "latitude": -2.5050,
+    "longitude": -54.9530,
+    "formatted_address": "Praça Central de Alter do Chão",
+    "phone": "(93) 3522-1234",
+    "website": "https://hadoukensushi.com.br",
+    "distance_km": 14.1
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "places": [
+    {
+      "id": "ChIJb_x_page1_001",
+      "types": ["art_gallery", "point_of_interest", "establishment"],
+      "formattedAddress": "Travessa Turiano Meira, 200, Santarém - PA, Brasil",
+      "location": {
+        "latitude": -2.4431,
+        "longitude": -54.7082
+      },
+      "displayName": {
+        "text": "Artesanato Tapajônico Centro",
+        "languageCode": "pt-BR"
+      },
+      "primaryType": "art_gallery"
+    }
+  ],
+  "nextPageToken": "CAUQAA_token_page_2_simulation"
+}

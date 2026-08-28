@@ -47,7 +47,12 @@ export default function CatalogScreen() {
   });
 
   const allActors: ActorSummary[] = flattenUniquePages(actorsQuery.data?.pages);
-  const favoriteActorIds = new Set(favoriteActorsQuery.data?.map((actor) => actor.id) ?? []);
+  const favoriteItems = Array.isArray(favoriteActorsQuery.data)
+    ? favoriteActorsQuery.data
+    : Array.isArray((favoriteActorsQuery.data as any)?.items)
+    ? (favoriteActorsQuery.data as any).items
+    : [];
+  const favoriteActorIds = new Set(favoriteItems.map((actor: any) => actor?.id).filter(Boolean));
 
   return (
     <View style={styles.container}>

@@ -1,9 +1,12 @@
 import type { MapPin, RouteGeometry } from '../../api/types';
 import {
   SELECTION_PIN_COLOR,
+  applyCoincidentOffsets,
+  clusterPins,
   filterPinsByModeAndCategory,
   formatCoordinateDisplay,
   getBoundsCoordinates,
+  getClusterAccessibilityLabel,
   getFitCoordinates,
   getGeometryCoordinates,
   getInitialRegion,
@@ -13,6 +16,7 @@ import {
   getItemPinColor,
   getItemPinIcon,
   getSelectionPinAccessibilityLabel,
+  isClusterItem,
 } from './MapAdapter.helpers';
 
 const pin: MapPin = {
@@ -227,6 +231,90 @@ describe('MapAdapter shared geospatial helpers', () => {
         { latitude: -2.8, longitude: -55.2 },
         { latitude: -2.4, longitude: -54.5 },
       ]);
+    });
+  });
+
+  describe('clusterPins and applyCoincidentOffsets (ECO-2307/ECO-2315)', () => {
+    const densePins: MapPin[] = Array.from({ length: 30 }, (_, i) => ({
+      id: `dense-pin-${i}`,
+      actor_id: `actor-${i}`,
+      name: `Ponto ${i}`,
+      category_slug: i % 2 === 0 ? 'alimentacao' : 'hospedagem',
+      category_label: i % 2 === 0 ? 'Alimentação' : 'Hospedagem',
+      color: i % 2 === 0 ? '#D97706' : '#2563EB',
+      icon: i % 2 === 0 ? 'utensils' : 'bed',
+      latitude: -2.63 + (i % 3) * 0.0005,
+      longitude: -54.94 + (i % 3) * 0.0005,
+      layer: 'route_corridor',
+    }));
+
+    it('clusters dense pins at low zoom level and produces accessible labels', () => {
+      const renderables = clusterPins(densePins, 12);
+      expect(renderables.length).toBeLessThan(densePins.length);
+      const clusters = renderables.filter(isClusterItem);
+      expect(clusters.length).toBeGreaterThan(0);
+
+      const firstCluster = clusters[0];
+      expect(firstCluster.count).toBeGreaterThanOrEqual(2);
+      expect(firstCluster.bounds.min_lat).toBeLessThanOrEqual(firstCluster.latitude);
+      expect(firstCluster.bounds.max_lat).toBeGreaterThanOrEqual(firstCluster.latitude);
+
+      const a11yLabel = getClusterAccessibilityLabel(firstCluster);
+      expect(a11yLabel).toContain('Grupo com');
+      expect(a11yLabel).toContain('Toque para aproximar');
+    });
+
+    it('preserves the selected actor as an individual pin even when surrounding pins cluster', () => {
+      const selectedId = 'actor-5';
+      const renderables = clusterPins(densePins, 12, selectedId);
+
+      const selectedRenderable = renderables.find(
+        (r) => !isClusterItem(r) && ('actor_id' in r ? r.actor_id === selectedId : r.id === selectedId)
+      );
+      expect(selectedRenderable).toBeDefined();
+    });
+
+    it('applies coincident offsets at high zoom instead of clustering', () => {
+      const coincidentPins: MapPin[] = [
+        {
+          id: 'p1',
+          actor_id: 'act-1',
+          name: 'Barraca 1',
+          category_slug: 'alimentacao',
+          category_label: 'Alimentação',
+          color: '#D97706',
+          icon: 'utensils',
+          latitude: -2.63000,
+          longitude: -54.94000,
+          layer: 'route_corridor',
+        },
+        {
+          id: 'p2',
+          actor_id: 'act-2',
+          name: 'Barraca 2',
+          category_slug: 'alimentacao',
+          category_label: 'Alimentação',
+          color: '#D97706',
+          icon: 'utensils',
+          latitude: -2.63000,
+          longitude: -54.94000,
+          layer: 'route_corridor',
+        },
+      ];
+
+      const renderables = clusterPins(coincidentPins, 16);
+      expect(renderables.length).toBe(2);
+      expect(renderables.every((r) => !isClusterItem(r))).toBe(true);
+
+      const [p1, p2] = renderables as (MapPin & { offsetCoordinate?: { latitude: number; longitude: number } })[];
+      expect(p1.offsetCoordinate).toBeDefined();
+      expect(p2.offsetCoordinate).toBeDefined();
+      expect(p1.offsetCoordinate!.latitude).not.toEqual(p2.offsetCoordinate!.latitude);
+    });
+
+    it('handles empty items array gracefully', () => {
+      expect(clusterPins([], 12)).toEqual([]);
+      expect(applyCoincidentOffsets([])).toEqual([]);
     });
   });
 });

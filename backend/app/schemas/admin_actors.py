@@ -72,6 +72,54 @@ class AdminCategoryListEnvelope(SchemaBase):
 
 
 # -----------------------------------------------------------------------------
+# Admin Actor Types (Level-2 Specialized Taxonomy)
+# -----------------------------------------------------------------------------
+
+
+class AdminActorTypeCreateSchema(BaseModel):
+    category_id: uuid.UUID
+    slug: str = Field(..., min_length=2, max_length=100, pattern=r"^[a-z0-9_]+$")
+    label: str = Field(..., min_length=2, max_length=255)
+    icon: str = Field(..., min_length=1, max_length=100)
+    sort_order: int = Field(0, ge=0)
+    aliases: list[str] = Field(default_factory=list)
+    spatial_scope: Literal["route_corridor", "citywide_essential", "both"] = "route_corridor"
+    publication_rule: str | None = None
+
+
+class AdminActorTypeUpdateSchema(BaseModel):
+    category_id: uuid.UUID | None = None
+    label: str | None = Field(None, min_length=2, max_length=255)
+    icon: str | None = Field(None, max_length=100)
+    sort_order: int | None = Field(None, ge=0)
+    aliases: list[str] | None = None
+    spatial_scope: Literal["route_corridor", "citywide_essential", "both"] | None = None
+    publication_rule: str | None = None
+
+
+class AdminActorTypeSchema(SchemaBase):
+    id: uuid.UUID
+    category_id: uuid.UUID
+    slug: str
+    label: str
+    icon: str
+    sort_order: int
+    aliases: list[str] = Field(default_factory=list)
+    spatial_scope: str
+    publication_rule: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class AdminActorTypeEnvelope(SchemaBase):
+    data: AdminActorTypeSchema
+
+
+class AdminActorTypeListEnvelope(SchemaBase):
+    data: list[AdminActorTypeSchema]
+
+
+# -----------------------------------------------------------------------------
 # Admin Accessibility Features
 # -----------------------------------------------------------------------------
 
@@ -114,6 +162,7 @@ class AdminAccessibilityFeatureListEnvelope(SchemaBase):
 
 class AdminActorCreateSchema(BaseModel):
     category_id: uuid.UUID
+    type_id: uuid.UUID | None = None
     slug: str = Field(..., min_length=2, max_length=150, pattern=r"^[a-z0-9-]+$")
     name: str = Field(..., min_length=2, max_length=255)
     description: str | None = None
@@ -136,6 +185,7 @@ class AdminActorCreateSchema(BaseModel):
 
 class AdminActorUpdateSchema(BaseModel):
     category_id: uuid.UUID | None = None
+    type_id: uuid.UUID | None = None
     name: str | None = Field(None, min_length=2, max_length=255)
     description: str | None = None
     sub_category: str | None = Field(None, max_length=100)
@@ -162,6 +212,8 @@ class AdminActorSchema(SchemaBase):
     id: uuid.UUID
     category_id: uuid.UUID
     category: AdminCategorySchema | None = None
+    type_id: uuid.UUID | None = None
+    type: AdminActorTypeSchema | None = None
     slug: str
     name: str
     description: str | None = None

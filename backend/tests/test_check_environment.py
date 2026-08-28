@@ -50,9 +50,11 @@ def test_run_checks_sanitizes_subprocess_stdout(capsys):
         "Chave exposta: SUPABASE_SECRET_KEY=sb_secret_999888777666"
     )
 
-    with patch("scripts.check_environment.check_tool", return_value=(True, "v1.0.0")), patch(
-        "scripts.check_env.validate", return_value=[]
-    ), patch("subprocess.run") as mock_sub_run:
+    with (
+        patch("scripts.check_environment.check_tool", return_value=(True, "v1.0.0")),
+        patch("scripts.check_env.validate", return_value=[]),
+        patch("subprocess.run") as mock_sub_run,
+    ):
         mock_sub_run.return_value = MagicMock(returncode=1, stdout=synthetic_secret_stdout)
         exit_code = check_env.run_checks()
 
@@ -73,7 +75,6 @@ def test_run_checks_uses_no_install_for_npx_supabase():
         mock_run.return_value = MagicMock(stdout="2.113.0", stderr="", returncode=0)
         ok, version = check_env.check_tool("npx", ["--no-install", "supabase", "--version"])
 
-
         assert ok is True
         mock_run.assert_called_once()
         args = mock_run.call_args[0][0]
@@ -82,11 +83,11 @@ def test_run_checks_uses_no_install_for_npx_supabase():
 
 def test_run_checks_returns_nonzero_on_collision():
     """Verify run_checks returns non-zero when environment collision is detected."""
-    with patch("scripts.check_environment.check_tool", return_value=(True, "v1.0.0")), patch(
-        "subprocess.run"
-    ) as mock_sub_run:
+    with (
+        patch("scripts.check_environment.check_tool", return_value=(True, "v1.0.0")),
+        patch("subprocess.run") as mock_sub_run,
+    ):
         # Simulate check_test_isolation failing with exit code 1 (collision)
         mock_sub_run.return_value = MagicMock(returncode=1, stdout="Collision detected")
         exit_code = check_env.run_checks()
         assert exit_code != 0
-

@@ -20,6 +20,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 }) => {
   const { state } = useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const regionButtonRef = React.useRef<React.ElementRef<typeof TouchableOpacity>>(null);
   const regions = useRegionsQuery();
   const activeRegion = regions.data?.find((region) => region.id === state.activeRegionId);
 
@@ -28,13 +29,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       <View style={styles.headerContainer}>
         <View style={styles.leftRow}>
           {showBack ? (
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={onBackPress}
-              {...makeAccessibleButton('Voltar', 'Retorna à tela anterior')}
-            >
-              <Ionicons name="arrow-back" size={24} color={theme.colors.brandForest} />
-            </TouchableOpacity>
+            <>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={onBackPress}
+                {...makeAccessibleButton('Voltar', 'Retorna à tela anterior')}
+              >
+                <Ionicons name="arrow-back" size={24} color={theme.colors.brandForest} />
+              </TouchableOpacity>
+              <Text style={styles.brandTitle} numberOfLines={1}>
+                {title}
+              </Text>
+            </>
           ) : (
             <View style={styles.logoRow}>
               <View style={styles.logoBadge}>
@@ -46,6 +52,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </View>
 
         <TouchableOpacity
+          ref={regionButtonRef}
           style={styles.regionChip}
           onPress={() => setIsModalOpen(true)}
           {...makeAccessibleButton(
@@ -63,6 +70,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       <RegionSelectorModal
         visible={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        returnFocusRef={regionButtonRef}
       />
     </>
   );

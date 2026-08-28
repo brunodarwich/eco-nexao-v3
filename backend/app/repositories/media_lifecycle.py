@@ -48,7 +48,6 @@ class MediaLifecycleRepository:
             alt_text=alt_text,
             credit=credit,
             license_code=license_code,
-            media_kind="stored",
             processing_status="processing",
         )
         self.db.add(asset)
@@ -160,10 +159,14 @@ class MediaLifecycleRepository:
         return pending
 
     async def cleanup_already_completed(self, asset_id: uuid.UUID) -> bool:
-        statement = select(AuditLog).where(
-            AuditLog.resource_type == "media",
-            AuditLog.resource_id == asset_id,
-        ).order_by(AuditLog.timestamp.desc())
+        statement = (
+            select(AuditLog)
+            .where(
+                AuditLog.resource_type == "media",
+                AuditLog.resource_id == asset_id,
+            )
+            .order_by(AuditLog.timestamp.desc())
+        )
         logs = list((await self.db.scalars(statement)).all())
         return any(log.changes.get("after", {}).get("cleanup_pending") is False for log in logs)
 

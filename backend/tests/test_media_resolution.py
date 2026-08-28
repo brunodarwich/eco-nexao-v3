@@ -38,7 +38,6 @@ def test_resolve_asset_urls_stored(storage_service: StorageService) -> None:
         credit="Foto por João",
         license_code="CC-BY-4.0",
         processing_status="ready",
-        media_kind="stored",
         derivatives={
             "thumb": {"storage_key": "editorial-media/routes/123/thumb.webp"},
             "card": {"storage_key": "editorial-media/routes/123/card.webp"},
@@ -65,34 +64,6 @@ def test_resolve_asset_urls_stored(storage_service: StorageService) -> None:
     assert resolved.license_code == "CC-BY-4.0"
 
 
-def test_resolve_asset_urls_google_proxy(storage_service: StorageService) -> None:
-    asset_id = uuid.uuid4()
-    owner_id = uuid.uuid4()
-
-    asset = MediaAsset(
-        id=asset_id,
-        owner_type="actor",
-        owner_id=owner_id,
-        storage_key=None,
-        mime_type="image/jpeg",
-        alt_text="Fachada do restaurante",
-        credit="Google Places",
-        license_code="PROPRIETARY",
-        processing_status="ready",
-        media_kind="google_proxy",
-        external_photo_reference="https://lh3.googleusercontent.com/p/places_photo_123",
-        sort_order=1,
-    )
-
-    resolver = MediaResolutionService(db=AsyncMock(), storage_service=storage_service)
-    resolved = resolver.resolve_asset_urls(asset)
-
-    assert resolved.id == asset_id
-    assert resolved.owner_type == "actor"
-    assert resolved.url == "https://lh3.googleusercontent.com/p/places_photo_123"
-    assert resolved.media_kind == "google_proxy"
-
-
 @pytest.mark.asyncio
 async def test_resolve_media_for_owner(mock_db: AsyncMock, storage_service: StorageService) -> None:
     owner_id = uuid.uuid4()
@@ -103,7 +74,6 @@ async def test_resolve_media_for_owner(mock_db: AsyncMock, storage_service: Stor
         storage_key="editorial-media/actors/hero.webp",
         mime_type="image/webp",
         processing_status="ready",
-        media_kind="stored",
         sort_order=0,
     )
     asset2 = MediaAsset(
@@ -113,7 +83,6 @@ async def test_resolve_media_for_owner(mock_db: AsyncMock, storage_service: Stor
         storage_key="editorial-media/actors/gallery2.webp",
         mime_type="image/webp",
         processing_status="ready",
-        media_kind="stored",
         sort_order=1,
     )
 
@@ -145,7 +114,6 @@ async def test_batch_resolve_covers_for_owners(
         storage_key="editorial-media/r1/cover.webp",
         mime_type="image/webp",
         processing_status="ready",
-        media_kind="stored",
         sort_order=0,
     )
     asset2 = MediaAsset(
@@ -155,7 +123,6 @@ async def test_batch_resolve_covers_for_owners(
         storage_key="editorial-media/r2/cover.webp",
         mime_type="image/webp",
         processing_status="ready",
-        media_kind="stored",
         sort_order=0,
     )
 
@@ -181,9 +148,7 @@ async def test_media_orphan_job_dry_run(mock_db: AsyncMock) -> None:
         mime_type="image/webp",
         processing_status="rejected",
         deleted_at=None,
-        derivatives={
-            "thumb": {"storage_key": "editorial-media/routes/rejected/thumb.webp"}
-        },
+        derivatives={"thumb": {"storage_key": "editorial-media/routes/rejected/thumb.webp"}},
     )
 
     deleted_asset = MediaAsset(

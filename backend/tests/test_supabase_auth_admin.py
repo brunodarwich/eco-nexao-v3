@@ -28,13 +28,17 @@ async def test_supabase_auth_admin_success_and_404_ignored(monkeypatch: pytest.M
     client = AsyncMock(spec=httpx.AsyncClient)
 
     # 200 OK
-    client.delete.return_value = httpx.Response(200, request=httpx.Request("DELETE", "https://test.supabase.co"))
+    client.delete.return_value = httpx.Response(
+        200, request=httpx.Request("DELETE", "https://test.supabase.co")
+    )
     admin = SupabaseAuthAdmin(client=client)
     await admin.delete_user(uuid.uuid4())
     assert client.delete.await_count == 1
 
     # 404 Not Found (idempotent, no error)
-    client.delete.return_value = httpx.Response(404, request=httpx.Request("DELETE", "https://test.supabase.co"))
+    client.delete.return_value = httpx.Response(
+        404, request=httpx.Request("DELETE", "https://test.supabase.co")
+    )
     await admin.delete_user(uuid.uuid4())
     assert client.delete.await_count == 2
 

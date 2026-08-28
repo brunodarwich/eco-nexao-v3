@@ -38,7 +38,7 @@ export class ErrorBoundary extends Component<Props, State> {
       errorInfo,
     });
     if (__DEV__) {
-      console.error('ErrorBoundary caught an unhandled error:', error, errorInfo);
+      console.error('ErrorBoundary caught an error:', error, errorInfo);
     }
   }
 

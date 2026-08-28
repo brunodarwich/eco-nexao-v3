@@ -31,9 +31,7 @@ from app.connectors.routing_connector import (
 logger = logging.getLogger(__name__)
 
 GOOGLE_ROUTES_URL = "https://routes.googleapis.com/directions/v2:computeRoutes"
-GOOGLE_ROUTES_FIELD_MASK = (
-    "routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline"
-)
+GOOGLE_ROUTES_FIELD_MASK = "routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline"
 
 
 @dataclass

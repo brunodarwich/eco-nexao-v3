@@ -85,9 +85,7 @@ class RoutingService:
         )
         if result.provider not in {"fake_deterministic", "google_routes"}:
             raise RoutingProviderUnavailableError("Provider retornou identificador não aprovado.")
-        approved_provider = cast(
-            Literal["fake_deterministic", "google_routes"], result.provider
-        )
+        approved_provider = cast(Literal["fake_deterministic", "google_routes"], result.provider)
 
         if result.bounds:
             bounds = RouteBoundsSchema(

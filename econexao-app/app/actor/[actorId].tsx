@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppHeader } from '../../src/components/common/AppHeader';
 import { Badge } from '../../src/components/common/Badge';
 import { EmptyStateView, ErrorStateView, LoadingView } from '../../src/components/common/UIStateViews';
+import { GooglePlacePhoto } from '../../src/components/common/GooglePlacePhoto';
 import { useActorDetailQuery } from '../../src/hooks/queries';
 import { useMyFavoriteActorsQuery } from '../../src/hooks/queries';
 import { useOptimisticFavoriteActor } from '../../src/hooks/useOptimisticFavoriteActor';
@@ -105,15 +106,16 @@ export default function ActorDetailScreen() {
   }
 
   const greenSeal = actor.green_badge_status === 'verified';
-  const categoryLabel = actor.category.label;
+  const categoryLabel = actor.category?.label || (actor as any).category_label || (actor as any).category_slug || 'Geral';
+  const categorySlug = actor.category?.slug || (actor as any).category_slug || 'outros';
   const isFavorite = actor.is_favorite
     || (favoriteActorsQuery.data?.some((favorite) => favorite.id === actor.id) ?? false);
   const actorSummary: ActorSummary = {
     id: actor.id,
     slug: actor.slug,
     name: actor.name,
-    category_slug: actor.category.slug,
-    category_label: actor.category.label,
+    category_slug: categorySlug,
+    category_label: categoryLabel,
     address: actor.address,
     latitude: actor.latitude,
     longitude: actor.longitude,
@@ -140,6 +142,8 @@ export default function ActorDetailScreen() {
               resizeMode="cover"
               accessibilityLabel={actor.cover_media?.alt_text ?? `Imagem de ${actor.name}`}
             />
+          ) : actor.id ? (
+            <GooglePlacePhoto actorId={actor.id} alt={`Foto de ${actor.name}`} />
           ) : (
             <View style={styles.bannerPlaceholder} accessibilityLabel="Imagem não disponível">
               <Ionicons name="storefront-outline" size={48} color={theme.colors.brandSage} />
@@ -149,7 +153,7 @@ export default function ActorDetailScreen() {
             <View style={styles.badgeRow}>
               {greenSeal && <Badge type="greenSeal" label="Selo Verde Consciente" />}
               {actor.verification_status === 'verified' && (
-                <Badge type="verified" label="Verificado SEMTUR" />
+                <Badge type="semturInventory" label="Inventário SEMTUR" />
               )}
             </View>
 
@@ -174,7 +178,18 @@ export default function ActorDetailScreen() {
 
         {/* Main Info */}
         <View style={styles.cardSection}>
-          <Text style={styles.categoryTag}>{categoryLabel.toUpperCase()}</Text>
+          <View style={styles.categoryRatingRow}>
+            <Text style={styles.categoryTag}>{categoryLabel.toUpperCase()}</Text>
+            {actor.google_rating != null && (
+              <View style={styles.ratingBadge}>
+                <Ionicons name="star" size={14} color={theme.colors.brandSun} />
+                <Text style={styles.ratingText}>
+                  {actor.google_rating.toFixed(1)} Google
+                  {actor.google_review_count ? ` (${actor.google_review_count})` : ''}
+                </Text>
+              </View>
+            )}
+          </View>
           <Text style={styles.title}>{actor.name}</Text>
 
           <View style={styles.locationRow}>
@@ -189,6 +204,53 @@ export default function ActorDetailScreen() {
             <Text style={styles.description}>{actor.description}</Text>
           )}
         </View>
+
+        {/* SEMTUR Institutional Provenance Note (ADR 0014 §2.6) */}
+        {actor.verification_status === 'verified' && (
+          <View
+            style={styles.semturSection}
+            accessible
+            accessibilityRole="text"
+            accessibilityLabel="Origem dos dados: Inventário SEMTUR"
+          >
+            <View style={styles.semturHeader}>
+              <Ionicons name="bookmark-outline" size={16} color="#334155" />
+              <Text style={styles.semturTitle}>Inventário SEMTUR</Text>
+            </View>
+            <Text style={styles.semturDescription}>
+              Este estabelecimento consta no Inventário Turístico divulgado pela Secretaria Municipal de Turismo de Santarém (SEMTUR). As informações refletem o registro público catalogado e estão sujeitas a alterações pelos responsáveis.
+            </Text>
+          </View>
+        )}
+
+        {/* Media Gallery */}
+        {Boolean(actor.gallery && actor.gallery.length > 0) && (
+          <View style={styles.cardSection}>
+            <Text style={styles.sectionTitle}>Galeria de Fotos</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.galleryScroller}
+            >
+              {actor.gallery!.map((item, index) => (
+                <View key={item.url || index} style={styles.galleryItem}>
+                  <Image
+                    source={{ uri: item.derivatives?.card ?? item.url }}
+                    style={styles.galleryImage}
+                    resizeMode="cover"
+                    accessible
+                    accessibilityLabel={item.alt_text || `Foto ${index + 1} de ${actor.name}`}
+                  />
+                  {item.credit ? (
+                    <Text style={styles.galleryCredit} numberOfLines={1}>
+                      Foto: {item.credit}
+                    </Text>
+                  ) : null}
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Action Buttons / Contacts (ECO-1005) */}
         <View style={styles.cardSection}>
@@ -237,11 +299,11 @@ export default function ActorDetailScreen() {
               <TouchableOpacity
                 style={[styles.contactChip, styles.mapChip]}
                 onPress={handleOpenMap}
-                {...makeAccessibleButton('Ver no mapa externo')}
+                {...makeAccessibleButton('Abrir no Google Maps', 'Ver localização no aplicativo do Google Maps')}
               >
                 <Ionicons name="map-outline" size={18} color={theme.colors.surfaceWhite} />
                 <Text style={[styles.contactChipText, styles.mapChipText]} numberOfLines={1}>
-                  Abrir no Mapa
+                  Abrir no Google Maps
                 </Text>
               </TouchableOpacity>
             )}
@@ -249,7 +311,7 @@ export default function ActorDetailScreen() {
         </View>
 
         {actor.cover_media?.credit ? (
-          <Text style={styles.mediaCredit}>Crédito da imagem: {actor.cover_media.credit}</Text>
+          <Text style={styles.mediaCredit}>Crédito da imagem principal: {actor.cover_media.credit}</Text>
         ) : null}
       </ScrollView>
     </View>
@@ -313,12 +375,32 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(117, 155, 113, 0.15)',
     ...theme.shadows.card,
   },
+  categoryRatingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: theme.radii.full,
+  },
+  ratingText: {
+    ...theme.typography.labelSm,
+    color: '#92400E',
+    fontWeight: '700',
+    fontSize: 12,
+  },
   categoryTag: {
     ...theme.typography.labelSm,
     color: theme.colors.brandForest,
     fontWeight: '700',
     letterSpacing: 0.5,
-    marginBottom: 4,
   },
   title: {
     ...theme.typography.headlineMd,
@@ -340,6 +422,55 @@ const styles = StyleSheet.create({
     ...theme.typography.bodyMd,
     color: theme.colors.onSurface,
     lineHeight: 22,
+  },
+  semturSection: {
+    backgroundColor: '#F8FAFC',
+    marginTop: 12,
+    marginHorizontal: theme.spacing.marginMobile,
+    padding: 14,
+    borderRadius: theme.radii.xl,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    gap: 6,
+  },
+  semturHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  semturTitle: {
+    ...theme.typography.labelMd,
+    color: '#334155',
+    fontWeight: '700',
+  },
+  semturDescription: {
+    ...theme.typography.bodySm,
+    color: '#475569',
+    lineHeight: 18,
+    fontSize: 12,
+  },
+  galleryScroller: {
+    paddingVertical: 6,
+    gap: 12,
+  },
+  galleryItem: {
+    width: 220,
+    backgroundColor: theme.colors.surfaceContainerLow,
+    borderRadius: theme.radii.lg,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(117, 155, 113, 0.15)',
+  },
+  galleryImage: {
+    width: '100%',
+    height: 140,
+  },
+  galleryCredit: {
+    ...theme.typography.labelSm,
+    color: theme.colors.onSurfaceVariant,
+    fontSize: 11,
+    padding: 6,
+    backgroundColor: theme.colors.surfaceWhite,
   },
   sectionTitle: {
     ...theme.typography.headlineSm,

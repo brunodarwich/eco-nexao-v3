@@ -30,9 +30,12 @@ class WorkflowAdminService:
     async def get_publish_guard(
         self, resource_type: str, resource_id: uuid.UUID
     ) -> PublishGuardResultSchema:
-        is_eligible, current_status, missing, warnings = (
-            await self.repository.get_publish_guard_status(resource_type, resource_id)
-        )
+        (
+            is_eligible,
+            current_status,
+            missing,
+            warnings,
+        ) = await self.repository.get_publish_guard_status(resource_type, resource_id)
         return PublishGuardResultSchema(
             resource_type=resource_type,
             resource_id=resource_id,
@@ -47,9 +50,7 @@ class WorkflowAdminService:
     ) -> EditorialResourceState:
         """Return persisted state or an unsaved draft after proving the resource exists."""
         if not await self.repository.check_resource_exists(resource_type, resource_id):
-            raise ValueError(
-                f"Recurso '{resource_type}' com ID {resource_id} não foi encontrado."
-            )
+            raise ValueError(f"Recurso '{resource_type}' com ID {resource_id} não foi encontrado.")
         state = await self.repository.get_resource_state(resource_type, resource_id)
         return state or EditorialResourceState(
             id=uuid.uuid4(),
@@ -59,6 +60,7 @@ class WorkflowAdminService:
             author_id=actor_id,
             version=1,
         )
+
     async def transition_status(
         self,
         resource_type: str,
@@ -209,6 +211,7 @@ class WorkflowAdminService:
             audit_log_id=audit.id,
             updated_at=candidate.updated_at,
         )
+
     @staticmethod
     def _alert_schema(
         alert: RouteAlert, *, resolved_by: uuid.UUID | None = None

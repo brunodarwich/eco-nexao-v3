@@ -395,10 +395,7 @@ class TerritorialAdminService:
         if body.expected_version:
             current_version = route.updated_at.isoformat()
             if body.expected_version != current_version:
-                msg = (
-                    "A rota foi alterada por outro usuário. "
-                    "Por favor recarregue antes de salvar."
-                )
+                msg = "A rota foi alterada por outro usuário. Por favor recarregue antes de salvar."
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail=msg,
@@ -735,10 +732,7 @@ class TerritorialAdminService:
         # Check existing provider geometry
         existing = await self.repo.get_geometry_by_origin(origin_id, provider=body.provider)
         if existing:
-            msg = (
-                f"Já existe uma geometria gravada para o provedor '{body.provider}' "
-                "nesta origem."
-            )
+            msg = f"Já existe uma geometria gravada para o provedor '{body.provider}' nesta origem."
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=msg,

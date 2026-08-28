@@ -36,9 +36,7 @@ class AvatarLifecycleRepository:
         previous = None
         if profile.avatar_media_id is not None:
             previous = await self.db.scalar(
-                select(MediaAsset)
-                .where(MediaAsset.id == profile.avatar_media_id)
-                .with_for_update()
+                select(MediaAsset).where(MediaAsset.id == profile.avatar_media_id).with_for_update()
             )
 
         now = datetime.now(UTC)
@@ -57,7 +55,6 @@ class AvatarLifecycleRepository:
             height_px=height_px,
             derivatives=derivatives,
             processed_at=now,
-            media_kind="stored",
         )
         self.db.add(asset)
         if previous is not None:

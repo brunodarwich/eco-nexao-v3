@@ -141,9 +141,7 @@ async def get_current_user_allow_deleted(credentials: BearerCredentials) -> Auth
 
 async def _reject_deleted_user(user: AuthenticatedUser, db: AsyncSession) -> None:
     marker = await db.scalar(
-        select(DeletedUserTombstone.user_id).where(
-            DeletedUserTombstone.user_id == user.id
-        )
+        select(DeletedUserTombstone.user_id).where(DeletedUserTombstone.user_id == user.id)
     )
     if marker is not None:
         raise HTTPException(

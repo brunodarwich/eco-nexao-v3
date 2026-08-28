@@ -42,9 +42,7 @@ class UserRepository:
                     raise
         return profile
 
-    async def update_profile(
-        self, user_id: uuid.UUID, update_data: dict[str, Any]
-    ) -> Profile:
+    async def update_profile(self, user_id: uuid.UUID, update_data: dict[str, Any]) -> Profile:
         profile = await self.get_or_create_profile(user_id)
         for key, value in update_data.items():
             if hasattr(profile, key):
@@ -76,7 +74,6 @@ class UserRepository:
                 if not pref:
                     raise
         return pref
-
 
     async def update_preferences(
         self, user_id: uuid.UUID, update_data: dict[str, Any]

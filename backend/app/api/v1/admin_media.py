@@ -87,6 +87,4 @@ async def recover_media_cleanup(
     completed, failed = await service.recover_pending_cleanup(
         _context(current_user), limit=body.limit, request_id=request_id
     )
-    return CleanupRecoveryEnvelope(
-        data=CleanupRecoverySchema(completed=completed, failed=failed)
-    )
+    return CleanupRecoveryEnvelope(data=CleanupRecoverySchema(completed=completed, failed=failed))

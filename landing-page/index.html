@@ -1,982 +1,1471 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <!-- Primary Meta Tags -->
-  <title>ECOnexão — Turismo Comunitário e Trilhas no Tapajós</title>
-  <meta name="title" content="ECOnexão — Turismo Comunitário e Trilhas no Tapajós">
-  <meta name="description" content="Trilhas mapeadas, dicas do caminho e contato direto com pousadas, restaurantes e barqueiros locais do Tapajós, com funcionamento offline.">
-  <meta name="keywords" content="ecoturismo, turismo comunitário, Tapajós, Alter do Chão, Santarém, Pindobal, rotas offline, trilhas, Amazônia">
-  <meta name="author" content="ECOnexão">
-  <meta name="theme-color" content="#33601E">
-
-  <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://econexao.app/">
-  <meta property="og:title" content="ECOnexão — Turismo Comunitário e Trilhas no Tapajós">
-  <meta property="og:description" content="Trilhas mapeadas, dicas do caminho e contato direto com quem recebe você no território.">
-  <meta property="og:image" content="assets/images/hero_tapajos_sunset.jpg">
-
-  <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="https://econexao.app/">
-  <meta property="twitter:title" content="ECOnexão — Turismo Comunitário e Trilhas no Tapajós">
-  <meta property="twitter:description" content="Trilhas mapeadas, dicas do caminho e contato direto com quem recebe você no território.">
-  <meta property="twitter:image" content="assets/images/hero_tapajos_sunset.jpg">
-
-  <!-- Google Fonts: Hanken Grotesk & Plus Jakarta Sans -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,300..900;1,300..900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="assets/brand/logo.png">
-
-  <!-- Stylesheet -->
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-
-  <!-- Accessible Skip Link -->
-  <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
-
-  <!-- ========================================================================
-       1. HEADER & NAVIGATION
-       ======================================================================== -->
-  <header id="header" class="site-header" role="banner">
-    <div class="container header-container">
-      <a href="#hero" class="brand-link" aria-label="ECOnexão - Página Inicial">
-        <img src="assets/brand/logo.png" alt="ECOnexão Logo" class="brand-logo" width="140" height="38">
-      </a>
-
-      <!-- Desktop Navigation -->
-      <nav class="desktop-nav" role="navigation" aria-label="Navegação Principal">
-        <ul class="nav-list">
-          <li><a href="#proposta" class="nav-link">A Proposta</a></li>
-          <li><a href="#showcase" class="nav-link">O Aplicativo</a></li>
-          <li><a href="#rota-piloto" class="nav-link">Rota Pindobal</a></li>
-          <li><a href="#publicos" class="nav-link">Impacto</a></li>
-          <li><a href="#tecnologia" class="nav-link">Tecnologia</a></li>
-        </ul>
-      </nav>
-
-      <!-- CTA & Mobile Toggle -->
-      <div class="header-actions">
-        <a href="#contato" class="btn btn-primary btn-sm">Falar com a Equipe</a>
-        
-        <button id="mobile-toggle" class="mobile-toggle" aria-expanded="false" aria-label="Abrir menu de navegação" aria-controls="mobile-menu">
-          <span class="hamburger-bar" aria-hidden="true"></span>
-          <span class="hamburger-bar" aria-hidden="true"></span>
-          <span class="hamburger-bar" aria-hidden="true"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Mobile Drawer Overlay -->
-    <div id="mobile-menu" class="mobile-menu" role="dialog" aria-modal="true" aria-label="Menu de Navegação Mobile" aria-hidden="true">
-      <ul class="mobile-nav-list">
-        <li><a href="#proposta" class="mobile-nav-link">A Proposta</a></li>
-        <li><a href="#showcase" class="mobile-nav-link">O Aplicativo</a></li>
-        <li><a href="#rota-piloto" class="mobile-nav-link">Rota Pindobal</a></li>
-        <li><a href="#publicos" class="mobile-nav-link">Impacto</a></li>
-        <li><a href="#tecnologia" class="mobile-nav-link">Tecnologia</a></li>
-        <li><a href="#contato" class="mobile-nav-link">Contato & Parcerias</a></li>
-        <li class="mobile-cta-item">
-          <a href="#contato" class="btn btn-primary btn-lg btn-block">Falar com a Equipe</a>
-        </li>
-      </ul>
-    </div>
-  </header>
-
-  <main id="main-content">
-    
-    <!-- ========================================================================
-         2. HERO SECTION
-         ======================================================================== -->
-    <section id="hero" class="hero-section" aria-labelledby="hero-title">
-      <div class="container hero-container">
-        
-        <!-- Hero Text Content -->
-        <div class="hero-content reveal">
-          <div>
-            <span class="hero-tag">
-              <span class="tag-dot" aria-hidden="true"></span>
-              Piloto: Santarém, Belterra e Alter do Chão — PA
-            </span>
-          </div>
-
-          <h1 id="hero-title" class="hero-title">
-            Um guia simples para explorar o Tapajós pelo olhar de quem mora aqui.
-          </h1>
-
-          <p class="hero-subtitle">
-            Trilhas mapeadas, dicas do caminho e contato direto com pousadas, restaurantes e barqueiros locais. Tudo disponível no celular, mesmo quando acabar o sinal de internet.
-          </p>
-
-          <div class="hero-buttons">
-            <a href="#showcase" class="btn btn-primary btn-lg">
-              Conhecer o Aplicativo
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-            </a>
-            <a href="#rota-piloto" class="btn btn-ghost btn-lg">
-              Ver Rota Pindobal
-            </a>
-          </div>
-
-          <!-- Trust Badges Metrics -->
-          <div class="hero-trust-bar">
-            <div class="trust-item">
-              <div class="trust-icon check-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-              </div>
-              <div class="trust-text">
-                <strong>Locais & Guias</strong>
-                <span>Hospedagens e barqueiros no mapa</span>
-              </div>
-            </div>
-
-            <div class="trust-item">
-              <div class="trust-icon shield-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-              </div>
-              <div class="trust-text">
-                <strong>Mapeamento Real</strong>
-                <span>Trilhas com pontos de apoio práticos</span>
-              </div>
-            </div>
-
-            <div class="trust-item">
-              <div class="trust-icon signal-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-              </div>
-              <div class="trust-text">
-                <strong>Modo Offline</strong>
-                <span>Mapas e telefones salvos no celular</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Hero Visual Mockup Stage -->
-        <div class="mockup-stage reveal">
-          
-          <!-- Smartphone Container -->
-          <div class="phone-frame hero-phone">
-            <div class="phone-speaker" aria-hidden="true"></div>
-            <div class="phone-camera" aria-hidden="true"></div>
-            <div class="phone-reflection" aria-hidden="true"></div>
-            <div class="phone-screen">
-              <img src="assets/screens/01-home.png" alt="Tela inicial do aplicativo ECOnexão exibindo regiões e rotas do Tapajós" class="screen-img" width="375" height="812" loading="eager">
-            </div>
-          </div>
-
-          <!-- Floating Badges -->
-          <div class="floating-badge badge-top-right">
-            <div class="badge-icon compass-bg">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
-            </div>
-            <div>
-              <span class="badge-label">Rota Piloto</span>
-              <span class="badge-val">Praia do Pindobal • 42 km</span>
-            </div>
-          </div>
-
-          <div class="floating-badge badge-bottom-left">
-            <div class="badge-icon verified-bg">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            </div>
-            <div>
-              <span class="badge-label">Checagem Local</span>
-              <span class="badge-val">Mapeamento em Campo</span>
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-    </section>
-
-      </div>
-    </section>
-
-    <!-- ========================================================================
-         3. A PROPOSTA: PENSADO PARA A REALIDADE LOCAL
-         ======================================================================== -->
-    <section id="proposta" class="section-padded bg-white" aria-labelledby="proposta-title">
-      <div class="container">
-        <div class="section-header text-center reveal">
-          <span class="section-tag">Por Que o ECOnexão</span>
-          <h2 id="proposta-title" class="section-title">Pensado para o dia a dia da região</h2>
-          <p class="section-desc">
-            Em muitas praias e ramais de terra do Tapajós, os aplicativos comuns ficam sem sinal ou não mostram os caminhos reais. O ECOnexão reúne o que você precisa saber para planejar sua ida com tranquilidade.
-          </p>
-        </div>
-
-        <div class="comparison-grid">
-          
-          <!-- Card 1: Caminhos e Ramais -->
-          <article class="comparison-card reveal reveal-delay-1">
-            <div class="card-icon-wrapper">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
-                <line x1="8" y1="2" x2="8" y2="18"></line>
-                <line x1="16" y1="6" x2="16" y2="22"></line>
-              </svg>
-            </div>
-            <h3 class="comparison-card-title">Caminhos e Ramais de Terra</h3>
-
-            <div class="comparison-blocks">
-              <div class="problem-block">
-                <div class="block-header">
-                  <span class="danger-dot" aria-hidden="true"></span>
-                  <span class="block-label">O Cenário Comum</span>
-                </div>
-                <p class="block-text">Mapas automáticos muitas vezes ignoram estradas de terra, variações de praia na seca e na cheia, ou levam a caminhos difíceis de passar.</p>
-              </div>
-
-              <div class="solution-block">
-                <div class="block-header">
-                  <span class="success-dot" aria-hidden="true"></span>
-                  <span class="block-label">A Abordagem ECOnexão</span>
-                </div>
-                <p class="block-text">Trilhas traçadas com distâncias reais, tipo de terreno (areia, terra batida ou várzea) e avisos sobre pontos que exigem mais cuidado.</p>
-              </div>
-            </div>
-
-            <div class="card-footer-tag">
-              <span>Distâncias Reais & Modo Offline</span>
-            </div>
-          </article>
-
-          <!-- Card 2: Contato Direto -->
-          <article class="comparison-card reveal reveal-delay-2">
-            <div class="card-icon-wrapper">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-              </svg>
-            </div>
-            <h3 class="comparison-card-title">Contato Direto com Quem Atende</h3>
-
-            <div class="comparison-blocks">
-              <div class="problem-block">
-                <div class="block-header">
-                  <span class="danger-dot" aria-hidden="true"></span>
-                  <span class="block-label">O Cenário Comum</span>
-                </div>
-                <p class="block-text">Plataformas de fora cobram comissões altas ou dificultam o contato simples com pequenas cozinhas, barqueiros e moradores.</p>
-              </div>
-
-              <div class="solution-block">
-                <div class="block-header">
-                  <span class="success-dot" aria-hidden="true"></span>
-                  <span class="block-label">A Abordagem ECOnexão</span>
-                </div>
-                <p class="block-text">Um catálogo aberto com telefone e WhatsApp direto de quem mora e trabalha no local, sem cobrança de comissão intermediária.</p>
-              </div>
-            </div>
-
-            <div class="card-footer-tag">
-              <span>Contato Direto Sem Intermediários</span>
-            </div>
-          </article>
-
-          <!-- Card 3: Informações Locais -->
-          <article class="comparison-card reveal reveal-delay-3">
-            <div class="card-icon-wrapper">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                <polyline points="9 12 11 14 15 10"></polyline>
-              </svg>
-            </div>
-            <h3 class="comparison-card-title">Informações Checadas Localmente</h3>
-
-            <div class="comparison-blocks">
-              <div class="problem-block">
-                <div class="block-header">
-                  <span class="danger-dot" aria-hidden="true"></span>
-                  <span class="block-label">O Cenário Comum</span>
-                </div>
-                <p class="block-text">Buscadores genéricos mostram locais fechados, telefones desatualizados e rotas imprecisas.</p>
-              </div>
-
-              <div class="solution-block">
-                <div class="block-header">
-                  <span class="success-dot" aria-hidden="true"></span>
-                  <span class="block-label">A Abordagem ECOnexão</span>
-                </div>
-                <p class="block-text">Informações levantadas e atualizadas periodicamente com a comunidade e fontes locais confiáveis.</p>
-              </div>
-            </div>
-
-            <div class="card-footer-tag">
-              <span>Dados Levantados no Território</span>
-            </div>
-          </article>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- ========================================================================
-         4. SHOWCASE INTERATIVO DAS 6 TELAS DO APP
-         ======================================================================== -->
-    <section id="showcase" class="section-padded bg-canvas" aria-labelledby="showcase-heading">
-      <div class="container">
-        <div class="section-header text-center reveal">
-          <span class="section-tag">Interface & Funcionalidades</span>
-          <h2 id="showcase-heading" class="section-title">Tudo o que você precisa durante a viagem</h2>
-          <p class="section-desc">
-            Uma navegação clara e direta, pensada para economizar bateria e funcionar direto no bolso.
-          </p>
-        </div>
-
-        <div class="app-showcase-wrapper">
-          
-          <!-- Interactive Tabs -->
-          <div class="showcase-nav-tabs reveal" role="tablist" aria-label="Navegação das Telas do App">
-            <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="showcase-screen-panel" id="tab-0" data-screen-index="0" tabindex="0">
-              <span class="tab-num">01</span>
-              <span class="tab-label">Início & Regiões</span>
-            </button>
-            <button class="tab-btn" role="tab" aria-selected="false" aria-controls="showcase-screen-panel" id="tab-1" data-screen-index="1" tabindex="-1">
-              <span class="tab-num">02</span>
-              <span class="tab-label">Rotas & Trilhas</span>
-            </button>
-            <button class="tab-btn" role="tab" aria-selected="false" aria-controls="showcase-screen-panel" id="tab-2" data-screen-index="2" tabindex="-1">
-              <span class="tab-num">03</span>
-              <span class="tab-label">Mapa & Avisos</span>
-            </button>
-            <button class="tab-btn" role="tab" aria-selected="false" aria-controls="showcase-screen-panel" id="tab-3" data-screen-index="3" tabindex="-1">
-              <span class="tab-num">04</span>
-              <span class="tab-label">Comércio Local</span>
-            </button>
-            <button class="tab-btn" role="tab" aria-selected="false" aria-controls="showcase-screen-panel" id="tab-4" data-screen-index="4" tabindex="-1">
-              <span class="tab-num">05</span>
-              <span class="tab-label">Modo Offline</span>
-            </button>
-            <button class="tab-btn" role="tab" aria-selected="false" aria-controls="showcase-screen-panel" id="tab-5" data-screen-index="5" tabindex="-1">
-              <span class="tab-num">06</span>
-              <span class="tab-label">Acessibilidade</span>
-            </button>
-          </div>
-
-          <!-- Showcase Stage -->
-          <div class="showcase-stage reveal" id="showcase-screen-panel" role="tabpanel" aria-labelledby="tab-0">
-            
-            <!-- Phone Mockup -->
-            <div class="showcase-device-col">
-              <div class="phone-frame showcase-phone">
-                <div class="phone-speaker" aria-hidden="true"></div>
-                <div class="phone-camera" aria-hidden="true"></div>
-                <div class="phone-reflection" aria-hidden="true"></div>
-                <div class="phone-screen">
-                  <img id="showcase-img" src="assets/screens/01-home.png" alt="Tela inicial do aplicativo ECOnexão exibindo regiões e rotas do Tapajós" class="screen-img fade-effect" width="375" height="812">
-                </div>
-              </div>
-            </div>
-
-            <!-- Descriptive Text Details -->
-            <div class="showcase-info-col">
-              <div class="showcase-header-row">
-                <span id="showcase-badge" class="badge-pill">Tela Inicial</span>
-                <span id="showcase-tag" class="badge-tag">Navegação Simples</span>
-              </div>
-
-              <h3 id="showcase-title" class="showcase-title">01. Início e Regiões</h3>
-              <p id="showcase-subtitle" class="showcase-subtitle">Escolha seu ponto de partida no Tapajós.</p>
-              
-              <p id="showcase-desc" class="showcase-description">
-                Alterne facilmente entre Santarém, Belterra e Alter do Chão para ver roteiros próximos, atrativos naturais e salvar caminhos para início rápido.
-              </p>
-
-              <!-- Dynamic Key Features -->
-              <div class="showcase-features-wrapper">
-                <h4 class="showcase-features-heading">Recursos Chave</h4>
-                <div id="showcase-features" class="showcase-features-container">
-                  <div class="feature-pill-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="check-svg" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    <span>Seleção rápida de região</span>
-                  </div>
-                  <div class="feature-pill-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="check-svg" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    <span>Busca de locais e atrativos</span>
-                  </div>
-                  <div class="feature-pill-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="check-svg" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    <span>Atalhos para rotas recomendadas</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Controls and Autoplay -->
-              <div class="showcase-nav-controls">
-                <div class="ctrl-btn-group">
-                  <button id="prev-screen" class="btn-ctrl" aria-label="Ver tela anterior">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                    Anterior
-                  </button>
-                  <span id="ctrl-indicator" class="ctrl-indicator" aria-live="polite">1 / 6</span>
-                  <button id="next-screen" class="btn-ctrl" aria-label="Ver próxima tela">
-                    Próximo
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                  </button>
-                </div>
-
-                <button id="btn-autoplay" class="btn-autoplay" aria-label="Pausar troca automática de telas" aria-pressed="true" title="Alternar reprodução automática">
-                  <svg id="autoplay-icon-pause" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <rect x="6" y="4" width="4" height="16"></rect>
-                    <rect x="14" y="4" width="4" height="16"></rect>
-                  </svg>
-                  <svg id="autoplay-icon-play" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:none;" aria-hidden="true">
-                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                  </svg>
-                  <span id="autoplay-label">Auto (5s)</span>
-                </button>
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- ========================================================================
-         5. ROTA PILOTO EM FOCO: SANTARÉM, ALTER DO CHÃO E PINDOBAL
-         ======================================================================== -->
-    <section id="rota-piloto" class="section-padded bg-white territory-section" aria-labelledby="piloto-title">
-      <div class="container">
-        <div class="section-header text-center reveal">
-          <span class="section-tag">Território Piloto</span>
-          <h2 id="piloto-title" class="section-title">Primeiro roteiro: Santarém, Alter do Chão e Praia do Pindobal</h2>
-          <p class="section-desc">
-            Um percurso que reúne praias de areia clara, culinária ribeirinha e pousadas acolhedoras às margens do Rio Tapajós.
-          </p>
-        </div>
-
-        <!-- Hero Imersivo da Rota Piloto com Estatísticas Territoriais -->
-        <article class="pilot-hero-card reveal">
-          <div class="pilot-hero-bg-wrapper">
-            <img src="assets/images/pindobal_route_hero.jpg" alt="Pôr do sol na Praia do Pindobal com águas calmas do Rio Tapajós" class="pilot-hero-img" loading="lazy" width="1200" height="600">
-            <div class="pilot-hero-overlay"></div>
-          </div>
-          
-          <div class="pilot-hero-content">
-            <div class="pilot-hero-header">
-              <span class="pilot-badge">Roteiro Piloto</span>
-              <span class="pilot-badge-secondary">Santarém • Belterra • Pindobal</span>
-            </div>
-
-            <h3 class="pilot-hero-title">Circuito Integrado Alter do Chão — Praia do Pindobal</h3>
-            <p class="pilot-hero-desc">
-              Uma travessia que combina trechos de rio, ramais de terra e caminhadas na areia, conectando o visitante aos serviços locais com autonomia e respeito à comunidade.
-            </p>
-
-            <!-- Territorial Stats Bar -->
-            <div class="pilot-stats-bar" role="region" aria-label="Informações Práticas da Rota">
-              <div class="pilot-stat-item">
-                <div class="stat-icon-wrap" aria-hidden="true">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
-                </div>
-                <div class="stat-meta">
-                  <span class="stat-number">42 km</span>
-                  <span class="stat-label">Percurso Total</span>
-                </div>
-              </div>
-
-              <div class="pilot-stat-divider" aria-hidden="true"></div>
-
-              <div class="pilot-stat-item">
-                <div class="stat-icon-wrap" aria-hidden="true">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"></path></svg>
-                </div>
-                <div class="stat-meta">
-                  <span class="stat-number">Plano</span>
-                  <span class="stat-label">Relevo Suave</span>
-                </div>
-              </div>
-
-              <div class="pilot-stat-divider" aria-hidden="true"></div>
-
-              <div class="pilot-stat-item">
-                <div class="stat-icon-wrap" aria-hidden="true">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                </div>
-                <div class="stat-meta">
-                  <span class="stat-number">Pontos Locais</span>
-                  <span class="stat-label">Pousadas e Barracas</span>
-                </div>
-              </div>
-
-              <div class="pilot-stat-divider" aria-hidden="true"></div>
-
-              <div class="pilot-stat-item">
-                <div class="stat-icon-wrap" aria-hidden="true">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
-                </div>
-                <div class="stat-meta">
-                  <span class="stat-number">Modo Offline</span>
-                  <span class="stat-label">Uso Sem Internet</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <!-- Grade dos 5 Segmentos de Atores Comunitários -->
-        <div class="actors-section-header reveal">
-          <h3 class="actors-section-title">Serviços e Vivências no Tapajós</h3>
-          <p class="actors-section-subtitle">Conheça os principais serviços mantidos pelas famílias e moradores de Santarém, Belterra e Pindobal.</p>
-        </div>
-
-        <div class="actors-grid">
-
-          <!-- Card 1: Hospedagem Familiar -->
-          <article class="actor-card reveal reveal-delay-1">
-            <figure class="actor-media">
-              <img src="assets/images/pousada_canto_floresta.jpg" alt="Pousada familiar integrada ao ambiente natural" class="actor-img" loading="lazy" width="400" height="260">
-              <span class="actor-category-tag tag-hospedagem">Hospedagem</span>
-            </figure>
-            <div class="actor-body">
-              <h4 class="actor-title">Pousadas e Hospedagem Familiar</h4>
-              <p class="actor-desc">Acomodações simples e acolhedoras geridas por famílias da região, perto da praia e com café da manhã regional.</p>
-              <div class="actor-highlight">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span>Estadia tranquila a poucos passos do Rio Tapajós.</span>
-              </div>
-            </div>
-          </article>
-
-          <!-- Card 2: Gastronomia Típica -->
-          <article class="actor-card reveal reveal-delay-2">
-            <figure class="actor-media">
-              <img src="assets/images/restaurante_moqueca.jpg" alt="Prato regional com peixe fresco da bacia amazônica" class="actor-img" loading="lazy" width="400" height="260">
-              <span class="actor-category-tag tag-gastronomia">Gastronomia</span>
-            </figure>
-            <div class="actor-body">
-              <h4 class="actor-title">Comida Típica do Tapajós</h4>
-              <p class="actor-desc">Peixes frescos assados na brasa (tambaqui, tucunaré e pirarucu), molho de tucupi, farinha de mandioca local e frutas da estação.</p>
-              <div class="actor-highlight">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span>Cozinhas familiares na beira da praia e nas vilas.</span>
-              </div>
-            </div>
-          </article>
-
-          <!-- Card 3: Transporte Fluvial -->
-          <article class="actor-card reveal reveal-delay-3">
-            <figure class="actor-media">
-              <img src="assets/images/alter_do_chao_hero.jpg" alt="Barqueiros locais em embarcações de madeira no Rio Tapajós" class="actor-img" loading="lazy" width="400" height="260">
-              <span class="actor-category-tag tag-transporte">Barqueiros</span>
-            </figure>
-            <div class="actor-body">
-              <h4 class="actor-title">Barqueiros e Travessias</h4>
-              <p class="actor-desc">Moradores que conhecem o rio, os bancos de areia e os igarapés, oferecendo travessias e passeios com tranquilidade.</p>
-              <div class="actor-highlight">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span>Deslocamentos de barco entre pontas de praia e comunidades.</span>
-              </div>
-            </div>
-          </article>
-
-          <!-- Card 4: Artesanato -->
-          <article class="actor-card reveal reveal-delay-1">
-            <figure class="actor-media">
-              <img src="assets/images/artesanato_local.jpg" alt="Biojoias amazônicas e peças trançadas em palha de tucumã" class="actor-img" loading="lazy" width="400" height="260">
-              <span class="actor-category-tag tag-artesanato">Artesanato</span>
-            </figure>
-            <div class="actor-body">
-              <h4 class="actor-title">Artesanato e Peças Locais</h4>
-              <p class="actor-desc">Biojoias com sementes nativas, peças em palha de tucumã e cerâmica regional vendidas diretamente pelas artesãs e artesãos.</p>
-              <div class="actor-highlight">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span>Renda que apoia diretamente as famílias produtoras.</span>
-              </div>
-            </div>
-          </article>
-
-          <!-- Card 5: Condutores & Atrativos Naturais -->
-          <article class="actor-card reveal reveal-delay-2 actor-card-featured">
-            <figure class="actor-media">
-              <img src="assets/images/pindobal_interactive_map.jpg" alt="Trilha ecológica e igarapé na região do Pindobal" class="actor-img" loading="lazy" width="400" height="260">
-              <span class="actor-category-tag tag-condutores">Praias & Trilhas</span>
-            </figure>
-            <div class="actor-body">
-              <h4 class="actor-title">Praias e Igarapés</h4>
-              <p class="actor-desc">Pontos de banho em águas calmas e trilhas de terra com marcação de sombra, acessos e cuidados de preservação.</p>
-              <div class="actor-highlight">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span>Orientações sobre o rio, banho seguro e respeito à mata nativa.</span>
-              </div>
-            </div>
-          </article>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- ========================================================================
-         6. PARA QUEM É O ECONEXÃO (PÚBLICOS E IMPACTO)
-         ======================================================================== -->
-    <section id="publicos" class="section-padded bg-dark-theme text-white" aria-labelledby="publicos-title">
-      <div class="container">
-        <div class="section-header text-center reveal">
-          <span class="section-tag section-tag-light">Impacto Comunitário</span>
-          <h2 id="publicos-title" class="section-title text-white">Uma ferramenta útil para quem visita e para quem vive aqui</h2>
-          <p class="section-desc text-muted-light">
-            O turismo no Tapajós funciona melhor quando é bom para quem passeia e justo para quem mora e cuida da região.
-          </p>
-        </div>
-
-        <!-- Grade de Públicos Beneficiados -->
-        <div class="grid-3-col">
-          
-          <!-- Pilar 1: Quem Visita -->
-          <article class="impact-card reveal reveal-delay-1">
-            <div class="impact-icon-circle">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
-            </div>
-            <div class="impact-header-badge">Para Quem Visita</div>
-            <h3 class="impact-title">Planejar passeios com tranquilidade e autonomia</h3>
-            <ul class="impact-list">
-              <li><strong>Roteiros claros:</strong> Distâncias, relevo e condições reais do caminho anotados com cuidado.</li>
-              <li><strong>Contato direto:</strong> Telefone e WhatsApp de anfitriões locais para tirar dúvidas e combinar serviços.</li>
-              <li><strong>Mapas offline:</strong> Acesso aos trajetos mesmo em praias e ramais sem sinal de celular.</li>
-              <li><strong>Apoio à comunidade:</strong> Seu gasto turístico fica direto com quem recebe você.</li>
-            </ul>
-          </article>
-
-          <!-- Pilar 2: Moradores e Empreendedores -->
-          <article class="impact-card reveal reveal-delay-2">
-            <div class="impact-icon-circle">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
-            </div>
-            <div class="impact-header-badge">Para Moradores & Negócios</div>
-            <h3 class="impact-title">Divulgar serviços e receber visitantes com autonomia</h3>
-            <ul class="impact-list">
-              <li><strong>Canal direto:</strong> Página no app com seu WhatsApp para o cliente falar direto com você.</li>
-              <li><strong>Sem comissões:</strong> Sem cobrança de porcentagem sobre diárias, almoços ou travessias.</li>
-              <li><strong>Visibilidade simples:</strong> Seu negócio aparece para os visitantes que percorrem a rota da região.</li>
-              <li><strong>Valorização local:</strong> Reconhecimento de boas práticas e hospitalidade familiar.</li>
-            </ul>
-          </article>
-
-          <!-- Pilar 3: Associações e Gestão Local -->
-          <article class="impact-card reveal reveal-delay-3">
-            <div class="impact-icon-circle">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
-            </div>
-            <div class="impact-header-badge">Para Associações & Gestão Local</div>
-            <h3 class="impact-title">Apoiar a organização do turismo com dados</h3>
-            <ul class="impact-list">
-              <li><strong>Base organizada:</strong> Dados georreferenciados alinhados aos levantamentos turísticos do território.</li>
-              <li><strong>Acompanhamento de fluxo:</strong> Visão da distribuição de visitantes ao longo dos ramais e praias.</li>
-              <li><strong>Comunicação útil:</strong> Espaço para avisos de preservação ambiental e cuidados no rio.</li>
-              <li><strong>Fortalecimento do TBC:</strong> Apoio prático ao Turismo de Base Comunitária em Santarém e Belterra.</li>
-            </ul>
-          </article>
-
-        </div>
-
-        <!-- Banner de Pilares de Impacto Territorial -->
-        <div class="impact-pillars-row reveal">
-          <div class="impact-pillar-item">
-            <div class="pillar-stat">Direto</div>
-            <div class="pillar-content">
-              <strong>Sem Intermediários</strong>
-              <span>Contato direto com quem atende na comunidade</span>
-            </div>
-          </div>
-
-          <div class="impact-pillar-item">
-            <div class="pillar-stat">Local</div>
-            <div class="pillar-content">
-              <strong>Dados da Região</strong>
-              <span>Informações alinhadas com o território de Santarém e Belterra</span>
-            </div>
-          </div>
-
-          <div class="impact-pillar-item">
-            <div class="pillar-stat">TBC</div>
-            <div class="pillar-content">
-              <strong>Base Comunitária</strong>
-              <span>Geração de renda direta e respeito aos saberes locais</span>
-            </div>
-          </div>
-
-          <div class="impact-pillar-item">
-            <div class="pillar-stat">Acesso</div>
-            <div class="pillar-content">
-              <strong>Informação Clara</strong>
-              <span>Estrutura física e acessibilidade informadas com transparência</span>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- ========================================================================
-         7. TECNOLOGIA & CONFIABILIDADE
-         ======================================================================== -->
-    <section id="tecnologia" class="section-padded bg-canvas" aria-labelledby="tecnologia-title">
-      <div class="container">
-        <div class="section-header text-center reveal">
-          <span class="section-tag">Tecnologia e Performance</span>
-          <h2 id="tecnologia-title" class="section-title">Tecnologia leve e voltada para o uso real</h2>
-          <p class="section-desc">
-            Construído para abrir rápido, gastar pouca bateria e funcionar sem depender de internet de alta velocidade.
-          </p>
-        </div>
-
-        <div class="tech-grid-5">
-          
-          <!-- Tech 1: Mobile Frontend -->
-          <div class="tech-box reveal reveal-delay-1">
-            <div class="tech-header-line">
-              <span class="tech-pill">Mobile Frontend</span>
-              <span class="tech-subpill">React Native</span>
-            </div>
-            <h3 class="tech-box-title">React Native & Expo SDK 54</h3>
-            <p class="tech-box-desc">Aplicativo rápido e fluido para Android e iOS, desenhado para economizar bateria em dias longos de caminhada ou passeio de barco.</p>
-          </div>
-
-          <!-- Tech 2: Backend API -->
-          <div class="tech-box reveal reveal-delay-2">
-            <div class="tech-header-line">
-              <span class="tech-pill">Serviços Ágeis</span>
-              <span class="tech-subpill">Python & FastAPI</span>
-            </div>
-            <h3 class="tech-box-title">FastAPI & Pydantic</h3>
-            <p class="tech-box-desc">Backend enxuto com tipagem estrita e documentação clara, garantindo consultas rápidas e integração segura com dados de campo.</p>
-          </div>
-
-          <!-- Tech 3: Spatial Database -->
-          <div class="tech-box reveal reveal-delay-3">
-            <div class="tech-header-line">
-              <span class="tech-pill">Geoespacial</span>
-              <span class="tech-subpill">PostGIS</span>
-            </div>
-            <h3 class="tech-box-title">PostgreSQL 17 & PostGIS</h3>
-            <p class="tech-box-desc">Cálculo de distâncias e tempos de trajeto por caminhos reais de terra e rio, com filtros de proximidade precisos.</p>
-          </div>
-
-          <!-- Tech 4: Auth & Storage -->
-          <div class="tech-box reveal reveal-delay-4">
-            <div class="tech-header-line">
-              <span class="tech-pill">Identidade & Mídia</span>
-              <span class="tech-subpill">Supabase</span>
-            </div>
-            <h3 class="tech-box-title">Supabase Auth & Storage</h3>
-            <p class="tech-box-desc">Acesso seguro e imagens compactas, otimizadas para abrir rapidamente mesmo em redes móveis oscilantes.</p>
-          </div>
-
-          <!-- Tech 5: Offline Routing -->
-          <div class="tech-box reveal reveal-delay-1">
-            <div class="tech-header-line">
-              <span class="tech-pill">Modo Offline</span>
-              <span class="tech-subpill">Cache Local</span>
-            </div>
-            <h3 class="tech-box-title">OSRM & Smart Caching</h3>
-            <p class="tech-box-desc">Trilhas e contatos salvos no próprio aparelho, garantindo que você consulte o mapa mesmo em locais sem sinal de celular.</p>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- ========================================================================
-         8. CONTATO / CONVERSA COM A EQUIPE
-         ======================================================================== -->
-    <section id="contato" class="section-padded bg-primary-gradient text-white" aria-labelledby="pitch-title">
-      <div class="container">
-        <div class="pitch-box">
-          
-          <!-- Left Column: Contact Information -->
-          <div class="pitch-info reveal">
-            <span class="pitch-badge">Fale Conosco</span>
-            <h2 id="pitch-title" class="pitch-title">Quer conversar com a equipe do projeto?</h2>
-            <p class="pitch-desc">
-              Seja você um morador com negócio local, condutor de turismo, pesquisador ou representante institucional, estamos à disposição para conversar sobre o projeto no Tapajós.
-            </p>
-
-            <div class="pitch-highlights">
-              <div class="pitch-item">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span>Mapeamento construído em diálogo com quem vive na região</span>
-              </div>
-              <div class="pitch-item">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span>Apoio prático para cadastrar pousadas, barcos e artesanato</span>
-              </div>
-              <div class="pitch-item">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span>Informações territoriais organizadas e acessíveis</span>
-              </div>
-            </div>
-
-            <div class="direct-contact-row">
-              <div class="contact-chip">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                <span>contato@econexao.app</span>
-              </div>
-              <div class="contact-chip">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                <span>Santarém & Belterra, Pará</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Right Column: Form Card -->
-          <div class="pitch-form-card reveal reveal-delay-2">
-            <h3 class="form-card-title">Envie uma Mensagem</h3>
-            <p class="form-card-desc">Preencha o formulário abaixo e entraremos em contato.</p>
-
-            <form id="contact-form" class="contact-form" novalidate aria-label="Formulário de Contato">
-              <div class="form-group">
-                <label for="contact-name">Seu Nome Completo <span class="required-asterisk" aria-hidden="true">*</span></label>
-                <input type="text" id="contact-name" name="name" placeholder="Ex: Mariana Silva" required autocomplete="name" aria-required="true" aria-describedby="contact-name-error">
-                <span id="contact-name-error" class="field-error-msg" aria-live="polite"></span>
-              </div>
-
-              <div class="form-group">
-                <label for="contact-org">Instituição, Comunidade ou Atividade <span class="required-asterisk" aria-hidden="true">*</span></label>
-                <input type="text" id="contact-org" name="organization" placeholder="Ex: Pousada local / Guia / Associação / Morador" required autocomplete="organization" aria-required="true" aria-describedby="contact-org-error">
-                <span id="contact-org-error" class="field-error-msg" aria-live="polite"></span>
-              </div>
-
-              <div class="form-group">
-                <label for="contact-email">Seu E-mail <span class="required-asterisk" aria-hidden="true">*</span></label>
-                <input type="email" id="contact-email" name="email" placeholder="Ex: mariana@email.com" required autocomplete="email" aria-required="true" aria-describedby="contact-email-error">
-                <span id="contact-email-error" class="field-error-msg" aria-live="polite"></span>
-              </div>
-
-              <div class="form-group">
-                <label for="contact-interest">Assunto Principal <span class="required-asterisk" aria-hidden="true">*</span></label>
-                <select id="contact-interest" name="interest_type" required aria-required="true" aria-describedby="contact-interest-error">
-                  <option value="" disabled selected>Selecione uma opção...</option>
-                  <option value="cadastro_local">Cadastrar Pousada, Barco ou Serviço Local</option>
-                  <option value="parceria_institucional">Parceria Institucional ou Comunitária</option>
-                  <option value="duvidas_guia">Dúvidas sobre o Guia e Roteiros</option>
-                  <option value="pesquisa_imprensa">Pesquisa, Imprensa ou Outro Assunto</option>
-                </select>
-                <span id="contact-interest-error" class="field-error-msg" aria-live="polite"></span>
-              </div>
-
-              <div class="form-group">
-                <label for="contact-msg">Mensagem (Opcional)</label>
-                <textarea id="contact-msg" name="message" rows="3" placeholder="Conte-nos brevemente o que você gostaria de saber ou propor..."></textarea>
-              </div>
-
-              <button type="submit" id="btn-submit-pitch" class="btn btn-sun btn-lg btn-block" aria-label="Enviar mensagem">
-                <span class="btn-text">Enviar Mensagem</span>
-                <span class="btn-spinner" aria-hidden="true" style="display: none;">
-                  <svg class="spinner-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke="currentColor"></circle><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor"></path></svg>
-                </span>
-                <svg class="btn-icon-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-              </button>
-
-              <div id="form-feedback" class="form-feedback" role="status" aria-live="polite"></div>
-            </form>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- ========================================================================
-       9. RODAPÉ (FOOTER)
-       ======================================================================== -->
-  <footer class="site-footer" role="contentinfo">
-    <div class="container footer-container">
-      
-      <!-- Brand & Mission Info -->
-      <div class="footer-brand">
-        <a href="#hero" class="brand-link" aria-label="ECOnexão Início">
-          <img src="assets/brand/logo.png" alt="ECOnexão Logo" class="footer-logo" width="140" height="38">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="ECOnexão conecta visitantes, rotas naturais e negócios locais de Santarém em uma experiência simples e gratuita."
+    />
+    <meta name="theme-color" content="#0a3c35" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="ECOnexão — Descubra destinos. Viva experiências." />
+    <meta
+      property="og:description"
+      content="Rotas, praias e negócios locais em um só lugar."
+    />
+    <meta property="og:image" content="assets/images/alter3.png" />
+    <title>ECOnexão — Descubra destinos. Viva experiências.</title>
+
+    <style>
+      :root {
+        --ink: #0b2622;
+        --ink-soft: #45615b;
+        --green-950: #062e29;
+        --green-900: #0a3c35;
+        --green-800: #105347;
+        --green-700: #14705e;
+        --mint: #a8dbc3;
+        --sand: #f4e9d4;
+        --gold: #e3bd69;
+        --cream: #fbf8f0;
+        --white: #ffffff;
+        --line: rgba(11, 38, 34, 0.13);
+        --shadow: 0 24px 70px rgba(4, 35, 30, 0.17);
+        --radius-xl: 2rem;
+        --radius-lg: 1.5rem;
+        --radius-md: 1rem;
+        --page: min(1180px, calc(100% - 3rem));
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: var(--cream);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      body.menu-open {
+        overflow: hidden;
+      }
+
+      img {
+        display: block;
+        max-width: 100%;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button,
+      a {
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      :focus-visible {
+        outline: 3px solid var(--gold);
+        outline-offset: 4px;
+      }
+
+      .skip-link {
+        position: fixed;
+        z-index: 100;
+        top: 0.75rem;
+        left: 0.75rem;
+        padding: 0.7rem 1rem;
+        border-radius: 999px;
+        color: var(--white);
+        background: var(--green-900);
+        transform: translateY(-150%);
+        transition: transform 180ms ease;
+      }
+
+      .skip-link:focus {
+        transform: translateY(0);
+      }
+
+      .container {
+        width: var(--page);
+        margin-inline: auto;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin: 0 0 1rem;
+        color: var(--green-700);
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.15em;
+        line-height: 1.2;
+        text-transform: uppercase;
+      }
+
+      .eyebrow::before {
+        width: 1.8rem;
+        height: 2px;
+        background: currentColor;
+        content: "";
+      }
+
+      .eyebrow--light {
+        color: var(--mint);
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.05;
+        text-wrap: balance;
+      }
+
+      h1 {
+        max-width: 820px;
+        margin-bottom: 1.3rem;
+        font-size: clamp(3.6rem, 8vw, 7.8rem);
+        font-weight: 560;
+        letter-spacing: -0.07em;
+      }
+
+      h2 {
+        margin-bottom: 1.25rem;
+        font-size: clamp(2.25rem, 5.2vw, 4.8rem);
+        font-weight: 580;
+        letter-spacing: -0.055em;
+      }
+
+      h3 {
+        margin-bottom: 0.65rem;
+        font-size: clamp(1.35rem, 2vw, 1.8rem);
+        letter-spacing: -0.035em;
+      }
+
+      .lead {
+        max-width: 670px;
+        color: var(--ink-soft);
+        font-size: clamp(1.05rem, 2vw, 1.25rem);
+      }
+
+      .button {
+        display: inline-flex;
+        min-height: 3.35rem;
+        align-items: center;
+        justify-content: center;
+        gap: 0.7rem;
+        padding: 0.85rem 1.3rem;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        color: var(--white);
+        background: var(--green-700);
+        font-weight: 760;
+        cursor: pointer;
+        transition:
+          transform 180ms ease,
+          background-color 180ms ease,
+          box-shadow 180ms ease;
+      }
+
+      .button:hover {
+        background: var(--green-800);
+        box-shadow: 0 13px 28px rgba(6, 46, 41, 0.2);
+        transform: translateY(-2px);
+      }
+
+      .button--light {
+        color: var(--green-950);
+        background: var(--white);
+      }
+
+      .button--light:hover {
+        color: var(--white);
+        background: var(--green-700);
+      }
+
+      .button__arrow {
+        font-size: 1.2em;
+        transition: transform 180ms ease;
+      }
+
+      .button:hover .button__arrow {
+        transform: translateX(3px);
+      }
+
+      /* Header */
+      .site-header {
+        position: absolute;
+        z-index: 20;
+        top: 0;
+        right: 0;
+        left: 0;
+        color: var(--white);
+      }
+
+      .nav {
+        display: flex;
+        min-height: 6.2rem;
+        align-items: center;
+        justify-content: space-between;
+        gap: 2rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.7rem;
+        font-size: 1.35rem;
+        font-weight: 760;
+        letter-spacing: -0.045em;
+      }
+
+      .brand__mark {
+        display: grid;
+        width: 2rem;
+        height: 2rem;
+        place-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 50%;
+        color: var(--green-950);
+        background: var(--mint);
+        font-size: 0.72rem;
+        font-weight: 900;
+        letter-spacing: -0.08em;
+      }
+
+      .nav__links {
+        display: flex;
+        align-items: center;
+        gap: 1.7rem;
+        font-size: 0.9rem;
+        font-weight: 680;
+      }
+
+      .nav__links > a:not(.nav__cta) {
+        opacity: 0.82;
+        transition: opacity 180ms ease;
+      }
+
+      .nav__links > a:hover {
+        opacity: 1;
+      }
+
+      .nav__cta {
+        padding: 0.65rem 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+      }
+
+      .menu-button {
+        display: none;
+        width: 2.8rem;
+        height: 2.8rem;
+        padding: 0;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        border-radius: 50%;
+        color: var(--white);
+        background: rgba(255, 255, 255, 0.08);
+        font-size: 1.25rem;
+        cursor: pointer;
+      }
+
+      /* Hero */
+      .hero {
+        position: relative;
+        display: grid;
+        min-height: 780px;
+        align-items: end;
+        overflow: hidden;
+        color: var(--white);
+        background:
+          linear-gradient(90deg, rgba(2, 32, 28, 0.85) 0%, rgba(2, 32, 28, 0.4) 56%, rgba(2, 32, 28, 0.16) 100%),
+          linear-gradient(0deg, rgba(3, 36, 31, 0.84) 0%, transparent 48%),
+          url("assets/images/pindobal4.png") center 63% / cover no-repeat;
+      }
+
+      .hero::after {
+        position: absolute;
+        inset: auto 0 0;
+        height: 12rem;
+        background: linear-gradient(0deg, var(--green-950), transparent);
+        content: "";
+        pointer-events: none;
+      }
+
+      .hero__content {
+        position: relative;
+        z-index: 2;
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+        align-items: end;
+        gap: 4rem;
+        padding: 13rem 0 6rem;
+      }
+
+      .hero__copy .eyebrow {
+        color: var(--mint);
+      }
+
+      .hero__copy .lead {
+        max-width: 590px;
+        margin-bottom: 2rem;
+        color: rgba(255, 255, 255, 0.78);
+      }
+
+      .route-card {
+        padding: 1.35rem;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: var(--radius-lg);
+        background: rgba(5, 43, 37, 0.45);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(18px);
+      }
+
+      .route-card__label {
+        margin-bottom: 1rem;
+        color: var(--mint);
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .route-card__path {
+        position: relative;
+        display: grid;
+        gap: 1.1rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .route-card__path::before {
+        position: absolute;
+        top: 0.75rem;
+        bottom: 0.75rem;
+        left: 0.42rem;
+        width: 1px;
+        background: rgba(168, 219, 195, 0.45);
+        content: "";
+      }
+
+      .route-card__path li {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1rem 1fr;
+        gap: 0.75rem;
+        align-items: start;
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 0.88rem;
+      }
+
+      .route-card__path li::before {
+        z-index: 1;
+        width: 0.85rem;
+        height: 0.85rem;
+        margin-top: 0.25rem;
+        border: 3px solid var(--mint);
+        border-radius: 50%;
+        background: var(--green-900);
+        content: "";
+      }
+
+      .route-card__path strong {
+        display: block;
+        color: var(--white);
+        font-size: 1rem;
+      }
+
+      /* Narrative */
+      .problem {
+        position: relative;
+        padding: 9rem 0;
+        color: var(--white);
+        background: var(--green-950);
+      }
+
+      .problem__grid {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        align-items: center;
+        gap: 6rem;
+      }
+
+      .problem h2 {
+        max-width: 680px;
+      }
+
+      .problem .lead {
+        color: rgba(255, 255, 255, 0.66);
+      }
+
+      .questions {
+        position: relative;
+        display: grid;
+        gap: 0.9rem;
+      }
+
+      .question {
+        display: flex;
+        min-height: 5rem;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.5rem;
+        padding: 1.1rem 1.35rem;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.055);
+        font-size: clamp(1.08rem, 2vw, 1.35rem);
+      }
+
+      .question span:last-child {
+        color: var(--mint);
+        font-size: 1.5rem;
+      }
+
+      .connection {
+        position: relative;
+        padding: 9rem 0;
+        color: var(--ink);
+        background: var(--cream);
+      }
+
+      .connection__head {
+        max-width: 870px;
+        margin-bottom: 4rem;
+      }
+
+      .connection__head h2 {
+        text-shadow: 0 3px 24px rgba(2, 30, 26, 0.32);
+      }
+
+      .connection__grid {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+      }
+
+      .audience-card {
+        min-height: 350px;
+        padding: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: var(--radius-xl);
+        background: rgba(4, 48, 41, 0.68);
+        box-shadow: 0 18px 45px rgba(2, 31, 27, 0.22);
+        backdrop-filter: blur(14px);
+      }
+
+      .audience-card:first-child {
+        color: var(--white);
+        background:
+          linear-gradient(0deg, rgba(3, 38, 33, 0.94) 0%, rgba(3, 38, 33, 0.48) 56%, rgba(3, 38, 33, 0.12) 100%),
+          url("assets/images/turista.webp") center / cover no-repeat;
+        text-shadow: 0 2px 18px rgba(2, 28, 25, 0.7);
+      }
+
+      .audience-card:last-child {
+        padding-left: 5.2rem;
+        color: var(--white);
+        background:
+          linear-gradient(0deg, rgba(3, 38, 33, 0.94) 0%, rgba(3, 38, 33, 0.58) 58%, rgba(3, 38, 33, 0.18) 100%),
+          url("assets/images/charutinho.jpg") center / cover no-repeat;
+        text-shadow: 0 2px 18px rgba(2, 28, 25, 0.7);
+      }
+
+      .audience-card__index {
+        display: grid;
+        width: 2.7rem;
+        height: 2.7rem;
+        margin-bottom: 5rem;
+        place-items: center;
+        border: 1px solid currentColor;
+        border-radius: 50%;
+        font-size: 0.78rem;
+        font-weight: 800;
+      }
+
+      .audience-card p {
+        max-width: 440px;
+        margin-bottom: 0;
+        opacity: 0.74;
+      }
+
+      .connection__bridge {
+        position: absolute;
+        z-index: 2;
+        top: 50%;
+        left: 50%;
+        display: grid;
+        width: 7.2rem;
+        height: 7.2rem;
+        place-items: center;
+        border: 6px solid var(--cream);
+        border-radius: 50%;
+        color: var(--green-950);
+        background: var(--gold);
+        font-size: 0.82rem;
+        font-weight: 850;
+        text-align: center;
+        transform: translate(-50%, -50%);
+      }
+
+      /* Steps */
+      .how {
+        padding: 9rem 0;
+        background: var(--sand);
+      }
+
+      .how__head {
+        display: grid;
+        grid-template-columns: 1fr 0.8fr;
+        align-items: end;
+        gap: 4rem;
+        margin-bottom: 4rem;
+      }
+
+      .how__head .lead {
+        margin-bottom: 1rem;
+      }
+
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        border-top: 1px solid rgba(11, 38, 34, 0.22);
+      }
+
+      .step {
+        padding: 2rem 2rem 0 0;
+      }
+
+      .step + .step {
+        padding-left: 2rem;
+        border-left: 1px solid rgba(11, 38, 34, 0.16);
+      }
+
+      .step__number {
+        display: inline-grid;
+        width: 2.6rem;
+        height: 2.6rem;
+        margin-bottom: 3rem;
+        place-items: center;
+        border-radius: 50%;
+        color: var(--white);
+        background: var(--green-800);
+        font-size: 0.8rem;
+        font-weight: 800;
+      }
+
+      .step p {
+        max-width: 290px;
+        margin-bottom: 0;
+        color: var(--ink-soft);
+      }
+
+      /* Destinations */
+      .destinations {
+        padding: 9rem 0;
+        overflow: hidden;
+      }
+
+      .destinations__head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 3rem;
+        margin-bottom: 3.5rem;
+      }
+
+      .destinations__head h2 {
+        max-width: 760px;
+        margin-bottom: 0;
+      }
+
+      .destinations__note {
+        max-width: 290px;
+        margin-bottom: 0.75rem;
+        color: var(--ink-soft);
+        font-size: 0.95rem;
+      }
+
+      .destination-grid {
+        display: grid;
+        grid-template-columns: 1.25fr 1fr 1fr;
+        grid-template-rows: 260px 260px;
+        gap: 1rem;
+      }
+
+      .destination {
+        position: relative;
+        min-height: 240px;
+        overflow: hidden;
+        border-radius: var(--radius-lg);
+        color: var(--white);
+        background: var(--green-900);
+      }
+
+      .destination:first-child {
+        grid-row: 1 / 3;
+      }
+
+      .destination img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+
+      .destination::after {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(0deg, rgba(2, 28, 25, 0.82), transparent 58%);
+        content: "";
+      }
+
+      .destination:hover img {
+        transform: scale(1.04);
+      }
+
+      .destination__label {
+        position: absolute;
+        z-index: 1;
+        right: 1.25rem;
+        bottom: 1.25rem;
+        left: 1.25rem;
+      }
+
+      .destination__label span {
+        display: block;
+        color: rgba(255, 255, 255, 0.68);
+        font-size: 0.75rem;
+        font-weight: 750;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .destination__label strong {
+        font-size: clamp(1.2rem, 2vw, 1.65rem);
+      }
+
+      /* Business */
+      .business {
+        position: relative;
+        min-height: 720px;
+        display: grid;
+        align-items: center;
+        overflow: hidden;
+        color: var(--white);
+        background:
+          linear-gradient(90deg, rgba(5, 48, 42, 0.15), rgba(5, 48, 42, 0.88) 58%, rgba(5, 48, 42, 0.97)),
+          url("assets/images/aramanai1.png") center / cover;
+      }
+
+      .business__content {
+        display: grid;
+        grid-template-columns: 0.78fr 1.22fr;
+        align-items: center;
+        gap: 6rem;
+        padding: 7rem 0;
+      }
+
+      .business__photo-label {
+        align-self: end;
+        width: fit-content;
+        padding: 0.65rem 0.9rem;
+        border: 1px solid rgba(255, 255, 255, 0.32);
+        border-radius: 999px;
+        background: rgba(5, 48, 42, 0.26);
+        font-size: 0.78rem;
+        font-weight: 750;
+        backdrop-filter: blur(12px);
+      }
+
+      .business__panel {
+        padding: clamp(2rem, 5vw, 4.5rem);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-xl);
+        background: rgba(5, 46, 40, 0.66);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(18px);
+      }
+
+      .business__panel h2 {
+        max-width: 700px;
+      }
+
+      .business__panel > p {
+        max-width: 590px;
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      .business__benefits {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-top: 2.5rem;
+      }
+
+      .benefit {
+        padding-top: 1rem;
+        border-top: 1px solid rgba(168, 219, 195, 0.38);
+      }
+
+      .benefit strong {
+        display: block;
+        margin-bottom: 0.3rem;
+        color: var(--mint);
+      }
+
+      .benefit span {
+        color: rgba(255, 255, 255, 0.66);
+        font-size: 0.86rem;
+      }
+
+      .trust {
+        background: var(--white);
+      }
+
+      .trust__grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        border-inline: 1px solid var(--line);
+      }
+
+      .trust__item {
+        padding: 2.4rem;
+      }
+
+      .trust__item + .trust__item {
+        border-left: 1px solid var(--line);
+      }
+
+      .trust__item span {
+        display: block;
+        margin-bottom: 0.3rem;
+        color: var(--green-700);
+        font-size: 0.72rem;
+        font-weight: 850;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .trust__item strong {
+        font-size: 1.08rem;
+      }
+
+      /* Newsletter */
+      .newsletter {
+        position: relative;
+        display: grid;
+        min-height: 720px;
+        align-items: center;
+        overflow: hidden;
+        color: var(--white);
+        background:
+          linear-gradient(90deg, rgba(3, 40, 35, 0.96), rgba(3, 40, 35, 0.62) 64%, rgba(3, 40, 35, 0.32)),
+          url("assets/images/pontadepedras1.png") center 58% / cover;
+      }
+
+      .newsletter::before {
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(circle at 80% 20%, rgba(227, 189, 105, 0.28), transparent 30%);
+        content: "";
+      }
+
+      .newsletter__content {
+        position: relative;
+        z-index: 1;
+        max-width: 800px;
+        padding: 8rem 0;
+      }
+
+      .newsletter h2 {
+        max-width: 760px;
+      }
+
+      .newsletter .lead {
+        max-width: 620px;
+        margin-bottom: 2.2rem;
+        color: rgba(255, 255, 255, 0.72);
+      }
+
+      .signup-form {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.7rem;
+        max-width: 700px;
+        padding: 0.6rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.11);
+        backdrop-filter: blur(14px);
+      }
+
+      .signup-form label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        clip-path: inset(50%);
+      }
+
+      .signup-form input {
+        width: 100%;
+        min-height: 3.35rem;
+        padding: 0 1rem;
+        border: 0;
+        outline: 0;
+        color: var(--white);
+        background: transparent;
+      }
+
+      .signup-form input::placeholder {
+        color: rgba(255, 255, 255, 0.62);
+      }
+
+      .signup-form input:focus-visible {
+        border-radius: 999px;
+        outline: 2px solid var(--gold);
+        outline-offset: 0;
+      }
+
+      .form-note {
+        max-width: 660px;
+        margin: 0.9rem 0 0;
+        color: rgba(255, 255, 255, 0.56);
+        font-size: 0.78rem;
+      }
+
+      .form-status {
+        display: none;
+        max-width: 700px;
+        margin-top: 1rem;
+        padding: 1rem 1.2rem;
+        border: 1px solid rgba(168, 219, 195, 0.42);
+        border-radius: var(--radius-md);
+        color: var(--mint);
+        background: rgba(168, 219, 195, 0.08);
+        font-weight: 700;
+      }
+
+      .form-status.is-visible {
+        display: block;
+      }
+
+      /* Footer */
+      .site-footer {
+        color: rgba(255, 255, 255, 0.7);
+        background: #032a25;
+      }
+
+      .footer__content {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 2rem;
+        align-items: center;
+        padding: 2.2rem 0;
+        font-size: 0.83rem;
+      }
+
+      .footer__content p {
+        margin: 0;
+      }
+
+      .footer__content a {
+        color: var(--white);
+        font-weight: 700;
+      }
+
+      @media (max-width: 980px) {
+        .hero__content,
+        .problem__grid,
+        .how__head,
+        .business__content {
+          grid-template-columns: 1fr;
+        }
+
+        .hero__content {
+          gap: 2.5rem;
+        }
+
+        .route-card {
+          max-width: 460px;
+        }
+
+        .problem__grid,
+        .business__content {
+          gap: 3.5rem;
+        }
+
+        .destination-grid {
+          grid-template-columns: 1fr 1fr;
+          grid-template-rows: repeat(3, 260px);
+        }
+
+        .destination:first-child {
+          grid-row: 1 / 3;
+        }
+
+        .business {
+          background:
+            linear-gradient(0deg, rgba(5, 48, 42, 0.96), rgba(5, 48, 42, 0.3)),
+            url("assets/images/aramanai1.png") center / cover;
+        }
+
+        .business__photo-label {
+          display: none;
+        }
+      }
+
+      @media (max-width: 760px) {
+        :root {
+          --page: min(100% - 2rem, 1180px);
+        }
+
+        h1 {
+          font-size: clamp(3.2rem, 18vw, 5.4rem);
+        }
+
+        .nav {
+          min-height: 5.2rem;
+        }
+
+        .menu-button {
+          display: grid;
+          place-items: center;
+        }
+
+        .nav__links {
+          position: fixed;
+          z-index: 30;
+          top: 5.2rem;
+          right: 1rem;
+          left: 1rem;
+          display: none;
+          align-items: stretch;
+          gap: 0;
+          padding: 0.7rem;
+          border: 1px solid rgba(255, 255, 255, 0.18);
+          border-radius: var(--radius-lg);
+          background: rgba(6, 46, 41, 0.97);
+          box-shadow: var(--shadow);
+          backdrop-filter: blur(16px);
+        }
+
+        .nav__links.is-open {
+          display: grid;
+        }
+
+        .nav__links a {
+          padding: 1rem;
+        }
+
+        .nav__cta {
+          margin-top: 0.3rem;
+          text-align: center;
+        }
+
+        .hero {
+          min-height: 820px;
+          background:
+            linear-gradient(0deg, rgba(2, 32, 28, 0.94), rgba(2, 32, 28, 0.24)),
+            url("assets/images/pindobal4.png") 52% center / cover no-repeat;
+        }
+
+        .hero__content {
+          padding: 10rem 0 4rem;
+        }
+
+        .problem,
+        .connection,
+        .how,
+        .destinations {
+          padding: 6.5rem 0;
+        }
+
+        .connection__grid {
+          grid-template-columns: 1fr;
+          gap: 1rem;
+        }
+
+        .connection__bridge {
+          position: relative;
+          top: auto;
+          left: auto;
+          grid-row: 2;
+          width: 100%;
+          height: auto;
+          min-height: 3.4rem;
+          border: 0;
+          border-radius: 999px;
+          transform: none;
+        }
+
+        .audience-card:last-child {
+          padding-left: 2rem;
+        }
+
+        .audience-card {
+          min-height: 310px;
+        }
+
+        .audience-card__index {
+          margin-bottom: 4rem;
+        }
+
+        .steps {
+          grid-template-columns: 1fr;
+        }
+
+        .step {
+          display: grid;
+          grid-template-columns: auto 1fr;
+          column-gap: 1.2rem;
+          padding: 1.5rem 0;
+        }
+
+        .step + .step {
+          padding-left: 0;
+          border-top: 1px solid rgba(11, 38, 34, 0.16);
+          border-left: 0;
+        }
+
+        .step__number {
+          grid-row: 1 / 3;
+          margin-bottom: 0;
+        }
+
+        .destinations__head {
+          display: block;
+        }
+
+        .destinations__note {
+          margin-top: 1.5rem;
+        }
+
+        .business__benefits,
+        .trust__grid {
+          grid-template-columns: 1fr;
+        }
+
+        .trust__grid {
+          border-inline: 0;
+        }
+
+        .trust__item {
+          padding-inline: 0;
+        }
+
+        .trust__item + .trust__item {
+          border-top: 1px solid var(--line);
+          border-left: 0;
+        }
+
+        .signup-form {
+          grid-template-columns: 1fr;
+          padding: 0.7rem;
+          border-radius: var(--radius-lg);
+        }
+
+        .signup-form input {
+          min-height: 3rem;
+        }
+
+        .footer__content {
+          grid-template-columns: 1fr;
+          gap: 0.65rem;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .destination-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          grid-template-rows: repeat(5, 280px);
+        }
+
+        .destination:first-child {
+          grid-row: auto;
+          grid-column: auto;
+        }
+
+        .business__panel {
+          padding: 1.5rem;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+
+    <header class="site-header">
+      <nav class="nav container" aria-label="Navegação principal">
+        <a class="brand" href="#inicio" aria-label="ECOnexão — início">
+          <span class="brand__mark" aria-hidden="true">ECO</span>
+          <span>ECOnexão</span>
         </a>
-        <p class="footer-text">
-          Guia de turismo comunitário e trilhas no Rio Tapajós. Desenvolvido para conectar viajantes a experiências autênticas e ao comércio local de Santarém, Belterra e Alter do Chão.
-        </p>
-        <div class="footer-badges-row">
-          <span class="footer-pill-badge">🌿 Base Comunitária</span>
-          <span class="footer-pill-badge">⚡ Funciona Offline</span>
-          <span class="footer-pill-badge">♿ Acessibilidade WCAG</span>
+
+        <button
+          class="menu-button"
+          type="button"
+          aria-expanded="false"
+          aria-controls="menu-principal"
+          aria-label="Abrir menu"
+        >
+          <span aria-hidden="true">☰</span>
+        </button>
+
+        <div class="nav__links" id="menu-principal">
+          <a href="#como-funciona">Como funciona</a>
+          <a href="#destinos">Destinos</a>
+          <a href="#negocios">Negócios locais</a>
+          <a class="nav__cta" href="#informativo">Receber informativo</a>
         </div>
-      </div>
+      </nav>
+    </header>
 
-      <!-- Col 1: Plataforma & Soluções -->
-      <div class="footer-col">
-        <h4 class="footer-heading">Plataforma</h4>
-        <ul class="footer-links-list">
-          <li><a href="#proposta">A Proposta</a></li>
-          <li><a href="#showcase">Telas do Aplicativo</a></li>
-          <li><a href="#rota-piloto">Rota Pindobal</a></li>
-          <li><a href="#publicos">Comunidades & Gestores</a></li>
-          <li><a href="#tecnologia">Tecnologia</a></li>
-        </ul>
-      </div>
+    <main id="conteudo">
+      <section class="hero" id="inicio" aria-labelledby="titulo-principal">
+        <div class="hero__content container">
+          <div class="hero__copy">
+            <h1 id="titulo-principal">Descubra destinos. Viva experiências.</h1>
+            <p class="lead">
+              Rotas, praias e negócios locais reunidos para você aproveitar melhor cada caminho.
+            </p>
+            <a class="button button--light" href="https://app.econexaoturismo.com/">
+              Conheça o ECOnexão
+              <span class="button__arrow" aria-hidden="true">→</span>
+            </a>
+          </div>
 
-      <!-- Col 2: Territórios do Tapajós -->
-      <div class="footer-col">
-        <h4 class="footer-heading">Território do Tapajós</h4>
-        <ul class="footer-links-list">
-          <li><a href="#rota-piloto">Praia do Pindobal</a></li>
-          <li><a href="#rota-piloto">Alter do Chão</a></li>
-          <li><a href="#rota-piloto">Comunidades Ribeirinhas</a></li>
-          <li><a href="#rota-piloto">Santarém — Pará</a></li>
-          <li><a href="#rota-piloto">Belterra — Pará</a></li>
-        </ul>
-      </div>
-
-      <!-- Col 3: Governança & Contato -->
-      <div class="footer-col">
-        <h4 class="footer-heading">Contato</h4>
-        <ul class="footer-links-list">
-          <li><a href="mailto:contato@econexao.app">contato@econexao.app</a></li>
-          <li><a href="#contato">Falar com a Equipe</a></li>
-          <li><a href="#contato">Cadastrar Meu Negócio</a></li>
-          <li><a href="#contato">Dúvidas Frequentes</a></li>
-        </ul>
-      </div>
-
-      <!-- Col 4: Declaração de Acessibilidade -->
-      <div class="footer-col">
-        <h4 class="footer-heading">Compromisso e Inclusão</h4>
-        <p class="footer-a11y-desc">
-          Interface desenvolvida sob diretrizes <strong>WCAG 2.1</strong>, suporte a tecnologias assistivas, contrastes reforçados para luz solar e baixo consumo de dados.
-        </p>
-        <p class="footer-location-tag">
-          📍 Santarém • Belterra • Alter do Chão — Pará
-        </p>
-      </div>
-
-    </div>
-
-    <!-- Bottom Bar -->
-    <div class="footer-bottom">
-      <div class="container footer-bottom-container">
-        <p>© 2026 ECOnexão. Tecnologia voltada à valorização cultural e socioeconômica no Tapajós.</p>
-        <div class="footer-bottom-links">
-          <span>Privacidade</span>
-          <span class="footer-dot-sep">•</span>
-          <span>Contato Direto</span>
-          <span class="footer-dot-sep">•</span>
-          <span>Sem Comissões</span>
+          <aside class="route-card" aria-label="Exemplo de rota no ECOnexão">
+            <p class="route-card__label">Sua próxima rota</p>
+            <ol class="route-card__path">
+              <li>
+                <span><strong>Escolha sua saída</strong>Aeroporto, rodoviária ou porto</span>
+              </li>
+              <li>
+                <span><strong>Trace o caminho</strong>Rotas claras para os destinos</span>
+              </li>
+              <li>
+                <span><strong>Descubra ao redor</strong>Serviços e experiências locais</span>
+              </li>
+            </ol>
+          </aside>
         </div>
-      </div>
-    </div>
-  </footer>
+      </section>
 
-  <!-- Script -->
-  <script src="script.js"></script>
-</body>
+      <section class="problem" id="descoberta" aria-labelledby="titulo-problema">
+        <div class="problem__grid container">
+          <div>
+            <h2 id="titulo-problema">Menos procura. Mais descoberta.</h2>
+            <p class="lead">
+              O ECOnexão organiza o que estava espalhado: destinos, acesso e serviços locais.
+            </p>
+          </div>
+
+          <div class="questions" aria-label="Dúvidas respondidas pelo ECOnexão">
+            <div class="question"><span>Para onde ir?</span><span aria-hidden="true">01</span></div>
+            <div class="question"><span>Como chegar?</span><span aria-hidden="true">02</span></div>
+            <div class="question"><span>O que encontrar?</span><span aria-hidden="true">03</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="connection" aria-labelledby="titulo-conexao">
+        <div class="container">
+          <div class="connection__head">
+            <h2 id="titulo-conexao">Experiências que conectam pessoas e negócios.</h2>
+          </div>
+
+          <div class="connection__grid">
+            <article class="audience-card">
+              <span class="audience-card__index" aria-hidden="true">01</span>
+              <h3>Viajantes que vivem cada destino</h3>
+              <p>Encontram paisagens, experiências e serviços para aproveitar a rota no próprio ritmo.</p>
+            </article>
+
+            <div class="connection__bridge" aria-hidden="true">ECOnexão</div>
+
+            <article class="audience-card">
+              <span class="audience-card__index" aria-hidden="true">02</span>
+              <h3>Negócios que dão sabor à rota</h3>
+              <p>Restaurantes, barracas e serviços locais ganham visibilidade no momento da escolha.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="how" id="como-funciona" aria-labelledby="titulo-como-funciona">
+        <div class="container">
+          <div class="how__head">
+            <div>
+              <h2 id="titulo-como-funciona">Do ponto de partida à experiência.</h2>
+            </div>
+            <p class="lead">Informação organizada para deixar a decisão mais leve.</p>
+          </div>
+
+          <div class="steps">
+            <article class="step">
+              <span class="step__number" aria-hidden="true">01</span>
+              <h3>Parta</h3>
+              <p>Informe de onde você sai.</p>
+            </article>
+            <article class="step">
+              <span class="step__number" aria-hidden="true">02</span>
+              <h3>Escolha</h3>
+              <p>Encontre o destino ideal.</p>
+            </article>
+            <article class="step">
+              <span class="step__number" aria-hidden="true">03</span>
+              <h3>Descubra</h3>
+              <p>Veja serviços e experiências pelo caminho.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="destinations" id="destinos" aria-labelledby="titulo-destinos">
+        <div class="container">
+          <div class="destinations__head">
+            <div>
+              <h2 id="titulo-destinos">Explore as principais rotas naturais.</h2>
+            </div>
+          </div>
+
+          <div class="destination-grid">
+            <article class="destination">
+              <img
+                src="assets/images/alter3.png"
+                alt="Vista aérea da praia de Alter do Chão cercada pelas águas"
+                loading="lazy"
+                decoding="async"
+              />
+              <div class="destination__label"><span>Destino</span><strong>Alter do Chão</strong></div>
+            </article>
+
+            <article class="destination">
+              <img
+                src="assets/images/pindobal4.png"
+                alt="Praia do Pindobal ao pôr do sol"
+                loading="lazy"
+                decoding="async"
+              />
+              <div class="destination__label"><span>Destino</span><strong>Pindobal</strong></div>
+            </article>
+
+            <article class="destination">
+              <img
+                src="assets/images/pontadepedras3.png"
+                alt="Vista aérea da faixa de areia de Ponta de Pedras"
+                loading="lazy"
+                decoding="async"
+              />
+              <div class="destination__label"><span>Destino</span><strong>Ponta de Pedras</strong></div>
+            </article>
+
+            <article class="destination">
+              <img
+                src="assets/images/aramanai2.png"
+                alt="Caminho entre a vegetação e a praia de Aramanai"
+                loading="lazy"
+                decoding="async"
+              />
+              <div class="destination__label"><span>Destino</span><strong>Aramanai</strong></div>
+            </article>
+
+            <article class="destination">
+              <img
+                src="assets/images/florestaencantada.png"
+                alt="Vegetação refletida nas águas da Floresta Encantada"
+                loading="lazy"
+                decoding="async"
+              />
+              <div class="destination__label"><span>Experiência</span><strong>Floresta Encantada</strong></div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="business" id="negocios" aria-labelledby="titulo-negocios">
+        <div class="business__content container">
+          <span class="business__photo-label">Aramanai · Santarém</span>
+
+          <div class="business__panel">
+            <h2 id="titulo-negocios">A rota também chega aos negócios.</h2>
+            <p>
+              Hospedagem, gastronomia, passeios, transporte, cultura e comércio fazem parte da experiência.
+            </p>
+
+            <div class="business__benefits">
+              <div class="benefit">
+                <strong>Visibilidade</strong>
+                <span>Negócios fáceis de encontrar.</span>
+              </div>
+              <div class="benefit">
+                <strong>Proximidade</strong>
+                <span>Destaque junto às rotas.</span>
+              </div>
+              <div class="benefit">
+                <strong>Contato direto</strong>
+                <span>Mais diálogo com o cliente.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="trust" aria-label="Compromissos do ECOnexão">
+        <div class="trust__grid container">
+          <div class="trust__item"><span>Acesso</span><strong>100% gratuito</strong></div>
+          <div class="trust__item"><span>Informação</span><strong>Organizada e verificada</strong></div>
+          <div class="trust__item"><span>Privacidade</span><strong>Proteção alinhada à LGPD</strong></div>
+        </div>
+      </section>
+
+      <section class="newsletter" id="informativo" aria-labelledby="titulo-informativo">
+        <div class="newsletter__content container">
+          <p class="eyebrow eyebrow--light">Informativo para negócios</p>
+          <h2 id="titulo-informativo">Seu negócio pode estar na próxima rota.</h2>
+          <p class="lead">
+            Receba novidades sobre cadastro, parcerias e oportunidades no ECOnexão.
+          </p>
+
+          <!-- Integre este formulário ao serviço de captação escolhido no momento da publicação. -->
+          <form class="signup-form" id="signup-form" novalidate>
+            <label for="email">Seu melhor e-mail</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              inputmode="email"
+              autocomplete="email"
+              placeholder="Seu melhor e-mail"
+              aria-describedby="form-note form-status"
+              required
+            />
+            <button class="button button--light" type="submit">
+              Quero receber
+              <span class="button__arrow" aria-hidden="true">→</span>
+            </button>
+          </form>
+          <p class="form-note" id="form-note">
+            Ao enviar, você concorda em receber comunicações do ECOnexão. Cancele quando quiser.
+          </p>
+          <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer__content container">
+        <p><strong>ECOnexão</strong> · Descubra destinos. Viva experiências.</p>
+        <p>© <span id="current-year"></span> ECOnexão</p>
+      </div>
+    </footer>
+
+    <script>
+      const menuButton = document.querySelector(".menu-button");
+      const menu = document.querySelector(".nav__links");
+      const menuLinks = document.querySelectorAll(".nav__links a");
+      const form = document.querySelector("#signup-form");
+      const emailInput = document.querySelector("#email");
+      const formStatus = document.querySelector("#form-status");
+
+      function closeMenu() {
+        menu.classList.remove("is-open");
+        menuButton.setAttribute("aria-expanded", "false");
+        menuButton.setAttribute("aria-label", "Abrir menu");
+        menuButton.querySelector("span").textContent = "☰";
+        document.body.classList.remove("menu-open");
+      }
+
+      menuButton.addEventListener("click", () => {
+        const isOpen = menuButton.getAttribute("aria-expanded") === "true";
+        menu.classList.toggle("is-open", !isOpen);
+        menuButton.setAttribute("aria-expanded", String(!isOpen));
+        menuButton.setAttribute("aria-label", isOpen ? "Abrir menu" : "Fechar menu");
+        menuButton.querySelector("span").textContent = isOpen ? "☰" : "×";
+        document.body.classList.toggle("menu-open", !isOpen);
+      });
+
+      menuLinks.forEach((link) => link.addEventListener("click", closeMenu));
+
+      window.addEventListener("resize", () => {
+        if (window.innerWidth > 760) closeMenu();
+      });
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        formStatus.classList.remove("is-visible");
+
+        if (!emailInput.validity.valid) {
+          emailInput.setAttribute("aria-invalid", "true");
+          formStatus.textContent = "Digite um e-mail válido para continuar.";
+          formStatus.classList.add("is-visible");
+          emailInput.focus();
+          return;
+        }
+
+        emailInput.removeAttribute("aria-invalid");
+        formStatus.textContent = "Tudo certo! Seu interesse foi registrado.";
+        formStatus.classList.add("is-visible");
+        form.reset();
+      });
+
+      emailInput.addEventListener("input", () => {
+        emailInput.removeAttribute("aria-invalid");
+        formStatus.classList.remove("is-visible");
+      });
+
+      document.querySelector("#current-year").textContent = new Date().getFullYear();
+    </script>
+  </body>
 </html>

@@ -48,6 +48,7 @@ def test_migration_files_and_seed_exist() -> None:
         "20260813141416_add_editorial_media_lifecycle.sql",
         "20260813142059_harden_editorial_media_lifecycle.sql",
         "20260813142447_finalize_media_kind_invariants.sql",
+        "20260827221358_eco_2510_remove_legacy_google_photo_persistence.sql",
         "20260813142802_close_derivative_metadata_null_gap.sql",
         "20260813152038_allow_media_processing_without_storage_key.sql",
         "20260813175721_archive_duplicate_route_actor_links.sql",
@@ -93,9 +94,9 @@ def test_private_domain_is_deny_by_default() -> None:
 
 def test_personal_badges_are_removed_forward_only() -> None:
     """The product removal uses a new migration and preserves historical files."""
-    removal_sql = (
-        MIGRATIONS_DIR / "20260824010914_remove_personal_impact_badges.sql"
-    ).read_text(encoding="utf-8")
+    removal_sql = (MIGRATIONS_DIR / "20260824010914_remove_personal_impact_badges.sql").read_text(
+        encoding="utf-8"
+    )
     assert "DROP TABLE IF EXISTS app_private.user_badges" in removal_sql
     assert "trips" not in removal_sql
     assert "trip_actor_visits" not in removal_sql
@@ -103,9 +104,9 @@ def test_personal_badges_are_removed_forward_only() -> None:
 
 def test_storage_policy_hardening_is_forward_only_and_owner_scoped() -> None:
     """The corrective migration must close BOLA without rewriting history."""
-    original_sql = (
-        MIGRATIONS_DIR / "20260812120000_storage_buckets_and_policies.sql"
-    ).read_text(encoding="utf-8")
+    original_sql = (MIGRATIONS_DIR / "20260812120000_storage_buckets_and_policies.sql").read_text(
+        encoding="utf-8"
+    )
     hardening_sql = (
         MIGRATIONS_DIR / "20260813084440_harden_storage_buckets_and_policies.sql"
     ).read_text(encoding="utf-8")
@@ -165,9 +166,9 @@ def test_editorial_rbac_is_private_deny_by_default_and_audit_is_immutable() -> N
 
 
 def test_reconciliation_archives_duplicate_route_links_reversibly() -> None:
-    sql = (
-        MIGRATIONS_DIR / "20260813175721_archive_duplicate_route_actor_links.sql"
-    ).read_text(encoding="utf-8")
+    sql = (MIGRATIONS_DIR / "20260813175721_archive_duplicate_route_actor_links.sql").read_text(
+        encoding="utf-8"
+    )
     assert "ADD COLUMN archived_at TIMESTAMPTZ" in sql
     assert "ADD COLUMN archived_by UUID REFERENCES auth.users(id) ON DELETE RESTRICT" in sql
     assert "chk_route_actors_archive_metadata" in sql
@@ -188,3 +189,20 @@ def test_editorial_rbac_contains_adr_roles_capabilities_and_state_machine() -> N
     assert "editorial_memberships_active_unique" in sql
     assert "revoked_at IS NULL" in sql
     assert "REFERENCES auth.users(id)" in sql
+
+
+def test_territorial_catalog_schema_migration_security_and_invoker() -> None:
+    """ECO-2504 / ADR 0014 / ADR 0015 migration must enforce RLS and security_invoker view."""
+    sql = (
+        MIGRATIONS_DIR / "20260827195436_territorial_catalog_schema_adr0014_adr0015.sql"
+    ).read_text(encoding="utf-8")
+    assert "CREATE TABLE IF NOT EXISTS app_private.actor_types" in sql
+    assert "ALTER TABLE app_private.actor_types ENABLE ROW LEVEL SECURITY" in sql
+    assert "REVOKE ALL ON app_private.actor_types FROM PUBLIC, anon, authenticated" in sql
+    assert "WITH (security_invoker = true)" in sql
+    assert "app_private.v_actor_semtur_inventory" in sql
+    assert (
+        "REVOKE ALL ON app_private.v_actor_semtur_inventory FROM PUBLIC, anon, authenticated" in sql
+    )
+    assert "auth.role()" not in sql
+    assert "SECURITY DEFINER" not in sql

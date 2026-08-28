@@ -11,9 +11,7 @@ def test_staging_smoke_requires_confirmation_and_exact_authorized_host() -> None
     with pytest.raises(ValueError, match="authorized"):
         validate_staging_target("https://other.example", "api-staging.example", True)
     assert (
-        validate_staging_target(
-            "https://api-staging.example/", "api-staging.example", True
-        )
+        validate_staging_target("https://api-staging.example/", "api-staging.example", True)
         == "https://api-staging.example"
     )
 

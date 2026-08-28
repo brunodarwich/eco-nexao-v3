@@ -53,6 +53,24 @@ Este diretório é a entrada canônica para produto, arquitetura, dados, execuç
 - `mapa_dinamico/prompts/`: um prompt executável por sessão, sempre uma task por
   vez e com orquestração obrigatória de subagentes.
 
+## Iniciativa de catálogo territorial SEMTUR + Google
+
+- `catalogo_territorial/README.md`: objetivo, limites e entrada da iniciativa.
+- `catalogo_territorial/plano_implementacao.md`: fases, arquitetura, gates e ordem
+  ECO-2501 a ECO-2513.
+- `catalogo_territorial/tasks.md`: backlog e condição de ativação de cada sessão.
+- `catalogo_territorial/protocolo_sessoes.md`: uso de `/goal`, subagentes, browser,
+  skills, evidências e paradas obrigatórias.
+- `catalogo_territorial/prompts/`: um prompt autocontido por task.
+
+## Higiene e saúde do repositório
+
+- `repository_health/README.md`: entrada do programa proposto ECO-2401–ECO-2410.
+- `repository_health/tasks.md`: backlog ordenado de baseline, documentação, legado,
+  deploy, assets, automação e auditoria.
+- `repository_health/prompts/`: um prompt Codex autocontido por task, com `/goal`,
+  subagentes e verificação independente obrigatória.
+
 ## Design e inventário
 
 - `elementos_interativos_telas.txt`: inventário canônico do estado atual.

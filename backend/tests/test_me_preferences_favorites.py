@@ -72,7 +72,6 @@ def api_client(
     mock_user_service: SimpleNamespace,
 ) -> Generator[tuple[TestClient, SimpleNamespace, AuthUser]]:
     user = AuthUser(
-
         id=uuid.uuid4(),
         email="test@econexao.org",
         is_anonymous=False,

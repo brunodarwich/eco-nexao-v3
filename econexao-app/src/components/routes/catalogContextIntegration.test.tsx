@@ -10,6 +10,10 @@ const mockToggleFavoriteActor = jest.fn();
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 
+jest.mock('../common/GooglePlacePhoto', () => ({
+  GooglePlacePhoto: () => null,
+}));
+
 jest.mock('expo-router', () => ({
   useLocalSearchParams: jest.fn(),
   useRouter: jest.fn(),

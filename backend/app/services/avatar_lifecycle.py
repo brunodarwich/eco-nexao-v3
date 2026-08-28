@@ -58,10 +58,7 @@ class AvatarLifecycleService:
         metadata: dict[str, dict[str, str | int]] = {}
         try:
             for name, derivative in processed.derivatives.items():
-                path = (
-                    f"{user_id}/{asset_id}_{name}_"
-                    f"{derivative.checksum_sha256}.webp"
-                )
+                path = f"{user_id}/{asset_id}_{name}_{derivative.checksum_sha256}.webp"
                 await self.storage.upload(path, derivative.content)
                 uploaded.append(path)
                 metadata[name] = {

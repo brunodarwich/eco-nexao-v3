@@ -112,12 +112,27 @@ class ActorCategoryRead(DomainBaseSchema):
     updated_at: datetime
 
 
+class ActorTypeRead(DomainBaseSchema):
+    id: uuid.UUID
+    category_id: uuid.UUID
+    slug: str
+    label: str
+    icon: str
+    sort_order: int = 0
+    aliases: list[str] = Field(default_factory=list)
+    spatial_scope: str
+    publication_rule: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
 class ActorRead(DomainBaseSchema):
     id: uuid.UUID
     slug: str
     name: str
     description: str | None = None
     category_id: uuid.UUID
+    type_id: uuid.UUID | None = None
     sub_category: str | None = None
     address: str | None = None
     city: str | None = None
@@ -180,10 +195,6 @@ class MediaAssetRead(DomainBaseSchema):
     processed_at: datetime | None = None
     rejected_reason: str | None = None
     deleted_at: datetime | None = None
-    media_kind: str = "stored"
-    external_photo_reference: str | None = None
-    external_attributions: list[Any] | None = None
-    external_cache_expires_at: datetime | None = None
     sort_order: int = 0
 
 

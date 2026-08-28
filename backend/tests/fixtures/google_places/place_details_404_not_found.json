@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": 404,
+    "message": "Resource 'places/ChIJ_obsolete_id_not_found' was not found in the repository.",
+    "status": "NOT_FOUND"
+  }
+}

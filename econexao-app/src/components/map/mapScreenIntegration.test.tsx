@@ -50,19 +50,49 @@ jest.mock('../common/AppHeader', () => ({
   AppHeader: () => null,
 }));
 
-jest.mock('../../api/client', () => ({
-  apiClient: {
-    configureAuth: jest.fn(),
-    previewRoute: jest.fn().mockResolvedValue({
-      data: {
-        distance_m: 10000,
-        duration_s: 600,
-        bounds: { min_lat: -2.5, max_lat: -2.4, min_lng: -54.9, max_lng: -54.7 },
-        geojson: { type: 'LineString', coordinates: [[-54.7083, -2.4431], [-54.9, -2.5]] },
-      },
-    }),
-  },
-}));
+jest.mock('../common/GooglePlacePhoto', () => {
+  const React = require('react');
+  const { View, Text } = require('react-native');
+  return {
+    GooglePlacePhoto: ({ actorId, alt }: { actorId: string; alt?: string }) => (
+      <View accessibilityLabel={alt || `Foto de ${actorId}`}>
+        <Text>Foto do Google</Text>
+      </View>
+    ),
+  };
+});
+
+jest.mock('../../api/client', () => {
+  class ApiClientError extends Error {
+    status?: number;
+    constructor(message: string, status = 500) {
+      super(message);
+      this.status = status;
+    }
+  }
+  return {
+    ApiClientError,
+    apiClient: {
+      configureAuth: jest.fn(),
+      getActorGooglePhoto: jest.fn().mockResolvedValue({
+        data: {
+          proxy_url: '/api/v1/places/photos/test-token',
+          expires_at: 9999999999,
+          author_attributions: [{ display_name: 'Fotógrafo Google', uri: 'https://maps.google.com' }],
+          google_maps_uri: 'https://maps.google.com/place',
+        },
+      }),
+      previewRoute: jest.fn().mockResolvedValue({
+        data: {
+          distance_m: 10000,
+          duration_s: 600,
+          bounds: { min_lat: -2.5, max_lat: -2.4, min_lng: -54.9, max_lng: -54.7 },
+          geojson: { type: 'LineString', coordinates: [[-54.7083, -2.4431], [-54.9, -2.5]] },
+        },
+      }),
+    },
+  };
+});
 
 jest.mock('./MapAdapter', () => {
   const React = require('react');

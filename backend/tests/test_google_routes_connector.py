@@ -55,9 +55,7 @@ async def test_google_routes_uses_post_minimal_mask_and_no_coordinate_url() -> N
         monthly_guard=InMemoryMonthlyUsageGuard(limit=100),
     )
 
-    result = await connector.calculate_route(
-        Coordinate(-2.44, -54.72), Coordinate(-2.63, -54.94)
-    )
+    result = await connector.calculate_route(Coordinate(-2.44, -54.72), Coordinate(-2.63, -54.94))
 
     assert result.provider == "google_routes"
     assert result.distance_m == 1234
@@ -73,9 +71,7 @@ async def test_google_routes_uses_post_minimal_mask_and_no_coordinate_url() -> N
 
 @pytest.mark.asyncio
 async def test_google_routes_rejects_missing_key_or_invalid_mode() -> None:
-    connector = GoogleRoutesConnector(
-        "", monthly_guard=InMemoryMonthlyUsageGuard(limit=10)
-    )
+    connector = GoogleRoutesConnector("", monthly_guard=InMemoryMonthlyUsageGuard(limit=10))
     with pytest.raises(RoutingProviderUnavailableError, match="Credencial"):
         await connector.calculate_route(Coordinate(0, 0), Coordinate(1, 1))
 
@@ -258,6 +254,7 @@ def test_circuit_breaker_state_is_shared_by_connector_instance() -> None:
 
     # After reset timeout, transitions to HALF_OPEN
     import time
+
     time.sleep(0.06)
     assert breaker.is_available() is True
     assert breaker.state == "HALF_OPEN"

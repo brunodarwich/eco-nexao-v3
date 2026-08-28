@@ -78,9 +78,7 @@ class MediaLifecycleService:
 
         uploaded: list[str] = []
         try:
-            processed = self.processor.process(
-                payload.content, declared_mime=payload.declared_mime
-            )
+            processed = self.processor.process(payload.content, declared_mime=payload.declared_mime)
             base = (
                 f"{payload.owner_type}/{payload.owner_id}/{asset_id}/"
                 f"{processed.source_checksum_sha256}"

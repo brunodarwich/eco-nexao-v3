@@ -195,9 +195,7 @@ async def test_invalid_image_is_rejected_without_touching_storage() -> None:
     )
 
     with pytest.raises(MediaLifecycleFailure, match="imagem válida"):
-        await service.process_editorial_image(
-            AuthorizationContext(actor_id=uuid.uuid4()), invalid
-        )
+        await service.process_editorial_image(AuthorizationContext(actor_id=uuid.uuid4()), invalid)
 
     assert not storage.uploaded
     assert repository.rejected is not None
@@ -260,7 +258,8 @@ async def test_cleanup_recovery_reports_storage_failure_without_marking_done() -
         cast(Any, repository), cast(Any, FakeAuthorization()), storage=storage
     )
 
-    assert await service.recover_pending_cleanup(
-        AuthorizationContext(actor_id=uuid.uuid4())
-    ) == (0, 1)
+    assert await service.recover_pending_cleanup(AuthorizationContext(actor_id=uuid.uuid4())) == (
+        0,
+        1,
+    )
     assert repository.completed_cleanup == []

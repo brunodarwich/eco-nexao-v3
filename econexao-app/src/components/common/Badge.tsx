@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
 
 interface BadgeProps {
-  type: 'greenSeal' | 'verified' | 'warning';
+  type: 'greenSeal' | 'verified' | 'semturInventory' | 'semtur' | 'warning';
   label?: string;
 }
 
@@ -12,21 +12,34 @@ export const Badge: React.FC<BadgeProps> = ({ type, label }) => {
   switch (type) {
     case 'greenSeal':
       return (
-        <View style={[styles.badgeContainer, styles.greenBadge]}>
+        <View style={[styles.badgeContainer, styles.greenBadge]} accessible accessibilityRole="text" accessibilityLabel={`Selo Verde: ${label || 'Selo Verde'}`}>
           <Ionicons name="leaf" size={14} color={theme.colors.onPrimary} />
           <Text style={styles.greenText}>{label || 'Selo Verde'}</Text>
         </View>
       );
+    case 'semturInventory':
+    case 'semtur':
+      return (
+        <View
+          style={[styles.badgeContainer, styles.semturBadge]}
+          accessible
+          accessibilityRole="text"
+          accessibilityLabel="Origem dos dados: Inventário SEMTUR"
+        >
+          <Ionicons name="bookmark-outline" size={13} color="#334155" />
+          <Text style={styles.semturText}>{label || 'Inventário SEMTUR'}</Text>
+        </View>
+      );
     case 'verified':
       return (
-        <View style={[styles.badgeContainer, styles.verifiedBadge]}>
+        <View style={[styles.badgeContainer, styles.verifiedBadge]} accessible accessibilityRole="text" accessibilityLabel={label || 'Verificada'}>
           <Ionicons name="checkmark-circle" size={14} color={theme.colors.onPrimary} />
           <Text style={styles.verifiedText}>{label || 'Verificada'}</Text>
         </View>
       );
     case 'warning':
       return (
-        <View style={[styles.badgeContainer, styles.warningBadge]}>
+        <View style={[styles.badgeContainer, styles.warningBadge]} accessible accessibilityRole="text" accessibilityLabel={label || 'Aviso Territorial'}>
           <Ionicons name="warning" size={14} color={theme.colors.brandDeep} />
           <Text style={styles.warningText}>{label || 'Aviso Territorial'}</Text>
         </View>
@@ -52,6 +65,17 @@ const styles = StyleSheet.create({
     ...theme.typography.labelSm,
     color: theme.colors.onPrimary,
     fontWeight: '700',
+  },
+  semturBadge: {
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+  },
+  semturText: {
+    ...theme.typography.labelSm,
+    color: '#334155',
+    fontWeight: '600',
+    fontSize: 11,
   },
   verifiedBadge: {
     backgroundColor: theme.colors.brandForest,

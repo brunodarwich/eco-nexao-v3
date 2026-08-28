@@ -8,6 +8,7 @@ import {
   ActorSummary,
   ActorCategoryListEnvelope,
   ActorDetailEnvelope,
+  GooglePhotoMetadataEnvelope,
   ActorListEnvelope,
   AvatarUploadResponseEnvelope,
   BootstrapData,
@@ -384,6 +385,12 @@ export class ApiClient {
 
   public async getActorDetail(actorId: string): Promise<ActorDetailEnvelope> {
     return this.request<ActorDetailEnvelope>(`/actors/${actorId}`, {}, false, false);
+  }
+
+  public async getActorGooglePhoto(actorId: string): Promise<GooglePhotoMetadataEnvelope> {
+    return this.request<GooglePhotoMetadataEnvelope>(
+      `/actors/${encodeURIComponent(actorId)}/google-photo`, {}, false, false
+    );
   }
 
   public async updateMyPreferences(

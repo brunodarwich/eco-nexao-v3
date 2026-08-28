@@ -73,8 +73,27 @@ class ResolvedMediaItemSchema(SchemaBase):
     alt_text: str | None = None
     credit: str | None = None
     license_code: str | None = None
-    media_kind: str = "stored"
     sort_order: int = 0
+
+
+class GooglePhotoAttributionSchema(SchemaBase):
+    display_name: str
+    uri: str | None = None
+
+
+class GooglePhotoMetadataSchema(SchemaBase):
+    """Ephemeral photo metadata; deliberately excludes Google resource/photo URLs."""
+
+    proxy_url: str
+    expires_at: int
+    width_px: int
+    height_px: int
+    author_attributions: list[GooglePhotoAttributionSchema] = Field(default_factory=list)
+    google_maps_uri: str
+
+
+class GooglePhotoMetadataEnvelope(SchemaBase):
+    data: GooglePhotoMetadataSchema
 
 
 class RouteSummarySchema(SchemaBase):

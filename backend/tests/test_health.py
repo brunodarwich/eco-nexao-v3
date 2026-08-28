@@ -65,7 +65,6 @@ def test_health_ready_success() -> None:
         app.dependency_overrides.pop(check_database_readiness, None)
 
 
-
 def test_health_ready_returns_safe_503_when_database_is_unavailable() -> None:
     """Test readiness fails closed without exposing connection details."""
     app.dependency_overrides[check_database_readiness] = lambda: False

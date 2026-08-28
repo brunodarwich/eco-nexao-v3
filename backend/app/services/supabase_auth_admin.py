@@ -36,4 +36,3 @@ class SupabaseAuthAdmin:
             response.raise_for_status()
         except (httpx.HTTPError, OSError) as exc:
             raise SupabaseAuthAdminError("Exclusão da identidade no Auth falhou.") from exc
-

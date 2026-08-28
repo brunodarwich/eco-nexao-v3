@@ -87,9 +87,10 @@ async def test_storage_failure_keeps_tombstone_and_prevents_destructive_followup
 
 def test_tombstone_migration_is_private_and_has_no_auth_foreign_key() -> None:
     migration = next(
-        Path(__file__).resolve().parents[2].glob(
-            "supabase/migrations/*_add_deleted_user_tombstones.sql"
-        )
+        Path(__file__)
+        .resolve()
+        .parents[2]
+        .glob("supabase/migrations/*_add_deleted_user_tombstones.sql")
     ).read_text(encoding="utf-8")
     assert "app_private.deleted_user_tombstones" in migration
     assert "REVOKE ALL" in migration
@@ -98,10 +99,7 @@ def test_tombstone_migration_is_private_and_has_no_auth_foreign_key() -> None:
 
 def test_concurrent_deletion_start_uses_database_conflict_resolution() -> None:
     source = (
-        Path(__file__).resolve().parents[1]
-        / "app"
-        / "repositories"
-        / "account_lifecycle.py"
+        Path(__file__).resolve().parents[1] / "app" / "repositories" / "account_lifecycle.py"
     ).read_text(encoding="utf-8")
     assert "on_conflict_do_nothing" in source
     assert "with_for_update" in source

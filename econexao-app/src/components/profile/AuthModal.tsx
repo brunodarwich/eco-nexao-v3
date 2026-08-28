@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Modal,
   StyleSheet,
   Text,
   TextInput,
@@ -13,17 +12,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import { theme } from '../../theme/theme';
 import { makeAccessibleButton } from '../../utils/accessibility';
+import { AccessibleModal } from '../common/AccessibleModal';
 
 interface AuthModalProps {
   visible: boolean;
   onClose: () => void;
+  returnFocusRef?: React.RefObject<any>;
 }
 
 type AuthMode = 'link' | 'signin' | 'signup' | 'recovery';
 
-export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
+export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, returnFocusRef }) => {
   const { user, linkAccount, signInWithPassword, signUp, resetPassword } = useAuth();
   const isAnonymous = user?.is_anonymous ?? true;
+  const closeButtonRef = useRef<React.ElementRef<typeof TouchableOpacity>>(null);
 
   const [mode, setMode] = useState<AuthMode>(isAnonymous ? 'link' : 'signin');
   const [email, setEmail] = useState('');
@@ -93,7 +95,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
+    <AccessibleModal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onClose={handleClose}
+      initialFocusRef={closeButtonRef}
+      returnFocusRef={returnFocusRef}
+      accessibilityLabel="Autenticação e cadastro ECOnexão"
+    >
       <View style={styles.overlay}>
         <View style={styles.card}>
           <View style={styles.header}>
@@ -114,6 +124,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
               </Text>
             </View>
             <TouchableOpacity
+              ref={closeButtonRef}
               onPress={handleClose}
               style={styles.closeButton}
               {...makeAccessibleButton('Fechar modal de autenticação')}
@@ -276,7 +287,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
           </View>
         </View>
       </View>
-    </Modal>
+    </AccessibleModal>
   );
 };
 

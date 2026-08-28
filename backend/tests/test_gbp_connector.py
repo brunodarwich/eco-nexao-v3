@@ -49,6 +49,7 @@ async def test_methods_raise_feature_disabled_when_flag_is_off() -> None:
 @pytest.mark.asyncio
 async def test_list_accounts_parses_oauth_response_and_bearer_headers() -> None:
     """Fetch authorized accounts using OAuth access token in Authorization header."""
+
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.method == "GET"
         assert request.url.path == "/v1/accounts"
@@ -80,6 +81,7 @@ async def test_list_accounts_parses_oauth_response_and_bearer_headers() -> None:
 @pytest.mark.asyncio
 async def test_list_locations_queries_account_and_parses_locations() -> None:
     """List locations for a given account with readMask."""
+
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.method == "GET"
         assert request.url.path == "/v1/accounts/12345/locations"
@@ -115,6 +117,7 @@ async def test_list_locations_queries_account_and_parses_locations() -> None:
 @pytest.mark.asyncio
 async def test_check_eligibility_verifies_business_status() -> None:
     """Check business eligibility status."""
+
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.method == "GET"
         assert request.url.path == "/v1/locations/biz-777"
@@ -139,6 +142,7 @@ async def test_check_eligibility_verifies_business_status() -> None:
 @pytest.mark.asyncio
 async def test_verify_consent_checks_account_permissions() -> None:
     """Verify third-party account consent status."""
+
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.method == "GET"
         assert request.url.path == "/v1/accounts/12345"
@@ -161,6 +165,7 @@ async def test_verify_consent_checks_account_permissions() -> None:
 @pytest.mark.asyncio
 async def test_handles_auth_errors_401_403_and_safely_wraps_exceptions() -> None:
     """Convert 401/403 HTTP errors into safe GbpConnectorError."""
+
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(401, json={"error": {"message": "Invalid credentials"}})
 

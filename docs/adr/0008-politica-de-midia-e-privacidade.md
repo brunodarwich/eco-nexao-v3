@@ -40,8 +40,8 @@ Fica formalmente decidido que:
 
 4. **Direitos Autorais e Regra para Fotos do Google Places API:**
    - **Vedação de Download Google:** É **estritamente proibido** baixar, copiar ou armazenar binários de fotos do Google Places API nos buckets do Supabase Storage (violação dos termos do Google Maps Platform).
-   - **Proxy e Caching:** O backend FastAPI armazenará apenas a referência da foto (`photo_reference`) no banco de dados e atuará como proxy reverso com cache de no máximo **30 dias** (limite permitido pelo Google), encaminhando a atribuição de autoria original (`photo_attributions`).
-   - **Licenciamento de Conteúdo:** Toda mídia editorial deve ter sua licença explicitada em `media_assets.license_code` (`CC-BY-4.0`, `SEMTUR_INSTITUTIONAL`, `PROPRIETARY`, `GOOGLE_PLACES_PROXY`).
+   - **Proxy sem persistência:** Esta redação é substituída pela correção normativa do ADR 0016: `photos[].name`, URLs de mídia, `flagContentUri` e atribuições são mantidos somente no grant opaco em memória, de uso único e vida curta. Não há cache, coluna ou licença `GOOGLE_PLACES_PROXY` em `media_assets`.
+   - **Licenciamento de Conteúdo:** Toda mídia editorial deve ter sua licença explicitada em `media_assets.license_code` (`CC-BY-4.0`, `SEMTUR_INSTITUTIONAL` ou `PROPRIETARY`).
 
 5. **Acessibilidade e Publish Guard:**
    - Toda mídia em `media_assets` exige `alt_text TEXT NOT NULL` e `credit TEXT NOT NULL`.

@@ -51,8 +51,7 @@ async def test_avatar_storage_uses_server_secret_and_official_object_routes(
     assert requests[1].method == "DELETE"
     assert requests[2].method == "POST"
     assert all(
-        request.headers.get("authorization", "").startswith("Bearer ")
-        for request in requests
+        request.headers.get("authorization", "").startswith("Bearer ") for request in requests
     )
 
 

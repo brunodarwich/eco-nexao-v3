@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": 503,
+    "message": "The service is temporarily unavailable. Please retry with exponential backoff.",
+    "status": "UNAVAILABLE"
+  }
+}

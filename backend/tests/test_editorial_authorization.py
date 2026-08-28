@@ -47,9 +47,7 @@ async def test_anonymous_or_regular_user_is_denied_by_default() -> None:
 def test_region_scope_rejects_cross_region_and_global_only_operations() -> None:
     service, _ = service_with("territory.write")
     region_id = uuid.uuid4()
-    context = AuthorizationContext(
-        actor_id=uuid.uuid4(), scope_type="region", scope_id=region_id
-    )
+    context = AuthorizationContext(actor_id=uuid.uuid4(), scope_type="region", scope_id=region_id)
 
     service.require_region_scope(context, region_id)
     with pytest.raises(HTTPException) as cross_region:
@@ -86,10 +84,15 @@ async def test_authorized_role_capability_allows_valid_transition(
     actor_id = uuid.uuid4()
     service, _ = service_with(capability)
     state = resource(author_id=uuid.uuid4(), current_status=current)
-    reason = "Justificativa editorial" if (current, target) in {
-        ("review", "draft"),
-        ("published", "draft"),
-    } else None
+    reason = (
+        "Justificativa editorial"
+        if (current, target)
+        in {
+            ("review", "draft"),
+            ("published", "draft"),
+        }
+        else None
+    )
 
     assert (
         await service.authorize_transition(

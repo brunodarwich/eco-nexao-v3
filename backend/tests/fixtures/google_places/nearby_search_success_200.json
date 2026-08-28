@@ -1,0 +1,32 @@
+{
+  "places": [
+    {
+      "id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+      "types": ["restaurant", "food", "point_of_interest", "establishment"],
+      "formattedAddress": "Av. Beira Rio, 120, Alter do Chão, Santarém - PA, Brasil",
+      "location": {
+        "latitude": -2.5042,
+        "longitude": -54.9535
+      },
+      "displayName": {
+        "text": "Restaurante do Saulo Alter",
+        "languageCode": "pt-BR"
+      },
+      "primaryType": "restaurant"
+    },
+    {
+      "id": "ChIJu2s9pXYZtFkR3v1ab982cc4",
+      "types": ["lodging", "point_of_interest", "establishment"],
+      "formattedAddress": "Rua Lauro Sodré, 450, Alter do Chão, Santarém - PA, Brasil",
+      "location": {
+        "latitude": -2.5085,
+        "longitude": -54.9512
+      },
+      "displayName": {
+        "text": "Pousada Borari",
+        "languageCode": "pt-BR"
+      },
+      "primaryType": "lodging"
+    }
+  ]
+}

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,6 +10,7 @@ import {
 } from 'react-native';
 
 import { apiClient } from '../../api/client';
+import { AccessibleModal } from '../common/AccessibleModal';
 import {
   EditorialAlertSchema,
   PublishGuardResultSchema,
@@ -581,7 +581,13 @@ export const WorkflowReviewQueue: React.FC<WorkflowReviewQueueProps> = ({
       {/* --------------------------------------------------------------------- */}
       {/* Modal: State Transition */}
       {/* --------------------------------------------------------------------- */}
-      <Modal visible={transitionModalVisible} transparent animationType="slide">
+      <AccessibleModal
+        visible={transitionModalVisible}
+        transparent
+        animationType="slide"
+        onClose={() => setTransitionModalVisible(false)}
+        accessibilityLabel="Confirmar transição editorial"
+      >
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Confirmar Transição Editorial</Text>
@@ -626,12 +632,18 @@ export const WorkflowReviewQueue: React.FC<WorkflowReviewQueueProps> = ({
             </View>
           </View>
         </View>
-      </Modal>
+      </AccessibleModal>
 
       {/* --------------------------------------------------------------------- */}
       {/* Modal: Reconciliation Decision */}
       {/* --------------------------------------------------------------------- */}
-      <Modal visible={decisionModalVisible} transparent animationType="slide">
+      <AccessibleModal
+        visible={decisionModalVisible}
+        transparent
+        animationType="slide"
+        onClose={() => setDecisionModalVisible(false)}
+        accessibilityLabel="Decisão de reconciliação"
+      >
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Decisão de Reconciliação ({decisionType.toUpperCase()})</Text>
@@ -689,12 +701,18 @@ export const WorkflowReviewQueue: React.FC<WorkflowReviewQueueProps> = ({
             </View>
           </View>
         </View>
-      </Modal>
+      </AccessibleModal>
 
       {/* --------------------------------------------------------------------- */}
       {/* Modal: Resolve Alert */}
       {/* --------------------------------------------------------------------- */}
-      <Modal visible={resolveModalVisible} transparent animationType="slide">
+      <AccessibleModal
+        visible={resolveModalVisible}
+        transparent
+        animationType="slide"
+        onClose={() => setResolveModalVisible(false)}
+        accessibilityLabel="Resolver alerta editorial"
+      >
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Resolver Alerta Editorial</Text>
@@ -737,7 +755,7 @@ export const WorkflowReviewQueue: React.FC<WorkflowReviewQueueProps> = ({
             </View>
           </View>
         </View>
-      </Modal>
+      </AccessibleModal>
     </ScrollView>
   );
 };

@@ -179,9 +179,7 @@ class GbpConnector:
                 if isinstance(metadata, dict)
                 else True
             )
-            is_verified = (
-                metadata.get("isVerified", False) if isinstance(metadata, dict) else False
-            )
+            is_verified = metadata.get("isVerified", False) if isinstance(metadata, dict) else False
             return {
                 "eligible": True,
                 "business_id": business_id,

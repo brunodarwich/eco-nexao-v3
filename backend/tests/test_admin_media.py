@@ -44,7 +44,6 @@ def mock_media_asset(
         alt_text="Imagem de teste",
         credit="Foto por SEMTUR",
         license_code="CC-BY-4.0",
-        media_kind="stored",
         processing_status="ready",
         storage_key="media/test/hero.webp",
         checksum_sha256=sha,
@@ -352,5 +351,3 @@ async def test_media_lifecycle_repository_methods() -> None:
         request_id=None,
     )
     assert mock_db.commit.called
-
-

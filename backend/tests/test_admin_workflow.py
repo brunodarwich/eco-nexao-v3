@@ -377,12 +377,17 @@ def test_alert_window_validation() -> None:
     now = datetime.now(UTC)
     with pytest.raises(ValueError, match="posterior"):
         EditorialAlertCreateRequest(
-            route_id=uuid.uuid4(), title="Alerta", message="Mensagem",
-            starts_at=now, ends_at=now,
+            route_id=uuid.uuid4(),
+            title="Alerta",
+            message="Mensagem",
+            starts_at=now,
+            ends_at=now,
         )
     with pytest.raises(ValueError, match="fuso horário"):
         EditorialAlertCreateRequest(
-            route_id=uuid.uuid4(), title="Alerta", message="Mensagem",
+            route_id=uuid.uuid4(),
+            title="Alerta",
+            message="Mensagem",
             starts_at=datetime.now(),
         )
 
@@ -394,12 +399,22 @@ def test_admin_alert_create_update_and_compensate() -> None:
     candidate_id = uuid.uuid4()
     now = datetime.now(UTC)
     alert = EditorialAlertSchema(
-        id=alert_id, route_id=route_id, title="Interdição", message="Obras",
-        severity="warning", is_active=True, published_at=now, created_at=now,
+        id=alert_id,
+        route_id=route_id,
+        title="Interdição",
+        message="Obras",
+        severity="warning",
+        is_active=True,
+        published_at=now,
+        created_at=now,
     )
     compensation = ReconciliationDecisionSchema(
-        candidate_id=candidate_id, status="pending", decision="compensate",
-        decision_notes="Reverter merge incorreto", audit_log_id=uuid.uuid4(), updated_at=now,
+        candidate_id=candidate_id,
+        status="pending",
+        decision="compensate",
+        decision_notes="Reverter merge incorreto",
+        audit_log_id=uuid.uuid4(),
+        updated_at=now,
     )
     service = AsyncMock()
     service.create_alert.return_value = alert
@@ -411,8 +426,11 @@ def test_admin_alert_create_update_and_compensate() -> None:
     try:
         client = TestClient(app)
         payload = {
-            "route_id": str(route_id), "title": "Interdição", "message": "Obras",
-            "severity": "warning", "published_at": now.isoformat(),
+            "route_id": str(route_id),
+            "title": "Interdição",
+            "message": "Obras",
+            "severity": "warning",
+            "published_at": now.isoformat(),
         }
         assert client.post("/api/v1/admin/alerts", json=payload).status_code == 201
         payload.pop("route_id")
@@ -562,9 +580,7 @@ async def test_service_transition_status_publish_guard_failure() -> None:
     route_id = uuid.uuid4()
     repo.check_resource_exists = AsyncMock(return_value=True)
     repo.transition_resource_state = AsyncMock(
-        side_effect=ValueError(
-            "Recurso não atende aos requisitos de publicação: Falta origem"
-        )
+        side_effect=ValueError("Recurso não atende aos requisitos de publicação: Falta origem")
     )
 
     with pytest.raises(ValueError) as exc:
@@ -749,9 +765,7 @@ async def test_repo_publish_guard_route_complete() -> None:
         ]
     )
 
-    eligible, status, missing, warnings = await repo.get_publish_guard_status(
-        "route", route_id
-    )
+    eligible, status, missing, warnings = await repo.get_publish_guard_status("route", route_id)
 
     assert (eligible, status, missing, warnings) == (True, "draft", [], [])
 
@@ -761,8 +775,11 @@ async def test_repo_publish_guard_region_origin_and_media_fail_closed() -> None:
     db = AsyncMock()
     repo = WorkflowAdminRepository(db)
     region = Region(
-        id=uuid.uuid4(), slug="oeste-para", name="Oeste do Pará",
-        state_code="PA", center=None,
+        id=uuid.uuid4(),
+        slug="oeste-para",
+        name="Oeste do Pará",
+        state_code="PA",
+        center=None,
     )
     db.execute = AsyncMock(side_effect=[_scalar_result(None), _scalar_result(region)])
     eligible, _, missing, _ = await repo.get_publish_guard_status("region", region.id)
@@ -771,8 +788,11 @@ async def test_repo_publish_guard_region_origin_and_media_fail_closed() -> None:
     assert any("não estão modeladas" in item for item in missing)
 
     origin = RouteOrigin(
-        id=uuid.uuid4(), route_id=uuid.uuid4(), code="porto",
-        name="Porto", location=None,
+        id=uuid.uuid4(),
+        route_id=uuid.uuid4(),
+        code="porto",
+        name="Porto",
+        location=None,
     )
     db.execute = AsyncMock(
         side_effect=[_scalar_result(None), _scalar_result(origin), _scalar_result(0)]
@@ -783,9 +803,13 @@ async def test_repo_publish_guard_region_origin_and_media_fail_closed() -> None:
     assert any("LineString" in item for item in missing)
 
     media = MediaAsset(
-        id=uuid.uuid4(), owner_type="route", owner_id=uuid.uuid4(),
-        storage_key="route/cover.webp", mime_type="image/webp",
-        alt_text=None, credit=None,
+        id=uuid.uuid4(),
+        owner_type="route",
+        owner_id=uuid.uuid4(),
+        storage_key="route/cover.webp",
+        mime_type="image/webp",
+        alt_text=None,
+        credit=None,
     )
     db.execute = AsyncMock(side_effect=[_scalar_result(None), _scalar_result(media)])
     eligible, _, missing, _ = await repo.get_publish_guard_status("media", media.id)
@@ -800,8 +824,12 @@ async def test_repo_publish_guard_actor_complete_and_resource_type_lookup() -> N
     db = AsyncMock()
     repo = WorkflowAdminRepository(db)
     actor = Actor(
-        id=uuid.uuid4(), category_id=uuid.uuid4(), slug="ator", name="Ator",
-        location="POINT(-54 -2)", phone="(93) 99999-9999",
+        id=uuid.uuid4(),
+        category_id=uuid.uuid4(),
+        slug="ator",
+        name="Ator",
+        location="POINT(-54 -2)",
+        phone="(93) 99999-9999",
         verification_status="verified",
     )
     db.execute = AsyncMock(
@@ -906,8 +934,12 @@ async def test_repo_transition_runs_publish_guard_after_lock_before_mutation() -
     resource_id = uuid.uuid4()
     actor_id = uuid.uuid4()
     state = EditorialResourceState(
-        id=uuid.uuid4(), resource_type="route", resource_id=resource_id,
-        status="draft", author_id=actor_id, version=1,
+        id=uuid.uuid4(),
+        resource_type="route",
+        resource_id=resource_id,
+        status="draft",
+        author_id=actor_id,
+        version=1,
     )
     repo.get_or_create_resource_state = AsyncMock(return_value=state)  # type: ignore[method-assign]
     repo.get_publish_guard_status = AsyncMock(  # type: ignore[method-assign]
@@ -917,8 +949,11 @@ async def test_repo_transition_runs_publish_guard_after_lock_before_mutation() -
 
     with pytest.raises(ValueError, match="Falta origem"):
         await repo.transition_resource_state(
-            resource_type="route", resource_id=resource_id, target_status="review",
-            actor_id=actor_id, expected_version=1,
+            resource_type="route",
+            resource_id=resource_id,
+            target_status="review",
+            actor_id=actor_id,
+            expected_version=1,
         )
 
     repo.get_or_create_resource_state.assert_awaited_once()
@@ -946,9 +981,7 @@ async def test_repo_decide_reconciliation_merge() -> None:
         status="pending",
     )
     actor_b = Actor(id=actor_b_id, category_id=uuid.uuid4(), slug="actor-b", name="B")
-    route_actor_link = RouteActor(
-        id=uuid.uuid4(), route_id=uuid.uuid4(), actor_id=actor_b_id
-    )
+    route_actor_link = RouteActor(id=uuid.uuid4(), route_id=uuid.uuid4(), actor_id=actor_b_id)
     ext_ref = ActorExternalRef(
         id=uuid.uuid4(), actor_id=actor_b_id, source_id=uuid.uuid4(), external_id="123"
     )
@@ -1000,12 +1033,8 @@ async def test_repo_merge_archives_duplicate_route_link_reversibly() -> None:
         score=0.9,
         status="pending",
     )
-    secondary_link = RouteActor(
-        id=uuid.uuid4(), route_id=uuid.uuid4(), actor_id=actor_b_id
-    )
-    transferable_link = RouteActor(
-        id=uuid.uuid4(), route_id=uuid.uuid4(), actor_id=actor_b_id
-    )
+    secondary_link = RouteActor(id=uuid.uuid4(), route_id=uuid.uuid4(), actor_id=actor_b_id)
+    transferable_link = RouteActor(id=uuid.uuid4(), route_id=uuid.uuid4(), actor_id=actor_b_id)
     primary_link = RouteActor(
         id=uuid.uuid4(), route_id=secondary_link.route_id, actor_id=actor_a_id
     )
@@ -1023,18 +1052,24 @@ async def test_repo_merge_archives_duplicate_route_link_reversibly() -> None:
     secondary_actor_result.scalar_one_or_none.return_value = Actor(
         id=actor_b_id, category_id=uuid.uuid4(), slug="secondary", name="Secondary"
     )
-    db.execute = AsyncMock(side_effect=[
-        candidate_result,
-        links_result,
-        no_duplicate_result,
-        duplicate_result,
-        refs_result,
-        secondary_actor_result,
-    ])
+    db.execute = AsyncMock(
+        side_effect=[
+            candidate_result,
+            links_result,
+            no_duplicate_result,
+            duplicate_result,
+            refs_result,
+            secondary_actor_result,
+        ]
+    )
     audit = AuditLog(
-        id=uuid.uuid4(), timestamp=datetime.now(UTC), actor_id=uuid.uuid4(),
-        action="RECONCILE", resource_type="reconciliation_candidate",
-        resource_id=candidate.id, changes={},
+        id=uuid.uuid4(),
+        timestamp=datetime.now(UTC),
+        actor_id=uuid.uuid4(),
+        action="RECONCILE",
+        resource_type="reconciliation_candidate",
+        resource_id=candidate.id,
+        changes={},
     )
     repo.log_action = AsyncMock(return_value=audit)
     editor_id = uuid.uuid4()
@@ -1068,28 +1103,44 @@ async def test_repo_compensate_merge_restores_only_snapshot() -> None:
     secondary_id = uuid.uuid4()
     deleted_at = datetime.now(UTC)
     candidate = ReconciliationCandidate(
-        id=candidate_id, actor_id_a=primary_id, actor_id_b=secondary_id,
-        score=0.9, status="merged",
+        id=candidate_id,
+        actor_id_a=primary_id,
+        actor_id_b=secondary_id,
+        score=0.9,
+        status="merged",
     )
     link = RouteActor(id=uuid.uuid4(), route_id=uuid.uuid4(), actor_id=primary_id)
     archived_link = RouteActor(
-        id=uuid.uuid4(), route_id=uuid.uuid4(), actor_id=secondary_id,
-        archived_at=deleted_at, archived_by=uuid.uuid4(), archive_reason="Duplicata",
+        id=uuid.uuid4(),
+        route_id=uuid.uuid4(),
+        actor_id=secondary_id,
+        archived_at=deleted_at,
+        archived_by=uuid.uuid4(),
+        archive_reason="Duplicata",
     )
     ref = ActorExternalRef(
         id=uuid.uuid4(), actor_id=primary_id, source_id=uuid.uuid4(), external_id="123"
     )
     secondary = Actor(
-        id=secondary_id, category_id=uuid.uuid4(), slug="secondary", name="Secondary",
+        id=secondary_id,
+        category_id=uuid.uuid4(),
+        slug="secondary",
+        name="Secondary",
         deleted_at=deleted_at,
     )
     merge_audit = AuditLog(
-        id=uuid.uuid4(), timestamp=deleted_at, actor_id=uuid.uuid4(), action="RECONCILE",
-        resource_type="reconciliation_candidate", resource_id=candidate_id,
+        id=uuid.uuid4(),
+        timestamp=deleted_at,
+        actor_id=uuid.uuid4(),
+        action="RECONCILE",
+        resource_type="reconciliation_candidate",
+        resource_id=candidate_id,
         changes={
-            "decision": "merge", "before": {"status": "pending"},
+            "decision": "merge",
+            "before": {"status": "pending"},
             "merge_snapshot": {
-                "primary_actor_id": str(primary_id), "secondary_actor_id": str(secondary_id),
+                "primary_actor_id": str(primary_id),
+                "secondary_actor_id": str(secondary_id),
                 "route_actor_link_ids": [str(link.id)],
                 "archived_route_actor_link_ids": [str(archived_link.id)],
                 "external_ref_ids": [str(ref.id)],
@@ -1107,9 +1158,13 @@ async def test_repo_compensate_merge_restores_only_snapshot() -> None:
     db.execute = AsyncMock(side_effect=results)
     repo.get_reconciliation_candidate_by_id = AsyncMock(return_value=candidate)
     audit = AuditLog(
-        id=uuid.uuid4(), timestamp=deleted_at, actor_id=uuid.uuid4(),
-        action="RECONCILE_COMPENSATE", resource_type="reconciliation_candidate",
-        resource_id=candidate_id, changes={},
+        id=uuid.uuid4(),
+        timestamp=deleted_at,
+        actor_id=uuid.uuid4(),
+        action="RECONCILE_COMPENSATE",
+        resource_type="reconciliation_candidate",
+        resource_id=candidate_id,
+        changes={},
     )
     repo.log_action = AsyncMock(return_value=audit)
 

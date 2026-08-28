@@ -1,5 +1,5 @@
 import type { MapBounds, RouteGeometry } from '../../api/types';
-import type { FlexiblePinItem, MapCoordinate } from './MapAdapter.types';
+import type { FlexiblePinItem, MapClusterItem, MapCoordinate, MapRenderableItem } from './MapAdapter.types';
 
 const isFiniteCoordinate = (latitude: unknown, longitude: unknown): boolean =>
   typeof latitude === 'number' &&
@@ -209,4 +209,263 @@ export const getInitialRegion = (
     latitudeDelta: Math.max((maxLatitude - minLatitude) * 1.25, 0.01),
     longitudeDelta: Math.max((maxLongitude - minLongitude) * 1.25, 0.01),
   };
+};
+
+export const isClusterItem = (item: MapRenderableItem): item is MapClusterItem => {
+  return 'isCluster' in item && item.isCluster === true;
+};
+
+export const getClusterAccessibilityLabel = (cluster: MapClusterItem): string => {
+  const count = cluster.count;
+  const category = cluster.primaryCategoryLabel || 'pontos turísticos';
+  return `Grupo com ${count} locais de ${category}. Toque para aproximar e visualizar cada ponto no mapa.`;
+};
+
+/**
+ * Calculates a gentle circular offset for pins sharing identical or near-identical coordinates
+ * so that all points remain visually distinct, clickable, and accessible at high zoom.
+ */
+export const applyCoincidentOffsets = <T extends FlexiblePinItem>(
+  items: T[],
+  selectedActorId?: string | null
+): (T & { offsetCoordinate?: MapCoordinate })[] => {
+  if (items.length <= 1) return items;
+
+  const groups = new Map<string, T[]>();
+  for (const item of items) {
+    const coord = getItemCoordinate(item);
+    if (!coord) continue;
+    const key = `${coord.latitude.toFixed(5)},${coord.longitude.toFixed(5)}`;
+    const group = groups.get(key) || [];
+    group.push(item);
+    groups.set(key, group);
+  }
+
+  const result: (T & { offsetCoordinate?: MapCoordinate })[] = [];
+
+  for (const item of items) {
+    const coord = getItemCoordinate(item);
+    if (!coord) {
+      result.push(item);
+      continue;
+    }
+    const key = `${coord.latitude.toFixed(5)},${coord.longitude.toFixed(5)}`;
+    const group = groups.get(key) || [];
+
+    if (group.length <= 1) {
+      result.push(item);
+      continue;
+    }
+
+    const indexInGroup = group.indexOf(item);
+    const isSelected = Boolean(
+      selectedActorId &&
+        (getItemId(item) === selectedActorId ||
+          ('actor_id' in item && item.actor_id === selectedActorId))
+    );
+
+    if (isSelected) {
+      result.push({
+        ...item,
+        offsetCoordinate: coord,
+      });
+      continue;
+    }
+
+    const angle = (2 * Math.PI * indexInGroup) / group.length;
+    const radius = 0.00018;
+    const offsetCoordinate: MapCoordinate = {
+      latitude: coord.latitude + radius * Math.cos(angle),
+      longitude: coord.longitude + radius * Math.sin(angle),
+    };
+
+    result.push({
+      ...item,
+      offsetCoordinate,
+    });
+  }
+
+  return result;
+};
+
+/**
+ * Deterministic clustering algorithm for map pins.
+ * Groups nearby pins at low zoom levels into clusters with bounding boxes and counts.
+ * Preserves the selectedActorId as an individual highlighted pin always.
+ */
+export const clusterPins = (
+  items: FlexiblePinItem[],
+  zoomLevel: number,
+  selectedActorId?: string | null
+): MapRenderableItem[] => {
+  if (items.length === 0) return [];
+
+  if (zoomLevel >= 16) {
+    return applyCoincidentOffsets(items, selectedActorId);
+  }
+
+  // Calculate degree radius corresponding to 40 screen pixels at given zoomLevel
+  const pixelRadius = 40;
+  const radiusDeg = (pixelRadius * 360) / (256 * Math.pow(2, Math.min(zoomLevel, 16)));
+
+  const validItems: { item: FlexiblePinItem; coord: MapCoordinate }[] = [];
+  let selectedEntry: { item: FlexiblePinItem; coord: MapCoordinate } | null = null;
+
+  for (const item of items) {
+    const coord = getItemCoordinate(item);
+    if (!coord) continue;
+
+    const isSelected = Boolean(
+      selectedActorId &&
+        (getItemId(item) === selectedActorId ||
+          ('actor_id' in item && item.actor_id === selectedActorId))
+    );
+
+    if (isSelected) {
+      selectedEntry = { item, coord };
+    } else {
+      validItems.push({ item, coord });
+    }
+  }
+
+  const assigned = new Set<number>();
+  const clusters: { items: FlexiblePinItem[]; centroid: MapCoordinate }[] = [];
+
+  for (let i = 0; i < validItems.length; i++) {
+    if (assigned.has(i)) continue;
+
+    assigned.add(i);
+    const clusterItems: FlexiblePinItem[] = [validItems[i].item];
+    let sumLat = validItems[i].coord.latitude;
+    let sumLng = validItems[i].coord.longitude;
+
+    for (let j = i + 1; j < validItems.length; j++) {
+      if (assigned.has(j)) continue;
+
+      const dLat = validItems[j].coord.latitude - validItems[i].coord.latitude;
+      const dLng = validItems[j].coord.longitude - validItems[i].coord.longitude;
+      const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+
+      if (dist <= radiusDeg) {
+        assigned.add(j);
+        clusterItems.push(validItems[j].item);
+        sumLat += validItems[j].coord.latitude;
+        sumLng += validItems[j].coord.longitude;
+      }
+    }
+
+    clusters.push({
+      items: clusterItems,
+      centroid: {
+        latitude: sumLat / clusterItems.length,
+        longitude: sumLng / clusterItems.length,
+      },
+    });
+  }
+
+  // Merge clusters whose centroids are within collision distance (1.2 * radiusDeg)
+  let merged = true;
+  while (merged) {
+    merged = false;
+    for (let i = 0; i < clusters.length; i++) {
+      for (let j = i + 1; j < clusters.length; j++) {
+        const dLat = clusters[i].centroid.latitude - clusters[j].centroid.latitude;
+        const dLng = clusters[i].centroid.longitude - clusters[j].centroid.longitude;
+        const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+        if (dist < radiusDeg * 1.2) {
+          clusters[i].items.push(...clusters[j].items);
+          const total = clusters[i].items.length;
+          const sumLat = clusters[i].items.reduce((s, it) => s + getItemCoordinate(it)!.latitude, 0);
+          const sumLng = clusters[i].items.reduce((s, it) => s + getItemCoordinate(it)!.longitude, 0);
+          clusters[i].centroid = {
+            latitude: sumLat / total,
+            longitude: sumLng / total,
+          };
+          clusters.splice(j, 1);
+          merged = true;
+          break;
+        }
+      }
+      if (merged) break;
+    }
+  }
+
+  const renderable: MapRenderableItem[] = [];
+  const singlePins: FlexiblePinItem[] = [];
+
+  for (let idx = 0; idx < clusters.length; idx++) {
+    const { items: clusterItems, centroid } = clusters[idx];
+
+    if (clusterItems.length === 1 && zoomLevel >= 14) {
+      singlePins.push(clusterItems[0]);
+      continue;
+    }
+
+    const lats = clusterItems.map((i) => getItemCoordinate(i)!.latitude);
+    const lngs = clusterItems.map((i) => getItemCoordinate(i)!.longitude);
+
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+
+    const categoryCounts: Record<string, { count: number; color: string; label: string }> = {};
+    for (const item of clusterItems) {
+      const slug = getItemCategory(item);
+      const color = getItemPinColor(item) || '#1B4D3E';
+      const label = getItemCategoryLabel(item);
+      if (!categoryCounts[slug]) {
+        categoryCounts[slug] = { count: 0, color, label };
+      }
+      categoryCounts[slug].count += 1;
+    }
+
+    let maxCatSlug = 'outros';
+    let maxCatCount = -1;
+    let maxCatColor = '#1B4D3E';
+    let maxCatLabel = 'Pontos de Interesse';
+
+    for (const [slug, data] of Object.entries(categoryCounts)) {
+      if (data.count > maxCatCount) {
+        maxCatCount = data.count;
+        maxCatSlug = slug;
+        maxCatColor = data.color;
+        maxCatLabel = data.label;
+      }
+    }
+
+    const latPadding = Math.max((maxLat - minLat) * 0.2, 0.005);
+    const lngPadding = Math.max((maxLng - minLng) * 0.2, 0.005);
+
+    const clusterItem: MapClusterItem = {
+      isCluster: true,
+      id: `cluster-${idx}-${clusterItems.length}`,
+      count: clusterItems.length,
+      latitude: centroid.latitude,
+      longitude: centroid.longitude,
+      bounds: {
+        min_lat: minLat - latPadding,
+        max_lat: maxLat + latPadding,
+        min_lng: minLng - lngPadding,
+        max_lng: maxLng + lngPadding,
+      },
+      primaryCategorySlug: maxCatSlug,
+      primaryCategoryLabel: maxCatLabel,
+      primaryColor: maxCatColor,
+      items: clusterItems,
+    };
+
+    renderable.push(clusterItem);
+  }
+
+  if (singlePins.length > 0) {
+    const offsetSinglePins = applyCoincidentOffsets(singlePins, selectedActorId);
+    renderable.push(...offsetSinglePins);
+  }
+
+  if (selectedEntry) {
+    renderable.push(selectedEntry.item);
+  }
+
+  return renderable;
 };

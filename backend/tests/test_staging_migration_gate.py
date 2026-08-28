@@ -505,4 +505,3 @@ def test_main_cli_entrypoint_orchestration(monkeypatch: pytest.MonkeyPatch) -> N
         access_token=VALID_TOKEN,
         apply_migrations=True,
     )
-

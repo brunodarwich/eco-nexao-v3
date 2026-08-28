@@ -1,0 +1,23 @@
+{
+  "semtur_record": {
+    "external_id": "semtur-poi-003",
+    "titulo": "Centro de Artesanato do Tapajós",
+    "categoria": "Comércio e Serviços Turísticos",
+    "tipo_normalizado": "artesanato",
+    "telefone": null,
+    "website": null,
+    "latitude": -2.44310,
+    "longitude": -54.70820,
+    "known_place_id": null
+  },
+  "google_candidate": {
+    "place_id": "ChIJ_artesanato_tapajos_003",
+    "name": "Centro de Artesanato do Tapajós",
+    "types": ["art_gallery", "store", "point_of_interest"],
+    "latitude": -2.44315,
+    "longitude": -54.70822,
+    "formatted_address": "Travessa Turiano Meira, Santarém",
+    "phone": null,
+    "website": null
+  }
+}

@@ -89,9 +89,7 @@ class TerritorialAdminRepository:
         await self.db.flush()
         return region
 
-    async def get_region_coordinates(
-        self, region: Region
-    ) -> tuple[float | None, float | None]:
+    async def get_region_coordinates(self, region: Region) -> tuple[float | None, float | None]:
         if region.center is None:
             return None, None
         stmt = select(
@@ -260,12 +258,8 @@ class TerritorialAdminRepository:
         res = await self.db.execute(stmt)
         return res.scalar_one_or_none()
 
-    async def get_origin_by_code(
-        self, route_id: uuid.UUID, code: str
-    ) -> RouteOrigin | None:
-        stmt = select(RouteOrigin).where(
-            RouteOrigin.route_id == route_id, RouteOrigin.code == code
-        )
+    async def get_origin_by_code(self, route_id: uuid.UUID, code: str) -> RouteOrigin | None:
+        stmt = select(RouteOrigin).where(RouteOrigin.route_id == route_id, RouteOrigin.code == code)
         res = await self.db.execute(stmt)
         return res.scalar_one_or_none()
 
@@ -346,9 +340,7 @@ class TerritorialAdminRepository:
         await self.db.flush()
         return True
 
-    async def get_origin_coordinates(
-        self, origin: RouteOrigin
-    ) -> tuple[float, float]:
+    async def get_origin_coordinates(self, origin: RouteOrigin) -> tuple[float, float]:
         stmt = select(
             ST_Y(origin.location).label("lat"),
             ST_X(origin.location).label("lon"),
@@ -459,9 +451,7 @@ class TerritorialAdminRepository:
         await self.db.flush()
         return geom_obj
 
-    async def get_geometry_geojson(
-        self, route_geom: RouteGeometry
-    ) -> dict[str, Any] | None:
+    async def get_geometry_geojson(self, route_geom: RouteGeometry) -> dict[str, Any] | None:
         stmt = select(ST_AsGeoJSON(route_geom.geometry))
         res = await self.db.execute(stmt)
         geojson_str = res.scalar_one_or_none()

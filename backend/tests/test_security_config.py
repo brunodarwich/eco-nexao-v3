@@ -35,7 +35,6 @@ IGNORED_PARTS = {
 }
 
 
-
 def test_sensitive_settings_are_masked_in_representations() -> None:
     """Sensitive values must not appear when settings are logged or inspected."""
     marker = "credential-that-must-stay-masked"

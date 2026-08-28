@@ -33,6 +33,9 @@ class Settings(BaseSettings):
         "https://eco-nexao-v3-git-staging-bruno-darwichs-projects.vercel.app",
         "https://econexao.app",
         "https://staging.econexao.app",
+        "https://econexaoturismo.com",
+        "https://www.econexaoturismo.com",
+        "https://app.econexaoturismo.com",
     ]
     LOG_LEVEL: str = "INFO"
     DATABASE_ECHO: bool = False
@@ -51,6 +54,12 @@ class Settings(BaseSettings):
     SUPABASE_JWT_AUDIENCE: str = "authenticated"
 
     GOOGLE_PLACES_API_KEY: SecretStr = SecretStr("")
+    FEATURE_GOOGLE_PLACES_SYNC: bool = False
+    GOOGLE_PLACES_TIMEOUT_SECONDS: float = 5.0
+    GOOGLE_PLACES_MAX_RETRIES: int = 2
+    GOOGLE_PLACES_CALL_BUDGET: int = 100
+    GOOGLE_PLACES_CIRCUIT_BREAKER_FAILURES: int = 5
+    GOOGLE_PLACES_CIRCUIT_BREAKER_RESET_SECONDS: float = 60.0
     GBP_CONNECTOR_ENABLED: bool = False
     ROUTING_PROVIDER: Literal["fake_deterministic", "google_routes"] = "fake_deterministic"
     ENABLE_DYNAMIC_ROUTING: bool = False
@@ -132,6 +141,10 @@ class Settings(BaseSettings):
                 raise ValueError("Roteamento dinâmico ainda não está autorizado em production.")
             if self.ENABLE_DYNAMIC_ROUTING and not self.GOOGLE_ROUTES_API_KEY.get_secret_value():
                 raise ValueError("GOOGLE_ROUTES_API_KEY é obrigatória quando o recurso está ativo.")
+        if self.FEATURE_GOOGLE_PLACES_SYNC and not self.GOOGLE_PLACES_API_KEY.get_secret_value():
+            raise ValueError(
+                "GOOGLE_PLACES_API_KEY é obrigatória quando FEATURE_GOOGLE_PLACES_SYNC está ativo."
+            )
         if self.GOOGLE_ROUTES_MONTHLY_ALERT_AT >= self.GOOGLE_ROUTES_MONTHLY_LIMIT:
             raise ValueError("O alerta mensal deve ocorrer antes do limite mensal.")
         return self

@@ -72,11 +72,11 @@ async def security_headers_middleware(request: Request, call_next: Any) -> Any:
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "geolocation=(self), camera=(), microphone=()"
-        
+
         # Enforce HSTS on staging and production or HTTPS requests
         if settings.APP_ENV in ("staging", "production") or request.url.scheme == "https":
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-            
+
         # Prevent caching on dynamic API routes if not explicitly configured
         if request.url.path.startswith("/api/v1") and "Cache-Control" not in response.headers:
             response.headers["Cache-Control"] = "no-store, max-age=0"
@@ -92,6 +92,7 @@ async def security_headers_middleware(request: Request, call_next: Any) -> Any:
 async def app_rate_limit_middleware(request: Request, call_next: Any) -> Any:
     """Middleware wrapper for rate limiting."""
     from app.core.rate_limit import rate_limit_middleware
+
     return await rate_limit_middleware(request, call_next)
 
 

@@ -95,9 +95,7 @@ class WorkflowAdminRepository:
             await self.db.flush()
         return state
 
-    async def check_resource_exists(
-        self, resource_type: str, resource_id: uuid.UUID
-    ) -> bool:
+    async def check_resource_exists(self, resource_type: str, resource_id: uuid.UUID) -> bool:
         id_column_by_type = {
             "region": Region.id,
             "route": Route.id,
@@ -173,11 +171,7 @@ class WorkflowAdminRepository:
                     missing.append("A mídia de capa deve possuir texto alternativo.")
                 if not cover or not cover.credit or not cover.credit.strip():
                     missing.append("A mídia de capa deve possuir crédito registrado.")
-                if (
-                    not cover
-                    or cover.owner_type != "route"
-                    or cover.owner_id != resource_id
-                ):
+                if not cover or cover.owner_type != "route" or cover.owner_id != resource_id:
                     missing.append("A mídia de capa deve pertencer à rota.")
                 if not cover or not cover.license_code:
                     missing.append("A mídia de capa deve possuir licença estruturada.")
@@ -259,8 +253,7 @@ class WorkflowAdminRepository:
 
         else:
             missing.append(
-                f"Tipo de recurso '{resource_type}' não possui "
-                "regras de publish guard registradas."
+                f"Tipo de recurso '{resource_type}' não possui regras de publish guard registradas."
             )
 
         is_eligible = len(missing) == 0
@@ -270,13 +263,6 @@ class WorkflowAdminRepository:
     def _media_is_publishable(media: MediaAsset) -> bool:
         if media.processing_status != "ready" or media.deleted_at:
             return False
-        if media.media_kind == "google_proxy":
-            return bool(
-                media.external_photo_reference
-                and media.external_attributions
-                and media.external_cache_expires_at
-                and media.external_cache_expires_at > datetime.now(UTC)
-            )
         required = {"thumb", "card", "hero"}
         if not required <= set(media.derivatives):
             return False
@@ -401,7 +387,10 @@ class WorkflowAdminRepository:
         self.db.add(alert)
         await self.db.flush()
         audit = await self.log_action(
-            actor_id, "CREATE", "route_alert", alert.id,
+            actor_id,
+            "CREATE",
+            "route_alert",
+            alert.id,
             {"before": None, "after": self._alert_snapshot(alert)},
         )
         return alert, audit
@@ -420,7 +409,10 @@ class WorkflowAdminRepository:
         alert.updated_at = datetime.now(UTC)
         await self.db.flush()
         audit = await self.log_action(
-            actor_id, "UPDATE", "route_alert", alert.id,
+            actor_id,
+            "UPDATE",
+            "route_alert",
+            alert.id,
             {"before": before, "after": self._alert_snapshot(alert)},
         )
         return alert, audit
@@ -428,12 +420,15 @@ class WorkflowAdminRepository:
     @staticmethod
     def _alert_snapshot(alert: RouteAlert) -> dict[str, Any]:
         return {
-            "route_id": str(alert.route_id), "title": alert.title,
-            "message": alert.message, "severity": alert.severity,
+            "route_id": str(alert.route_id),
+            "title": alert.title,
+            "message": alert.message,
+            "severity": alert.severity,
             "source": alert.source,
             "starts_at": alert.starts_at.isoformat() if alert.starts_at else None,
             "ends_at": alert.ends_at.isoformat() if alert.ends_at else None,
-            "published_at": alert.published_at.isoformat(), "is_active": alert.is_active,
+            "published_at": alert.published_at.isoformat(),
+            "is_active": alert.is_active,
         }
 
     async def resolve_alert(
@@ -519,7 +514,8 @@ class WorkflowAdminRepository:
 
         previous_status = candidate.status
         new_status = (
-            "accepted" if decision == "accept"
+            "accepted"
+            if decision == "accept"
             else ("rejected" if decision == "reject" else "merged")
         )
         merge_snapshot: dict[str, Any] | None = None
@@ -527,9 +523,7 @@ class WorkflowAdminRepository:
         if decision == "merge":
             primary_id = target_actor_id or candidate.actor_id_a
             secondary_id = (
-                candidate.actor_id_b
-                if primary_id == candidate.actor_id_a
-                else candidate.actor_id_a
+                candidate.actor_id_b if primary_id == candidate.actor_id_a else candidate.actor_id_a
             )
 
             # Transfer route_actors links if not existing
@@ -629,11 +623,13 @@ class WorkflowAdminRepository:
             raise ValueError("Conflito: candidato não está no estado merged.")
 
         result = await self.db.execute(
-            select(AuditLog).where(
+            select(AuditLog)
+            .where(
                 AuditLog.resource_type == "reconciliation_candidate",
                 AuditLog.resource_id == candidate_id,
                 AuditLog.action == "RECONCILE",
-            ).order_by(AuditLog.timestamp.desc())
+            )
+            .order_by(AuditLog.timestamp.desc())
         )
         merge_audit = next(
             (entry for entry in result.scalars().all() if entry.changes.get("decision") == "merge"),
@@ -665,8 +661,7 @@ class WorkflowAdminRepository:
         if len(links) != len(link_ids) or any(link.actor_id != primary_id for link in links):
             raise ValueError("Conflito: vínculos de rota mudaram após o merge.")
         if len(archived_links) != len(archived_link_ids) or any(
-            link.actor_id != secondary_id or link.archived_at is None
-            for link in archived_links
+            link.actor_id != secondary_id or link.archived_at is None for link in archived_links
         ):
             raise ValueError("Conflito: vínculos arquivados mudaram após o merge.")
         if len(refs) != len(ref_ids) or any(ref.actor_id != primary_id for ref in refs):
@@ -706,12 +701,16 @@ class WorkflowAdminRepository:
         candidate.status = restored_status
         candidate.updated_at = now
         audit = await self.log_action(
-            actor_id, "RECONCILE", "reconciliation_candidate", candidate_id,
+            actor_id,
+            "RECONCILE",
+            "reconciliation_candidate",
+            candidate_id,
             {
                 "before": {"status": before_status, "merge_audit_id": str(merge_audit.id)},
                 "after": {"status": restored_status, "snapshot_restored": snapshot},
                 "decision": "compensate",
-            }, reason,
+            },
+            reason,
         )
         await self.db.flush()
         return candidate, audit

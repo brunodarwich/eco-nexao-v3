@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
-  Modal,
   View,
   Text,
   StyleSheet,
@@ -15,19 +14,23 @@ import { useApp } from '../../hooks/useApp';
 import { useRegionsQuery } from '../../hooks/queries';
 import { apiClient } from '../../api/client';
 import { makeAccessibleButton } from '../../utils/accessibility';
+import { AccessibleModal } from './AccessibleModal';
 import type { Region } from '../../api/types';
 
 interface RegionSelectorModalProps {
   visible: boolean;
   onClose: () => void;
+  returnFocusRef?: React.RefObject<any>;
 }
 
 export const RegionSelectorModal: React.FC<RegionSelectorModalProps> = ({
   visible,
   onClose,
+  returnFocusRef,
 }) => {
   const { state, dispatch } = useApp();
   const regionsQuery = useRegionsQuery();
+  const closeButtonRef = useRef<React.ElementRef<typeof TouchableOpacity>>(null);
 
   const handleSelectRegion = async (region: Region) => {
     dispatch({ type: 'SET_ACTIVE_REGION', payload: region.id });
@@ -42,13 +45,14 @@ export const RegionSelectorModal: React.FC<RegionSelectorModalProps> = ({
   };
 
   return (
-    <Modal
+    <AccessibleModal
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={onClose}
-      accessibilityViewIsModal
-      aria-modal
+      onClose={onClose}
+      initialFocusRef={closeButtonRef}
+      returnFocusRef={returnFocusRef}
+      accessibilityLabel="Seletor de região"
     >
       <View style={styles.backdrop}>
         <View style={styles.modalContainer}>
@@ -58,6 +62,7 @@ export const RegionSelectorModal: React.FC<RegionSelectorModalProps> = ({
               <Text style={styles.title}>Selecionar Região</Text>
             </View>
             <TouchableOpacity
+              ref={closeButtonRef}
               style={styles.closeButton}
               onPress={onClose}
               {...makeAccessibleButton('Fechar', 'Fecha o seletor de região')}
@@ -84,7 +89,7 @@ export const RegionSelectorModal: React.FC<RegionSelectorModalProps> = ({
             </View>
           ) : (
             <ScrollView contentContainerStyle={styles.listContent}>
-              {regionsQuery.data?.map((region) => {
+              {regionsQuery.data?.map((region: Region) => {
                 const isSelected = region.id === state.activeRegionId;
                 return (
                   <TouchableOpacity
@@ -111,7 +116,7 @@ export const RegionSelectorModal: React.FC<RegionSelectorModalProps> = ({
           )}
         </View>
       </View>
-    </Modal>
+    </AccessibleModal>
   );
 };
 

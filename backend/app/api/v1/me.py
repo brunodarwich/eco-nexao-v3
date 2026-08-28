@@ -38,7 +38,6 @@ AvatarLifecycleDep = Annotated[AvatarLifecycleService, Depends(get_avatar_lifecy
 AccountLifecycleDep = Annotated[AccountLifecycleService, Depends(get_account_lifecycle_service)]
 
 
-
 @router.get(
     "",
     response_model=UserProfileEnvelope,
@@ -140,11 +139,8 @@ async def delete_my_account(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
         ) from exc
     return StandardSuccessResponse(
-        data=StandardSuccessData(
-            success=True, message="Conta excluída permanentemente."
-        )
+        data=StandardSuccessData(success=True, message="Conta excluída permanentemente.")
     )
-
 
 
 @router.get(

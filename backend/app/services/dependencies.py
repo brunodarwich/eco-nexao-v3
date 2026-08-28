@@ -5,13 +5,17 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.connectors.fake_routing_connector import FakeRoutingConnector
+from app.connectors.google_places import GooglePlacesClient, PlacesConnectorProtocol
 from app.connectors.google_routes_connector import GoogleRoutesConnector
 from app.connectors.routing_connector import RoutingConnector
 from app.core.config import settings
 from app.db.session import get_db
 from app.repositories.editorial_authorization import EditorialAuthorizationRepository
+from app.repositories.territorial import TerritorialRepository
+from app.services.actor_google_photo import ActorGooglePhotoService
 from app.services.content_service import ContentService
 from app.services.editorial_authorization import EditorialAuthorizationService
+from app.services.google_photo_proxy import GooglePhotoProxyService
 from app.services.routing_service import RoutingService
 from app.services.storage_service import StorageService
 from app.services.territorial import TerritorialService
@@ -26,6 +30,26 @@ if TYPE_CHECKING:
     from app.services.workflow_admin import WorkflowAdminService
 
 DatabaseSession = Annotated[AsyncSession, Depends(get_db)]
+_google_photo_proxy: GooglePhotoProxyService | None = None
+
+
+async def _fetch_google_photo(resource_name: str, height: int, width: int) -> tuple[bytes, str]:
+    client = GooglePlacesClient(
+        settings.GOOGLE_PLACES_API_KEY.get_secret_value(),
+        timeout_s=settings.GOOGLE_PLACES_TIMEOUT_SECONDS,
+        max_retries=settings.GOOGLE_PLACES_MAX_RETRIES,
+        call_budget=settings.GOOGLE_PLACES_CALL_BUDGET,
+        enabled=settings.FEATURE_GOOGLE_PLACES_SYNC,
+    )
+    return await client.fetch_photo(resource_name, max_height_px=height, max_width_px=width)
+
+
+def get_google_photo_proxy() -> GooglePhotoProxyService:
+    """Process-local grants intentionally vanish on restart."""
+    global _google_photo_proxy
+    if _google_photo_proxy is None:
+        _google_photo_proxy = GooglePhotoProxyService(_fetch_google_photo)
+    return _google_photo_proxy
 
 
 @lru_cache(maxsize=8)
@@ -75,6 +99,24 @@ def get_routing_connector() -> RoutingConnector:
 def get_territorial_service(db: DatabaseSession) -> TerritorialService:
     """Build the territorial service for one request."""
     return TerritorialService(db)
+
+
+def get_google_places_connector() -> PlacesConnectorProtocol:
+    return GooglePlacesClient(
+        settings.GOOGLE_PLACES_API_KEY.get_secret_value(),
+        timeout_s=settings.GOOGLE_PLACES_TIMEOUT_SECONDS,
+        max_retries=settings.GOOGLE_PLACES_MAX_RETRIES,
+        call_budget=settings.GOOGLE_PLACES_CALL_BUDGET,
+        enabled=settings.FEATURE_GOOGLE_PLACES_SYNC,
+    )
+
+
+def get_actor_google_photo_service(
+    db: DatabaseSession,
+    places: Annotated[PlacesConnectorProtocol, Depends(get_google_places_connector)],
+    proxy: Annotated[GooglePhotoProxyService, Depends(get_google_photo_proxy)],
+) -> ActorGooglePhotoService:
+    return ActorGooglePhotoService(TerritorialRepository(db), places, proxy)
 
 
 def get_routing_service(

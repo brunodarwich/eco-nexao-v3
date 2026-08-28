@@ -185,9 +185,7 @@ def test_preview_endpoint_rejects_rate_limit_bypass_via_random_tokens(
             distance_m=1000,
             duration_s=100,
             geojson={"type": "LineString", "coordinates": [[-54.7, -2.4], [-54.8, -2.5]]},
-            bounds=RouteBoundsSchema(
-                min_lat=-2.5, max_lat=-2.4, min_lng=-54.8, max_lng=-54.7
-            ),
+            bounds=RouteBoundsSchema(min_lat=-2.5, max_lat=-2.4, min_lng=-54.8, max_lng=-54.7),
         )
     )
 

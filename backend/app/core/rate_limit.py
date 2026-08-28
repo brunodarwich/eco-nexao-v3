@@ -165,11 +165,7 @@ async def rate_limit_middleware(request: Request, call_next: Any) -> Response:
     )
 
     if is_limited:
-        req_id = (
-            getattr(request.state, "request_id", None)
-            or request_id_ctx_var.get()
-            or "unknown"
-        )
+        req_id = getattr(request.state, "request_id", None) or request_id_ctx_var.get() or "unknown"
         headers = {
             "X-RateLimit-Limit": str(limit_val),
             "X-RateLimit-Remaining": "0",

@@ -75,9 +75,7 @@ class EditorialAuthorizationService:
     def __init__(self, repository: EditorialAuthorizationRepository) -> None:
         self.repository = repository
 
-    async def require_capability(
-        self, context: AuthorizationContext, capability: str
-    ) -> None:
+    async def require_capability(self, context: AuthorizationContext, capability: str) -> None:
         capabilities = await self.repository.capabilities_for(
             context.actor_id,
             scope_type=context.scope_type,
@@ -99,9 +97,7 @@ class EditorialAuthorizationService:
             )
 
     @staticmethod
-    def require_region_scope(
-        context: AuthorizationContext, resource_region_id: uuid.UUID
-    ) -> None:
+    def require_region_scope(context: AuthorizationContext, resource_region_id: uuid.UUID) -> None:
         """Prevent a selected regional scope from crossing into another region."""
         if context.scope_type == "global":
             return

@@ -1,0 +1,29 @@
+{
+  "id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+  "photos": [
+    {
+      "name": "places/ChIJN1t_tDeuEmsRUsoyG83frY4/photos/AUc7tX_photo_1_hash",
+      "widthPx": 4032,
+      "heightPx": 3024,
+      "authorAttributions": [
+        {
+          "displayName": "Carlos Fotógrafo Tapajós",
+          "uri": "https://maps.google.com/contrib/10987654321",
+          "photoUri": "https://lh3.googleusercontent.com/a/photo-author-avatar"
+        }
+      ]
+    },
+    {
+      "name": "places/ChIJN1t_tDeuEmsRUsoyG83frY4/photos/AUc7tX_photo_2_hash",
+      "widthPx": 2048,
+      "heightPx": 1536,
+      "authorAttributions": [
+        {
+          "displayName": "Maria Guia Turístico",
+          "uri": "https://maps.google.com/contrib/20987654321",
+          "photoUri": "https://lh3.googleusercontent.com/a/photo-author-avatar-2"
+        }
+      ]
+    }
+  ]
+}

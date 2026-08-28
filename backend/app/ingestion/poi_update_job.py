@@ -312,7 +312,5 @@ class PoiUpdateJob:
         if "userRatingCount" in payload and payload["userRatingCount"] is not None:
             actor.google_review_count = int(payload["userRatingCount"])
 
-        if "regularOpeningHours" in payload and isinstance(
-            payload["regularOpeningHours"], dict
-        ):
+        if "regularOpeningHours" in payload and isinstance(payload["regularOpeningHours"], dict):
             actor.opening_hours = payload["regularOpeningHours"]

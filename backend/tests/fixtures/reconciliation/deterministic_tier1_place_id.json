@@ -1,0 +1,23 @@
+{
+  "semtur_record": {
+    "external_id": "semtur-poi-001",
+    "titulo": "Restaurante do Saulo Alter",
+    "categoria": "Alimentos e Bebidas",
+    "tipo_normalizado": "restaurante",
+    "telefone": "(93) 99123-4567",
+    "website": "https://restaurantedosaulo.com.br",
+    "latitude": -2.5042,
+    "longitude": -54.9535,
+    "known_place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4"
+  },
+  "google_candidate": {
+    "place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+    "name": "Restaurante do Saulo Alter do Chão",
+    "types": ["restaurant", "food", "point_of_interest"],
+    "latitude": -2.50425,
+    "longitude": -54.95352,
+    "formatted_address": "Av. Beira Rio, 120, Alter do Chão",
+    "phone": "(93) 99123-4567",
+    "website": "https://restaurantedosaulo.com.br"
+  }
+}

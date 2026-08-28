@@ -162,8 +162,7 @@ def test_route_map_passes_spatial_filters(api: tuple[TestClient, SimpleNamespace
     route_id = uuid.uuid4()
     origin_id = uuid.uuid4()
     response = client.get(
-        f"/api/v1/routes/{route_id}/map?origin_id={origin_id}"
-        "&layer=both&category=transporte"
+        f"/api/v1/routes/{route_id}/map?origin_id={origin_id}&layer=both&category=transporte"
     )
     assert response.status_code == 404
     service.get_route_map_payload.assert_awaited_once_with(

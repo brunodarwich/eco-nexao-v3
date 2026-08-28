@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
-  Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -17,19 +16,23 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAppTheme } from '../../theme/theme';
 import { useAuth } from '../../hooks/useAuth';
 import { makeAccessibleButton, makeAccessibleHeader } from '../../utils/accessibility';
+import { AccessibleModal } from '../common/AccessibleModal';
 
 interface AccountDeletionModalProps {
   visible: boolean;
   onClose: () => void;
+  returnFocusRef?: React.RefObject<any>;
 }
 
 export const AccountDeletionModal: React.FC<AccountDeletionModalProps> = ({
   visible,
   onClose,
+  returnFocusRef,
 }) => {
   const theme = useAppTheme();
   const queryClient = useQueryClient();
   const { signOut } = useAuth();
+  const cancelButtonRef = useRef<React.ElementRef<typeof TouchableOpacity>>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleConfirmDeletion = async () => {
@@ -62,14 +65,16 @@ export const AccountDeletionModal: React.FC<AccountDeletionModalProps> = ({
   };
 
   return (
-    <Modal
+    <AccessibleModal
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={() => {
+      onClose={() => {
         if (!isProcessing) onClose();
       }}
-      accessibilityViewIsModal
+      initialFocusRef={cancelButtonRef}
+      returnFocusRef={returnFocusRef}
+      accessibilityLabel="Confirmação de exclusão de conta"
     >
       <View style={styles.overlay}>
         <View
@@ -111,6 +116,7 @@ export const AccountDeletionModal: React.FC<AccountDeletionModalProps> = ({
 
           <View style={styles.actionsRow}>
             <TouchableOpacity
+              ref={cancelButtonRef}
               style={[styles.cancelButton, { borderColor: theme.colors.brandSage }]}
               onPress={onClose}
               disabled={isProcessing}
@@ -143,7 +149,7 @@ export const AccountDeletionModal: React.FC<AccountDeletionModalProps> = ({
           </View>
         </View>
       </View>
-    </Modal>
+    </AccessibleModal>
   );
 };
 

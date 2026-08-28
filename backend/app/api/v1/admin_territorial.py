@@ -31,9 +31,7 @@ from app.services.territorial_admin import TerritorialAdminService
 router = APIRouter(prefix="/admin/territory", tags=["Admin Territorial"])
 
 CurrentUserDep = Annotated[AuthenticatedUser, Depends(get_current_user)]
-TerritorialAdminDep = Annotated[
-    TerritorialAdminService, Depends(get_territorial_admin_service)
-]
+TerritorialAdminDep = Annotated[TerritorialAdminService, Depends(get_territorial_admin_service)]
 
 
 def _build_context(user: AuthenticatedUser) -> AuthorizationContext:

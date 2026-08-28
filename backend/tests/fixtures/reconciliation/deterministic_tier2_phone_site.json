@@ -1,0 +1,23 @@
+{
+  "semtur_record": {
+    "external_id": "semtur-poi-002",
+    "titulo": "Pousada Vila de Alter",
+    "categoria": "Hospedagem",
+    "tipo_normalizado": "pousada",
+    "telefone": "+55 (93) 98111-2233",
+    "website": "https://viladealter.com.br",
+    "latitude": -2.5080,
+    "longitude": -54.9520,
+    "known_place_id": null
+  },
+  "google_candidate": {
+    "place_id": "ChIJ_vila_alter_987654",
+    "name": "Pousada Boutique Vila de Alter",
+    "types": ["lodging", "hotel", "point_of_interest"],
+    "latitude": -2.5082,
+    "longitude": -54.9521,
+    "formatted_address": "Rua Lauro Sodré, 300, Alter do Chão",
+    "phone": "93981112233",
+    "website": "http://www.viladealter.com.br/"
+  }
+}

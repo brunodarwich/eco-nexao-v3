@@ -1,0 +1,19 @@
+{
+  "semtur_record": {
+    "external_id": "semtur-poi-007",
+    "titulo": "Hotel Mirante da Ilha",
+    "categoria": "Hospedagem",
+    "tipo_normalizado": "hotel",
+    "telefone": "(93) 3527-1234",
+    "website": "https://mirantedailha.com.br",
+    "latitude": -2.5020,
+    "longitude": -54.9500,
+    "known_place_id": "ChIJ_old_merged_id_mirante_111"
+  },
+  "google_refresh_update": {
+    "original_place_id": "ChIJ_old_merged_id_mirante_111",
+    "canonical_place_id": "ChIJ_canonical_new_mirante_222",
+    "is_changed": true,
+    "is_stale": false
+  }
+}

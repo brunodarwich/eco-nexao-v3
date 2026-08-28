@@ -43,6 +43,7 @@ export const CategoryFilters: React.FC<CategoryFiltersProps> = ({
   onSelectCategory,
   categories,
 }) => {
+  const categoryList = Array.isArray(categories) ? categories : [];
   return (
     <ScrollView
       style={styles.scroller}
@@ -56,7 +57,7 @@ export const CategoryFilters: React.FC<CategoryFiltersProps> = ({
         onPress={() => onSelectCategory('')}
         icon="apps-outline"
       />
-      {categories.map((cat) => {
+      {categoryList.map((cat) => {
         const slug = 'category_slug' in cat ? cat.category_slug : cat.slug;
         const label = 'count' in cat ? `${cat.label} (${cat.count})` : cat.label;
         return (

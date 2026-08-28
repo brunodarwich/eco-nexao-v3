@@ -279,8 +279,12 @@ async def compensate_reconciliation_merge(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     return ReconciliationDecisionEnvelope(data=result)
+
+
 @router.post(
-    "/alerts", response_model=EditorialAlertEnvelope, status_code=status.HTTP_201_CREATED,
+    "/alerts",
+    response_model=EditorialAlertEnvelope,
+    status_code=status.HTTP_201_CREATED,
     summary="Criar alerta editorial",
 )
 async def create_editorial_alert(
@@ -292,9 +296,7 @@ async def create_editorial_alert(
     ctx = _build_context(current_user)
     await editorial_auth.require_capability(ctx, "content.publish")
     try:
-        result = await service.create_alert(
-            actor_id=ctx.actor_id, values=body.model_dump()
-        )
+        result = await service.create_alert(actor_id=ctx.actor_id, values=body.model_dump())
     except LookupError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except ValueError as exc:
@@ -305,7 +307,8 @@ async def create_editorial_alert(
 
 
 @router.put(
-    "/alerts/{alert_id}", response_model=EditorialAlertEnvelope,
+    "/alerts/{alert_id}",
+    response_model=EditorialAlertEnvelope,
     summary="Atualizar alerta editorial",
 )
 async def update_editorial_alert(

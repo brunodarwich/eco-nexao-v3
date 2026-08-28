@@ -181,3 +181,72 @@ async def test_public_category_query_filters_public_and_returns_outros() -> None
     service.repo.list_actor_categories = AsyncMock(return_value=[outros])
     response = await service.list_actor_categories()
     assert [category.slug for category in response.data] == ["outros"]
+
+
+def test_canonical_actor_types_count_and_invariants() -> None:
+    from app.core.taxonomy import (
+        CANONICAL_ACTOR_TYPES,
+        CANONICAL_TYPE_SLUGS,
+        get_canonical_actor_type,
+        is_canonical_actor_type,
+    )
+
+    # 32 specialized subtypes defined in ADR 0015
+    assert len(CANONICAL_ACTOR_TYPES) == 32
+    assert len(CANONICAL_TYPE_SLUGS) == 32
+
+    for slug, type_def in CANONICAL_ACTOR_TYPES.items():
+        assert is_canonical_actor_type(slug) is True
+        assert type_def["slug"] == slug
+        assert type_def["category_slug"] in CANONICAL_CATEGORY_SLUGS
+        assert type_def["label"]
+        assert type_def["icon"]
+        assert type_def["spatial_scope"] in ("route_corridor", "citywide_essential", "both")
+        assert len(type_def["aliases"]) > 0
+
+    assert get_canonical_actor_type("invalid_type_slug")["slug"] == "nao_classificado"
+
+
+@pytest.mark.parametrize(
+    ("raw_text", "expected_type_slug"),
+    [
+        ("Restaurante e Bar Regional", "restaurante"),
+        ("Peixaria da Orla", "restaurante"),
+        ("Botequim & Choperia", "bar_vida_noturna"),
+        ("Barraca de praia Pindobal", "barraca_praia"),
+        ("Cafeteria e Sorveteria", "cafe_lanchonete"),
+        ("Supermercado e Mercearia", "mercado_conveniencia"),
+        ("Feira Agroecológica Municipal", "feira_livre"),
+        ("Trilha do Macaco e Igarapé", "atrativo_natural"),
+        ("Praia de Ponta de Pedras", "praia_fluvial"),
+        ("Bancada de Areia e Arquipélago", "ilha"),
+        ("Mirante da Serra da Piroca", "serra_mirante"),
+        ("Área de Proteção Ambiental Flona", "unidade_conservacao"),
+        ("Centro Cultural e Museu", "patrimonio_cultural"),
+        ("Catedral e Igreja Matriz", "templo_religioso"),
+        ("Balneário e Parque Aquático", "lazer_balneario"),
+        ("Pousada e Ecopousada", "pousada_hotel"),
+        ("Aluguel de Casa de Praia e Camping", "casa_temporada"),
+        ("Associação de Artesãos Tapajônicos", "artesanato_local"),
+        ("Aeroporto de Santarém", "terminal_aeroporto"),
+        ("Terminal Hidroviário e Balsa", "terminal_porto"),
+        ("Rodoviária e Vans", "terminal_rodoviario"),
+        ("Catraias e Barqueiro em Alter do Chão", "catraia_travessia"),
+        ("Posto de Gasolina 24h", "posto_combustivel"),
+        ("Locadora de Veículos e Rent a Car", "locadora_mobilidade"),
+        ("Agência de Receptivo e Passeios", "agencia_turismo"),
+        ("Hospital Municipal e UPA", "hospital_upa"),
+        ("UBS e Centro de Saúde da Família", "posto_saude_ubs"),
+        ("Farmácia e Drogaria 24 Horas", "farmacia"),
+        ("Delegacia da Polícia Civil e Bombeiros", "seguranca_publica"),
+        ("Conselho Tutelar e CRAS", "conselho_tutelar_protecao"),
+        ("Cartório e Prefeitura", "servicos_publicos_cartorios"),
+        ("Shopping e Decoração de Eventos", "comercio_eventos"),
+        ("Totalmente desconhecido", "nao_classificado"),
+        (None, "nao_classificado"),
+    ],
+)
+def test_normalize_actor_type_slug(raw_text: str | None, expected_type_slug: str) -> None:
+    from app.core.taxonomy import normalize_actor_type_slug
+
+    assert normalize_actor_type_slug(raw_text) == expected_type_slug

@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  Modal,
   StyleSheet,
   Text,
   TextInput,
@@ -17,6 +16,7 @@ import { apiClient } from '../../api/client';
 import { queryKeys } from '../../api/queryKeys';
 import { useAppTheme } from '../../theme/theme';
 import { makeAccessibleButton, makeAccessibleHeader } from '../../utils/accessibility';
+import { AccessibleModal } from '../common/AccessibleModal';
 import { UserProfileSchema } from '../../api/types';
 
 interface EditProfileModalProps {
@@ -24,6 +24,7 @@ interface EditProfileModalProps {
   onClose: () => void;
   currentProfile?: UserProfileSchema;
   userId?: string;
+  returnFocusRef?: React.RefObject<any>;
 }
 
 export const EditProfileModal: React.FC<EditProfileModalProps> = ({
@@ -31,8 +32,10 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   onClose,
   currentProfile,
   userId = '',
+  returnFocusRef,
 }) => {
   const theme = useAppTheme();
+  const closeButtonRef = useRef<React.ElementRef<typeof TouchableOpacity>>(null);
   let queryClient: ReturnType<typeof useQueryClient> | undefined;
   try {
     queryClient = useQueryClient();
@@ -77,7 +80,15 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <AccessibleModal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onClose={onClose}
+      initialFocusRef={closeButtonRef}
+      returnFocusRef={returnFocusRef}
+      accessibilityLabel="Edição de perfil"
+    >
       <View style={styles.overlay}>
         <View
           style={[
@@ -97,6 +108,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               Editar Perfil
             </Text>
             <TouchableOpacity
+              ref={closeButtonRef}
               onPress={onClose}
               {...makeAccessibleButton('Fechar edição de perfil')}
             >
@@ -176,7 +188,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
           </View>
         </View>
       </View>
-    </Modal>
+    </AccessibleModal>
   );
 };
 

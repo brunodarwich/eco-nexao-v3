@@ -1,0 +1,34 @@
+{
+  "id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+  "displayName": {
+    "text": "Restaurante do Saulo Alter",
+    "languageCode": "pt-BR"
+  },
+  "formattedAddress": "Av. Beira Rio, 120, Alter do Chão, Santarém - PA, Brasil",
+  "location": {
+    "latitude": -2.5042,
+    "longitude": -54.9535
+  },
+  "primaryType": "restaurant",
+  "businessStatus": "OPERATIONAL",
+  "nationalPhoneNumber": "(93) 99123-4567",
+  "websiteUri": "https://restaurantedosaulo.com.br",
+  "googleMapsUri": "https://maps.google.com/?cid=1029384756",
+  "regularOpeningHours": {
+    "openNow": true,
+    "periods": [
+      {
+        "open": { "day": 1, "hour": 11, "minute": 0 },
+        "close": { "day": 1, "hour": 22, "minute": 0 }
+      },
+      {
+        "open": { "day": 2, "hour": 11, "minute": 0 },
+        "close": { "day": 2, "hour": 22, "minute": 0 }
+      }
+    ],
+    "weekdayDescriptions": [
+      "Segunda-feira: 11:00 – 22:00",
+      "Terça-feira: 11:00 – 22:00"
+    ]
+  }
+}

@@ -124,9 +124,7 @@ class RouteOrigin(Base):
 
 class RouteGeometry(Base):
     __table_args__ = (
-        UniqueConstraint(
-            "route_origin_id", "provider", name="uq_route_geometries_origin_provider"
-        ),
+        UniqueConstraint("route_origin_id", "provider", name="uq_route_geometries_origin_provider"),
     )
     __tablename__ = "route_geometries"
 
@@ -180,6 +178,32 @@ class ActorCategory(Base):
     )
 
     actors: Mapped[list["Actor"]] = relationship("Actor", back_populates="category")
+    types: Mapped[list["ActorType"]] = relationship("ActorType", back_populates="category")
+
+
+class ActorType(Base):
+    __tablename__ = "actor_types"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    category_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("actor_categories.id", ondelete="RESTRICT"), nullable=False
+    )
+    slug: Mapped[str] = mapped_column(VARCHAR(100), unique=True, nullable=False)
+    label: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
+    icon: Mapped[str] = mapped_column(VARCHAR(100), nullable=False)
+    sort_order: Mapped[int] = mapped_column(INTEGER, default=0, nullable=False)
+    aliases: Mapped[list[str]] = mapped_column(JSONB, default=list, nullable=False)
+    spatial_scope: Mapped[str] = mapped_column(VARCHAR(32), nullable=False)
+    publication_rule: Mapped[str | None] = mapped_column(TEXT, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.clock_timestamp(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.clock_timestamp(), nullable=False
+    )
+
+    category: Mapped["ActorCategory"] = relationship("ActorCategory", back_populates="types")
+    actors: Mapped[list["Actor"]] = relationship("Actor", back_populates="type")
 
 
 class Actor(Base):
@@ -191,6 +215,9 @@ class Actor(Base):
     description: Mapped[str | None] = mapped_column(TEXT, nullable=True)
     category_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("actor_categories.id", ondelete="RESTRICT"), nullable=False
+    )
+    type_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("actor_types.id", ondelete="RESTRICT"), nullable=True
     )
     region_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("regions.id", ondelete="SET NULL"), nullable=True
@@ -226,6 +253,7 @@ class Actor(Base):
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     category: Mapped["ActorCategory"] = relationship("ActorCategory", back_populates="actors")
+    type: Mapped["ActorType | None"] = relationship("ActorType", back_populates="actors")
     region: Mapped["Region | None"] = relationship("Region", back_populates="actors")
     route_actors: Mapped[list["RouteActor"]] = relationship(
         "RouteActor", back_populates="actor", cascade="all, delete-orphan"
@@ -369,9 +397,7 @@ class MediaAsset(Base):
     alt_text: Mapped[str | None] = mapped_column(TEXT, nullable=True)
     credit: Mapped[str | None] = mapped_column(TEXT, nullable=True)
     license_code: Mapped[str | None] = mapped_column(VARCHAR(40), nullable=True)
-    processing_status: Mapped[str] = mapped_column(
-        VARCHAR(20), default="pending", nullable=False
-    )
+    processing_status: Mapped[str] = mapped_column(VARCHAR(20), default="pending", nullable=False)
     checksum_sha256: Mapped[str | None] = mapped_column(VARCHAR(64), nullable=True)
     width_px: Mapped[int | None] = mapped_column(INTEGER, nullable=True)
     height_px: Mapped[int | None] = mapped_column(INTEGER, nullable=True)
@@ -430,6 +456,7 @@ class ActorExternalRef(Base):
     )
     external_id: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
     source_url: Mapped[str | None] = mapped_column(TEXT, nullable=True)
+    status_ref: Mapped[str] = mapped_column(VARCHAR(20), default="active", nullable=False)
     last_seen_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.clock_timestamp(), nullable=False
     )
@@ -478,6 +505,7 @@ class RawSourceRecord(Base):
     external_id: Mapped[str | None] = mapped_column(VARCHAR(255), nullable=True)
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     payload_hash: Mapped[str] = mapped_column(VARCHAR(64), nullable=False)
+    payload_hash_sha256: Mapped[str | None] = mapped_column(VARCHAR(64), nullable=True)
     license_terms: Mapped[str | None] = mapped_column(TEXT, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.clock_timestamp(), nullable=False

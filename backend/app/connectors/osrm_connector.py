@@ -156,8 +156,7 @@ class OSRMConnector(RoutingConnector):
 
         profile = PROFILE_MAP.get(travel_mode.upper(), "driving")
         coords = (
-            f"{origin.longitude},{origin.latitude};"
-            f"{destination.longitude},{destination.latitude}"
+            f"{origin.longitude},{origin.latitude};{destination.longitude},{destination.latitude}"
         )
         url = f"{self.base_url}/route/v1/{profile}/{coords}?overview=full&geometries=geojson"
 
@@ -205,9 +204,9 @@ class OSRMConnector(RoutingConnector):
                             },
                         )
                         self.circuit_breaker.record_failure()
-                        if (
-                            400 <= response.status_code < 500
-                            and response.status_code not in (408, 429)
+                        if 400 <= response.status_code < 500 and response.status_code not in (
+                            408,
+                            429,
                         ):
                             # Non-retryable 4xx client errors
                             raise RoutingProviderUnavailableError(

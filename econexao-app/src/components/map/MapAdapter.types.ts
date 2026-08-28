@@ -26,6 +26,23 @@ export interface MapCoordinate {
 export type GeoBounds = MapBounds;
 export type MapViewMode = 'route' | 'city';
 
+export interface MapClusterItem {
+  isCluster: true;
+  id: string;
+  count: number;
+  latitude: number;
+  longitude: number;
+  bounds: MapBounds;
+  primaryCategorySlug: string;
+  primaryCategoryLabel: string;
+  primaryColor: string;
+  items: FlexiblePinItem[];
+}
+
+export type MapRenderableItem =
+  | (FlexiblePinItem & { isCluster?: false; offsetCoordinate?: MapCoordinate })
+  | MapClusterItem;
+
 export interface MapAdapterProps {
   /** @deprecated Real adapters use map tiles rather than a raster source. */
   mapImageSource?: ImageSourcePropType;
@@ -38,6 +55,7 @@ export interface MapAdapterProps {
   onViewModeChange?: (mode: MapViewMode) => void;
   selectedActorId?: string;
   onSelectActor: (actorId: string) => void;
+  onSelectCluster?: (cluster: MapClusterItem) => void;
   height?: DimensionValue;
   showControls?: boolean;
   selectionMode?: boolean;

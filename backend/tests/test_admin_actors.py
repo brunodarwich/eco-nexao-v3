@@ -265,9 +265,7 @@ async def test_service_categories_edge_cases() -> None:
     # 404 update_category
     service.repo.get_category_by_id.return_value = None
     with pytest.raises(HTTPException) as exc:
-        await service.update_category(
-            ctx, cat_id, AdminCategoryUpdateSchema(label="Novo Label")
-        )
+        await service.update_category(ctx, cat_id, AdminCategoryUpdateSchema(label="Novo Label"))
     assert exc.value.status_code == 404
 
     # 422 before persistence when canonical metadata would drift
@@ -311,9 +309,7 @@ async def test_service_accessibility_features_edge_cases() -> None:
     with pytest.raises(HTTPException) as exc:
         await service.create_accessibility_feature(
             ctx,
-            AdminAccessibilityFeatureCreateSchema(
-                slug="rampa", label="Rampa"
-            ),
+            AdminAccessibilityFeatureCreateSchema(slug="rampa", label="Rampa"),
         )
     assert exc.value.status_code == 409
 
@@ -348,9 +344,7 @@ async def test_service_actor_edge_cases() -> None:
     with pytest.raises(HTTPException) as exc:
         await service.create_actor(
             ctx,
-            AdminActorCreateSchema(
-                category_id=uuid.uuid4(), slug="pousada", name="Pousada"
-            ),
+            AdminActorCreateSchema(category_id=uuid.uuid4(), slug="pousada", name="Pousada"),
         )
     assert exc.value.status_code == 404
 
@@ -360,9 +354,7 @@ async def test_service_actor_edge_cases() -> None:
     with pytest.raises(HTTPException) as exc:
         await service.create_actor(
             ctx,
-            AdminActorCreateSchema(
-                category_id=uuid.uuid4(), slug="pousada", name="Pousada"
-            ),
+            AdminActorCreateSchema(category_id=uuid.uuid4(), slug="pousada", name="Pousada"),
         )
     assert exc.value.status_code == 409
 
@@ -386,9 +378,7 @@ async def test_service_actor_edge_cases() -> None:
     service.repo.get_actor_by_id.return_value = MagicMock()
     service.repo.get_category_by_id.return_value = None
     with pytest.raises(HTTPException) as exc:
-        await service.update_actor(
-            ctx, actor_id, AdminActorUpdateSchema(category_id=uuid.uuid4())
-        )
+        await service.update_actor(ctx, actor_id, AdminActorUpdateSchema(category_id=uuid.uuid4()))
     assert exc.value.status_code == 404
 
     # 404 update_actor missing feature
@@ -428,9 +418,7 @@ async def test_service_route_actor_edge_cases() -> None:
         await service.create_route_link(
             ctx,
             actor_id,
-            AdminRouteActorCreateSchema(
-                route_id=uuid.uuid4(), actor_id=actor_id
-            ),
+            AdminRouteActorCreateSchema(route_id=uuid.uuid4(), actor_id=actor_id),
         )
     assert exc.value.status_code == 404
 
@@ -441,18 +429,14 @@ async def test_service_route_actor_edge_cases() -> None:
         await service.create_route_link(
             ctx,
             actor_id,
-            AdminRouteActorCreateSchema(
-                route_id=uuid.uuid4(), actor_id=actor_id
-            ),
+            AdminRouteActorCreateSchema(route_id=uuid.uuid4(), actor_id=actor_id),
         )
     assert exc.value.status_code == 409
 
     # 404 update_route_link missing link
     service.repo.get_route_actor_by_id.return_value = None
     with pytest.raises(HTTPException) as exc:
-        await service.update_route_link(
-            ctx, link_id, AdminRouteActorUpdateSchema(is_featured=True)
-        )
+        await service.update_route_link(ctx, link_id, AdminRouteActorUpdateSchema(is_featured=True))
     assert exc.value.status_code == 404
 
     # 404 delete_route_link missing link
@@ -603,14 +587,14 @@ def test_admin_accessibility_feature_endpoints() -> None:
         updated_at=now,
     )
 
-    admin_service.list_accessibility_features.return_value = (
-        AdminAccessibilityFeatureListEnvelope(data=[feat_schema])
+    admin_service.list_accessibility_features.return_value = AdminAccessibilityFeatureListEnvelope(
+        data=[feat_schema]
     )
-    admin_service.get_accessibility_feature.return_value = (
-        AdminAccessibilityFeatureEnvelope(data=feat_schema)
+    admin_service.get_accessibility_feature.return_value = AdminAccessibilityFeatureEnvelope(
+        data=feat_schema
     )
-    admin_service.update_accessibility_feature.return_value = (
-        AdminAccessibilityFeatureEnvelope(data=feat_schema)
+    admin_service.update_accessibility_feature.return_value = AdminAccessibilityFeatureEnvelope(
+        data=feat_schema
     )
 
     app.dependency_overrides[get_current_user] = lambda: user
@@ -644,17 +628,15 @@ def test_admin_create_accessibility_feature_success() -> None:
     admin_service = AsyncMock()
     now = datetime.now(UTC)
     feature_id = uuid.uuid4()
-    admin_service.create_accessibility_feature.return_value = (
-        AdminAccessibilityFeatureEnvelope(
-            data=AdminAccessibilityFeatureSchema(
-                id=feature_id,
-                slug="rampa-acesso",
-                label="Rampa de Acesso",
-                description="Rampa para cadeirantes",
-                icon="ramp",
-                created_at=now,
-                updated_at=now,
-            )
+    admin_service.create_accessibility_feature.return_value = AdminAccessibilityFeatureEnvelope(
+        data=AdminAccessibilityFeatureSchema(
+            id=feature_id,
+            slug="rampa-acesso",
+            label="Rampa de Acesso",
+            description="Rampa para cadeirantes",
+            icon="ramp",
+            created_at=now,
+            updated_at=now,
         )
     )
 
@@ -884,12 +866,10 @@ def test_admin_route_links_endpoints() -> None:
         updated_at=now,
     )
 
-    admin_service.list_route_links_by_actor.return_value = (
-        AdminRouteActorListEnvelope(data=[link_schema])
+    admin_service.list_route_links_by_actor.return_value = AdminRouteActorListEnvelope(
+        data=[link_schema]
     )
-    admin_service.update_route_link.return_value = AdminRouteActorEnvelope(
-        data=link_schema
-    )
+    admin_service.update_route_link.return_value = AdminRouteActorEnvelope(data=link_schema)
     admin_service.delete_route_link.return_value = True
 
     app.dependency_overrides[get_current_user] = lambda: user
@@ -1061,3 +1041,113 @@ async def test_service_delete_actor_records_audit_log() -> None:
     assert call_kwargs["action"] == "delete"
     assert call_kwargs["resource_type"] == "actor"
     assert call_kwargs["resource_id"] == actor_id
+
+
+@pytest.mark.asyncio
+async def test_repo_actor_types_crud() -> None:
+    from app.models.domain import ActorType
+
+    db = AsyncMock()
+    repo = ActorAdminRepository(db)
+    type_id = uuid.uuid4()
+    cat_id = uuid.uuid4()
+    t = ActorType(
+        id=type_id,
+        category_id=cat_id,
+        slug="pousada_hotel",
+        label="Hotel & Pousada",
+        icon="bed",
+        sort_order=30,
+        aliases=["pousada", "hotel"],
+        spatial_scope="route_corridor",
+        publication_rule="Público se published.",
+    )
+
+    exec_mock = MagicMock()
+    exec_mock.scalar_one_or_none.return_value = t
+    exec_mock.scalars.return_value.all.return_value = [t]
+    db.execute.return_value = exec_mock
+
+    assert await repo.get_actor_type_by_id(type_id) is t
+    assert await repo.get_actor_type_by_slug("pousada_hotel") is t
+    assert len(await repo.list_actor_types(category_id=cat_id)) == 1
+
+    created = await repo.create_actor_type(
+        category_id=cat_id,
+        slug="novo_tipo",
+        label="Novo Tipo",
+        icon="star",
+        sort_order=1,
+    )
+    assert created.slug == "novo_tipo"
+
+    updated = await repo.update_actor_type(type_id, label="Hotel e Pousada Atualizado")
+    assert updated is not None and updated.label == "Hotel e Pousada Atualizado"
+
+    exec_mock.scalar_one_or_none.return_value = None
+    assert await repo.update_actor_type(uuid.uuid4(), label="Outro") is None
+
+
+@pytest.mark.asyncio
+async def test_service_actor_types_crud() -> None:
+    from app.models.domain import ActorType
+    from app.schemas.admin_actors import AdminActorTypeCreateSchema, AdminActorTypeUpdateSchema
+
+    db = AsyncMock()
+    service = ActorAdminService(db)
+    service.auth_service = AsyncMock()
+    service.auth_repo = MagicMock()
+    service.repo = AsyncMock()
+
+    cat_id = uuid.uuid4()
+    type_id = uuid.uuid4()
+    now = datetime.now(UTC)
+    t = ActorType(
+        id=type_id,
+        category_id=cat_id,
+        slug="pousada_hotel",
+        label="Hotel & Pousada",
+        icon="bed",
+        sort_order=30,
+        aliases=["pousada", "hotel"],
+        spatial_scope="route_corridor",
+        publication_rule="Público se published.",
+        created_at=now,
+        updated_at=now,
+    )
+
+    service.repo.list_actor_types.return_value = [t]
+    service.repo.get_actor_type_by_id.return_value = t
+    service.repo.get_actor_type_by_slug.return_value = None
+    service.repo.get_category_by_id.return_value = MagicMock()
+    service.repo.create_actor_type.return_value = t
+    service.repo.update_actor_type.return_value = t
+
+    ctx = AuthorizationContext(actor_id=uuid.uuid4())
+
+    list_res = await service.list_actor_types(ctx, category_id=cat_id)
+    assert len(list_res.data) == 1
+    assert list_res.data[0].slug == "pousada_hotel"
+
+    get_res = await service.get_actor_type(ctx, type_id)
+    assert get_res.data.id == type_id
+
+    create_res = await service.create_actor_type(
+        ctx,
+        AdminActorTypeCreateSchema(
+            category_id=cat_id,
+            slug="novo_subtipo",
+            label="Novo Subtipo",
+            icon="star",
+            sort_order=5,
+            spatial_scope="route_corridor",
+        ),
+    )
+    assert create_res.data.slug == "pousada_hotel"
+
+    update_res = await service.update_actor_type(
+        ctx,
+        type_id,
+        AdminActorTypeUpdateSchema(label="Novo Nome Subtipo"),
+    )
+    assert update_res.data.id == type_id

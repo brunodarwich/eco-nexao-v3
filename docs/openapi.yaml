@@ -3229,6 +3229,46 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/actors/{actor_id}/google-photo:
+    get:
+      tags:
+      - Territorial - Actors
+      summary: Foto Google temporária do ator
+      description: Emite um grant opaco a partir de Place Details recente; não expõe URLs Google.
+      operationId: get_actor_google_photo_api_v1_actors__actor_id__google_photo_get
+      parameters:
+      - name: actor_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Actor Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GooglePhotoMetadataEnvelope'
+        '404':
+          description: Foto indisponível.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Foto temporariamente indisponível.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/me:
     get:
       tags:
@@ -3675,6 +3715,81 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
       security:
       - HTTPBearer: []
+  /api/v1/places/photos/{token}/metadata:
+    get:
+      tags:
+      - Google Place Photos
+      summary: Get Place Photo Metadata
+      description: Metadata is intentionally only available after a trusted server-side
+        grant.
+      operationId: get_place_photo_metadata_api_v1_places_photos__token__metadata_get
+      parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GooglePhotoMetadataEnvelope'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/places/photos/{token}:
+    get:
+      tags:
+      - Google Place Photos
+      summary: Get Place Photo
+      operationId: get_place_photo_api_v1_places_photos__token__get
+      parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Token
+      - name: maxHeightPx
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 4800
+          minimum: 1
+          default: 600
+          title: Maxheightpx
+      - name: maxWidthPx
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 4800
+          minimum: 1
+          default: 800
+          title: Maxwidthpx
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '404':
+          description: Foto indisponível
+        '410':
+          description: Foto expirada
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/content/support:
     get:
       tags:
@@ -4093,6 +4208,12 @@ components:
           type: string
           format: uuid
           title: Category Id
+        type_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Type Id
         slug:
           type: string
           maxLength: 150
@@ -4237,6 +4358,16 @@ components:
           anyOf:
           - $ref: '#/components/schemas/AdminCategorySchema'
           - type: 'null'
+        type_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Type Id
+        type:
+          anyOf:
+          - $ref: '#/components/schemas/AdminActorTypeSchema'
+          - type: 'null'
         slug:
           type: string
           title: Slug
@@ -4354,6 +4485,61 @@ components:
       - created_at
       - updated_at
       title: AdminActorSchema
+    AdminActorTypeSchema:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        category_id:
+          type: string
+          format: uuid
+          title: Category Id
+        slug:
+          type: string
+          title: Slug
+        label:
+          type: string
+          title: Label
+        icon:
+          type: string
+          title: Icon
+        sort_order:
+          type: integer
+          title: Sort Order
+        aliases:
+          items:
+            type: string
+          type: array
+          title: Aliases
+        spatial_scope:
+          type: string
+          title: Spatial Scope
+        publication_rule:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Publication Rule
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - category_id
+      - slug
+      - label
+      - icon
+      - sort_order
+      - spatial_scope
+      - created_at
+      - updated_at
+      title: AdminActorTypeSchema
     AdminActorUpdateSchema:
       properties:
         category_id:
@@ -4362,6 +4548,12 @@ components:
             format: uuid
           - type: 'null'
           title: Category Id
+        type_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Type Id
         name:
           anyOf:
           - type: string
@@ -5764,7 +5956,7 @@ components:
           title: License Code
         image:
           type: string
-          contentMediaType: application/octet-stream
+          format: binary
           title: Image
       type: object
       required:
@@ -5779,7 +5971,7 @@ components:
       properties:
         file:
           type: string
-          contentMediaType: application/octet-stream
+          format: binary
           title: File
           description: Imagem JPEG, PNG ou WebP; máximo 5 MiB
       type: object
@@ -6154,6 +6346,60 @@ components:
       - question
       - answer
       title: FAQItemSchema
+    GooglePhotoAttributionSchema:
+      properties:
+        display_name:
+          type: string
+          title: Display Name
+        uri:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Uri
+      type: object
+      required:
+      - display_name
+      title: GooglePhotoAttributionSchema
+    GooglePhotoMetadataEnvelope:
+      properties:
+        data:
+          $ref: '#/components/schemas/GooglePhotoMetadataSchema'
+      type: object
+      required:
+      - data
+      title: GooglePhotoMetadataEnvelope
+    GooglePhotoMetadataSchema:
+      properties:
+        proxy_url:
+          type: string
+          title: Proxy Url
+        expires_at:
+          type: integer
+          title: Expires At
+        width_px:
+          type: integer
+          title: Width Px
+        height_px:
+          type: integer
+          title: Height Px
+        author_attributions:
+          items:
+            $ref: '#/components/schemas/GooglePhotoAttributionSchema'
+          type: array
+          title: Author Attributions
+        google_maps_uri:
+          type: string
+          title: Google Maps Uri
+      type: object
+      required:
+      - proxy_url
+      - expires_at
+      - width_px
+      - height_px
+      - google_maps_uri
+      title: GooglePhotoMetadataSchema
+      description: Ephemeral photo metadata; deliberately excludes Google resource/photo
+        URLs.
     HTTPValidationError:
       properties:
         detail:
@@ -6391,27 +6637,6 @@ components:
             format: date-time
           - type: 'null'
           title: Deleted At
-        media_kind:
-          type: string
-          title: Media Kind
-          default: stored
-        external_photo_reference:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: External Photo Reference
-        external_attributions:
-          anyOf:
-          - items: {}
-            type: array
-          - type: 'null'
-          title: External Attributions
-        external_cache_expires_at:
-          anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
-          title: External Cache Expires At
         sort_order:
           type: integer
           title: Sort Order
@@ -6689,10 +6914,6 @@ components:
           - type: string
           - type: 'null'
           title: License Code
-        media_kind:
-          type: string
-          title: Media Kind
-          default: stored
         sort_order:
           type: integer
           title: Sort Order
@@ -7622,11 +7843,6 @@ components:
         type:
           type: string
           title: Error Type
-        input:
-          title: Input
-        ctx:
-          type: object
-          title: Context
       type: object
       required:
       - loc

@@ -21,9 +21,7 @@ CurrentUserDep = Annotated[AuthenticatedUser, Depends(get_current_user)]
     summary="Lista de regiões ativas",
     description="Retorna todas as regiões turísticas ativas disponíveis na plataforma.",
 )
-async def list_regions(
-    service: TerritorialServiceDep, response: Response
-) -> RegionListEnvelope:
+async def list_regions(service: TerritorialServiceDep, response: Response) -> RegionListEnvelope:
     response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=60"
     return await service.get_regions()
 

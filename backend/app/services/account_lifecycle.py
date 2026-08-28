@@ -50,9 +50,7 @@ class AccountLifecycleService:
             await self.repository.start_deletion(user_id)
             assets = await self.repository.avatar_assets(user_id)
             known_paths = {
-                path
-                for asset in assets
-                for path in AvatarLifecycleService.storage_paths(asset)
+                path for asset in assets for path in AvatarLifecycleService.storage_paths(asset)
             }
             listed_paths = await self.storage.list_user_paths(str(user_id))
             paths = sorted(known_paths.union(listed_paths))

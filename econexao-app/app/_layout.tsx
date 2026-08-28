@@ -30,6 +30,10 @@ function LayoutContent() {
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="route/[routeId]/index" options={{ headerShown: false }} />
+        <Stack.Screen name="route/[routeId]/map" options={{ headerShown: false }} />
+        <Stack.Screen name="route/[routeId]/catalog" options={{ headerShown: false }} />
+        <Stack.Screen name="actor/[actorId]" options={{ headerShown: false }} />
         <Stack.Screen
           name="admin/index"
           options={{ headerShown: false, title: 'Painel Editorial' }}

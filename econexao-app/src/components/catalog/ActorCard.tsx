@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
 import type { ActorSummary } from '../../api/types';
 import { Badge } from '../common/Badge';
+import { GooglePlacePhoto } from '../common/GooglePlacePhoto';
 import { makeAccessibleButton, setAccessibilityFocusSafely } from '../../utils/accessibility';
 
 export interface ActorCardProps {
@@ -38,11 +39,12 @@ export const ActorCard: React.FC<ActorCardProps> = ({
   }, [focusOnMount]);
 
   const effectiveIsFavorite = isFavorite ?? false;
-  const categoryName = actor.category_label.toUpperCase();
+  const categoryName = (actor.category_label || actor.category_slug || 'Geral').toUpperCase();
   const hasGreenSeal = actor.green_badge_status === 'verified';
-  const ratingValue = actor.google_rating;
+  const isSemtur = actor.verification_status === 'verified';
+  const ratingValue = typeof actor.google_rating === 'number' && Number.isFinite(actor.google_rating) ? actor.google_rating : null;
   const imageUrl = actor.cover_media?.derivatives?.card ?? actor.cover_media?.url ?? actor.cover_image_url;
-  const imageAlt = actor.cover_media?.alt_text || `Foto de ${actor.name}`;
+  const imageAlt = actor.cover_media?.alt_text || `Foto de ${actor.name || 'estabelecimento'}`;
   const isCompact = variant === 'compact';
 
   return (
@@ -53,7 +55,7 @@ export const ActorCard: React.FC<ActorCardProps> = ({
         onPress={onPress}
         {...makeAccessibleButton(
           `Estabelecimento ${actor.name}`,
-          `${categoryName}. ${actor.address ? `Endereço: ${actor.address}.` : ''} ${ratingValue ? `Avaliação ${ratingValue}.` : ''} Toque para ver detalhes.`
+          `${categoryName}. ${isSemtur ? 'Origem: Inventário SEMTUR. ' : ''}${actor.address ? `Endereço: ${actor.address}. ` : ''}${ratingValue ? `Avaliação ${ratingValue.toFixed(1)} no Google. ` : ''}Toque para ver detalhes.`
         )}
       >
         <View style={[styles.imageContainer, isCompact && styles.compactImageContainer]}>
@@ -65,6 +67,13 @@ export const ActorCard: React.FC<ActorCardProps> = ({
               accessible
               accessibilityLabel={imageAlt}
             />
+          ) : actor.id ? (
+            <GooglePlacePhoto
+              actorId={actor.id}
+              alt={imageAlt}
+              compact
+              style={styles.googlePhoto}
+            />
           ) : (
             <View style={styles.placeholderImage}>
               <Ionicons name="storefront-outline" size={40} color={theme.colors.brandSage} />
@@ -73,6 +82,7 @@ export const ActorCard: React.FC<ActorCardProps> = ({
 
           <View style={styles.badgeRow}>
             {hasGreenSeal && <Badge type="greenSeal" label="Selo Verde" />}
+            {isSemtur && <Badge type="semturInventory" label="Inventário SEMTUR" />}
           </View>
         </View>
 
@@ -82,7 +92,7 @@ export const ActorCard: React.FC<ActorCardProps> = ({
             {ratingValue != null && (
               <View style={styles.ratingRow}>
                 <Ionicons name="star" size={14} color={theme.colors.brandSun} />
-                <Text style={styles.ratingText}>{ratingValue.toFixed(1)} Google</Text>
+                <Text style={styles.ratingText}>{`${ratingValue.toFixed(1)} Google`}</Text>
               </View>
             )}
           </View>
@@ -110,7 +120,7 @@ export const ActorCard: React.FC<ActorCardProps> = ({
         >
           <Ionicons
             name={effectiveIsFavorite ? 'heart' : 'heart-outline'}
-            size={18}
+            size={20}
             color={effectiveIsFavorite ? theme.colors.error : theme.colors.onSurface}
           />
         </TouchableOpacity>
@@ -152,6 +162,10 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  googlePhoto: {
+    width: '100%',
+    height: '100%',
+  },
   compactImageContainer: {
     width: 104,
     height: 'auto',
@@ -169,19 +183,24 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     left: 12,
+    right: 56,
     zIndex: 10,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
   },
   favoriteButton: {
     position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 34,
-    height: 34,
+    top: 8,
+    right: 8,
+    width: 44,
+    height: 44,
     borderRadius: theme.radii.full,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 20,
+    ...theme.shadows.card,
   },
   content: {
     padding: theme.spacing.marginMobile,

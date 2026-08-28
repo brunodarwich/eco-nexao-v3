@@ -1,12 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { AppHeader } from '../../../src/components/common/AppHeader';
+import { Badge } from '../../../src/components/common/Badge';
 import { CategoryFilters } from '../../../src/components/catalog/CategoryFilters';
 import { MapAdapter } from '../../../src/components/map/MapAdapter';
+import { AccessibleModal } from '../../../src/components/common/AccessibleModal';
+import { GooglePlacePhoto } from '../../../src/components/common/GooglePlacePhoto';
 import { EmptyStateView, ErrorStateView, LoadingView } from '../../../src/components/common/UIStateViews';
 import { useRouteActorsQuery, useRouteMapQuery } from '../../../src/hooks/queries';
 import { theme } from '../../../src/theme/theme';
@@ -16,7 +19,7 @@ import { apiClient } from '../../../src/api/client';
 import { queryKeys } from '../../../src/api/queryKeys';
 import { CHOOSE_ON_MAP_ORIGIN_ID } from '../../../src/components/routes/OriginSelector';
 import { useAppContext } from '../../../src/state/useAppContext';
-import type { MapPin } from '../../../src/api/types';
+import type { MapPin, MapLegendItem } from '../../../src/api/types';
 import type { MapCoordinate, MapViewMode } from '../../../src/components/map/MapAdapter.types';
 
 const AccessibleMapControl = ({
@@ -287,8 +290,8 @@ export default function MapScreen() {
         },
       }
     : mapQuery.data!;
-  const allPins = mapPayload.pins || [];
-  const legend = [...(mapPayload.legend || [])].sort((a, b) => a.sort_order - b.sort_order);
+  const allPins = mapPayload.pins;
+  const legend = [...mapPayload.legend].sort((a, b) => a.sort_order - b.sort_order);
   const legendBySlug = new Map(legend.map((item) => [item.category_slug, item]));
   const hasInvalidMetadata =
     mapPayload.route_id !== routeId ||
@@ -354,8 +357,11 @@ export default function MapScreen() {
   const selectedPin: MapPin | undefined = allPins.find(
     (p) => p.actor_id === selectedActorId || p.id === selectedActorId
   );
-  const selectedActorSummary = actorsQuery.data?.data.find(
-    (a) => a.id === selectedActorId
+  const actorsList = Array.isArray(actorsQuery.data)
+    ? actorsQuery.data
+    : actorsQuery.data?.data || (actorsQuery.data as any)?.items;
+  const selectedActorSummary = actorsList?.find(
+    (a: any) => a.id === selectedActorId
   );
 
   return (
@@ -531,14 +537,14 @@ export default function MapScreen() {
 
       {/* Accessible actor preview sheet. The backdrop is a sibling so its press
           cannot propagate through the sheet to map controls or pins. */}
-      <Modal
+      <AccessibleModal
         visible={!isSelectionMode && Boolean(selectedActorId) && Boolean(selectedPin || selectedActorSummary)}
         transparent
         animationType="slide"
-        onRequestClose={closeActorSheet}
-        onShow={() => moveAccessibilityFocus(closeSheetButtonRef)}
-        accessibilityViewIsModal
-        aria-modal
+        onClose={closeActorSheet}
+        initialFocusRef={closeSheetButtonRef}
+        returnFocusRef={mapRegionRef}
+        accessibilityLabel="Painel de detalhes do ator selecionado"
       >
         <View style={styles.sheetModalRoot}>
           <TouchableOpacity
@@ -555,6 +561,12 @@ export default function MapScreen() {
                 <Text style={styles.sheetCategoryTag}>
                   {(selectedPin?.category_label || selectedActorSummary?.category_label || selectedPin?.category_slug || 'Ponto da Rota').toUpperCase()}
                 </Text>
+                {selectedActorSummary?.verification_status === 'verified' && (
+                  <Badge type="semturInventory" label="Inventário SEMTUR" />
+                )}
+                {selectedActorSummary?.green_badge_status === 'verified' && (
+                  <Badge type="greenSeal" label="Selo Verde" />
+                )}
               </View>
               <TouchableOpacity
                 ref={closeSheetButtonRef}
@@ -579,11 +591,53 @@ export default function MapScreen() {
               </Text>
             )}
 
+            {typeof selectedActorSummary?.google_rating === 'number' && Number.isFinite(selectedActorSummary.google_rating) && (
+              <View
+                style={styles.sheetRatingRow}
+                accessibilityRole="text"
+                accessibilityLabel={`Avaliação Google: ${selectedActorSummary.google_rating.toFixed(1)} estrelas`}
+              >
+                <Ionicons name="star" size={14} color={theme.colors.brandSun} />
+                <Text style={styles.sheetRatingText}>{`${selectedActorSummary.google_rating.toFixed(1)} Google`}</Text>
+              </View>
+            )}
+
             {typeof selectedPin?.distance_from_origin_m === 'number' && (
               <Text style={styles.sheetDistance}>
                 Distância da origem: {(selectedPin.distance_from_origin_m / 1000).toFixed(1)} km
               </Text>
             )}
+
+            <View style={styles.sheetPhotoContainer}>
+              {selectedActorSummary?.cover_media?.derivatives?.card || selectedActorSummary?.cover_media?.url || selectedActorSummary?.cover_image_url ? (
+                <Image
+                  source={{
+                    uri:
+                      selectedActorSummary?.cover_media?.derivatives?.card ??
+                      selectedActorSummary?.cover_media?.url ??
+                      selectedActorSummary?.cover_image_url,
+                  }}
+                  style={styles.sheetCoverImage}
+                  resizeMode="cover"
+                  accessible
+                  accessibilityLabel={
+                    selectedActorSummary?.cover_media?.alt_text ||
+                    `Foto de ${selectedPin?.name || selectedActorSummary?.name}`
+                  }
+                />
+              ) : (selectedPin?.actor_id || selectedPin?.id || selectedActorSummary?.id || selectedActorId) ? (
+                <GooglePlacePhoto
+                  actorId={
+                    (selectedPin?.actor_id ||
+                      selectedPin?.id ||
+                      selectedActorSummary?.id ||
+                      selectedActorId)!
+                  }
+                  alt={`Foto de ${selectedPin?.name || selectedActorSummary?.name || 'estabelecimento'}`}
+                  compact
+                />
+              ) : null}
+            </View>
 
             {actorsQuery.isFetching && !selectedActorSummary && (
               <ActivityIndicator accessibilityLabel="Carregando detalhes do ator" />
@@ -604,7 +658,11 @@ export default function MapScreen() {
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => {
-                const targetActorId = selectedPin?.actor_id || selectedPin?.id || selectedActorSummary?.id;
+                const targetActorId =
+                  selectedPin?.actor_id ||
+                  selectedPin?.id ||
+                  selectedActorSummary?.id ||
+                  selectedActorId;
                 if (targetActorId) {
                   router.push(
                     `/route/${encodeURIComponent(routeId)}/catalog?${new URLSearchParams({
@@ -627,7 +685,7 @@ export default function MapScreen() {
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+      </AccessibleModal>
     </View>
   );
 }
@@ -850,13 +908,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   sheetTagWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  sheetCategoryTag: {
+    ...theme.typography.labelSm,
     backgroundColor: theme.colors.surfaceContainerLow,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: theme.radii.sm,
-  },
-  sheetCategoryTag: {
-    ...theme.typography.labelSm,
     color: theme.colors.brandForest,
     fontSize: 10,
     fontWeight: '700',
@@ -882,6 +944,30 @@ const styles = StyleSheet.create({
     color: theme.colors.brandForest,
     fontSize: 11,
     fontWeight: '600',
+  },
+  sheetRatingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginVertical: 2,
+  },
+  sheetRatingText: {
+    ...theme.typography.labelSm,
+    color: theme.colors.brandDeep,
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  sheetPhotoContainer: {
+    width: '100%',
+    marginVertical: 4,
+    borderRadius: theme.radii.md,
+    overflow: 'hidden',
+  },
+  sheetCoverImage: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    maxHeight: 140,
+    borderRadius: theme.radii.md,
   },
   sheetQueryError: {
     gap: 8,

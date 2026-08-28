@@ -19,6 +19,11 @@ from app.schemas.admin_actors import (
     AdminActorEnvelope,
     AdminActorListEnvelope,
     AdminActorSchema,
+    AdminActorTypeCreateSchema,
+    AdminActorTypeEnvelope,
+    AdminActorTypeListEnvelope,
+    AdminActorTypeSchema,
+    AdminActorTypeUpdateSchema,
     AdminActorUpdateSchema,
     AdminCategoryCreateSchema,
     AdminCategoryEnvelope,
@@ -64,6 +69,22 @@ class ActorAdminService:
                 updated_at=actor.category.updated_at,
             )
 
+        type_schema = None
+        if getattr(actor, "type", None):
+            type_schema = AdminActorTypeSchema(
+                id=actor.type.id,
+                category_id=actor.type.category_id,
+                slug=actor.type.slug,
+                label=actor.type.label,
+                icon=actor.type.icon,
+                sort_order=actor.type.sort_order,
+                aliases=actor.type.aliases or [],
+                spatial_scope=actor.type.spatial_scope,
+                publication_rule=actor.type.publication_rule,
+                created_at=actor.type.created_at,
+                updated_at=actor.type.updated_at,
+            )
+
         features_schemas = []
         if getattr(actor, "accessibility_features", None):
             for link in actor.accessibility_features:
@@ -84,6 +105,8 @@ class ActorAdminService:
             id=actor.id,
             category_id=actor.category_id,
             category=cat_schema,
+            type_id=actor.type_id,
+            type=type_schema,
             slug=actor.slug,
             name=actor.name,
             description=actor.description,
@@ -110,12 +133,190 @@ class ActorAdminService:
         )
 
     # -------------------------------------------------------------------------
+    # Actor Type Operations (Level-2 Specialized Taxonomy ADR 0015 / ECO-2504)
+    # -------------------------------------------------------------------------
+
+    async def list_actor_types(
+        self, context: AuthorizationContext, category_id: uuid.UUID | None = None
+    ) -> AdminActorTypeListEnvelope:
+        await self.auth_service.require_capability(context, "actor.write")
+        types = await self.repo.list_actor_types(category_id=category_id)
+        schemas = [
+            AdminActorTypeSchema(
+                id=t.id,
+                category_id=t.category_id,
+                slug=t.slug,
+                label=t.label,
+                icon=t.icon,
+                sort_order=t.sort_order,
+                aliases=t.aliases or [],
+                spatial_scope=t.spatial_scope,
+                publication_rule=t.publication_rule,
+                created_at=t.created_at,
+                updated_at=t.updated_at,
+            )
+            for t in types
+        ]
+        return AdminActorTypeListEnvelope(data=schemas)
+
+    async def get_actor_type(
+        self, context: AuthorizationContext, type_id: uuid.UUID
+    ) -> AdminActorTypeEnvelope:
+        await self.auth_service.require_capability(context, "actor.write")
+        t = await self.repo.get_actor_type_by_id(type_id)
+        if not t:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Tipo de ator com ID {type_id} não foi encontrado.",
+            )
+        return AdminActorTypeEnvelope(
+            data=AdminActorTypeSchema(
+                id=t.id,
+                category_id=t.category_id,
+                slug=t.slug,
+                label=t.label,
+                icon=t.icon,
+                sort_order=t.sort_order,
+                aliases=t.aliases or [],
+                spatial_scope=t.spatial_scope,
+                publication_rule=t.publication_rule,
+                created_at=t.created_at,
+                updated_at=t.updated_at,
+            )
+        )
+
+    async def create_actor_type(
+        self, context: AuthorizationContext, body: AdminActorTypeCreateSchema
+    ) -> AdminActorTypeEnvelope:
+        await self.auth_service.require_capability(context, "actor.write")
+
+        cat = await self.repo.get_category_by_id(body.category_id)
+        if not cat:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Categoria vinculada (ID: {body.category_id}) não foi encontrada.",
+            )
+
+        existing = await self.repo.get_actor_type_by_slug(body.slug)
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Já existe um tipo de ator com o slug '{body.slug}'.",
+            )
+
+        t = await self.repo.create_actor_type(
+            category_id=body.category_id,
+            slug=body.slug,
+            label=body.label,
+            icon=body.icon,
+            sort_order=body.sort_order,
+            aliases=body.aliases,
+            spatial_scope=body.spatial_scope,
+            publication_rule=body.publication_rule,
+        )
+
+        self.auth_repo.append_audit(
+            actor_id=context.actor_id,
+            action="create",
+            resource_type="actor_type",
+            resource_id=t.id,
+            changes={
+                "slug": t.slug,
+                "label": t.label,
+                "category_id": str(t.category_id),
+            },
+        )
+
+        return AdminActorTypeEnvelope(
+            data=AdminActorTypeSchema(
+                id=t.id,
+                category_id=t.category_id,
+                slug=t.slug,
+                label=t.label,
+                icon=t.icon,
+                sort_order=t.sort_order,
+                aliases=t.aliases or [],
+                spatial_scope=t.spatial_scope,
+                publication_rule=t.publication_rule,
+                created_at=t.created_at,
+                updated_at=t.updated_at,
+            )
+        )
+
+    async def update_actor_type(
+        self,
+        context: AuthorizationContext,
+        type_id: uuid.UUID,
+        body: AdminActorTypeUpdateSchema,
+    ) -> AdminActorTypeEnvelope:
+        await self.auth_service.require_capability(context, "actor.write")
+
+        t = await self.repo.get_actor_type_by_id(type_id)
+        if not t:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Tipo de ator com ID {type_id} não foi encontrado.",
+            )
+
+        if body.category_id is not None:
+            cat = await self.repo.get_category_by_id(body.category_id)
+            if not cat:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Categoria vinculada (ID: {body.category_id}) não foi encontrada.",
+                )
+
+        updated = await self.repo.update_actor_type(
+            type_id=type_id,
+            category_id=body.category_id,
+            label=body.label,
+            icon=body.icon,
+            sort_order=body.sort_order,
+            aliases=body.aliases,
+            spatial_scope=body.spatial_scope,
+            publication_rule=body.publication_rule,
+        )
+        if not updated:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Tipo de ator com ID {type_id} não foi encontrado.",
+            )
+
+        changes: dict[str, Any] = {}
+        if body.label is not None:
+            changes["label"] = body.label
+        if body.category_id is not None:
+            changes["category_id"] = str(body.category_id)
+
+        self.auth_repo.append_audit(
+            actor_id=context.actor_id,
+            action="update",
+            resource_type="actor_type",
+            resource_id=type_id,
+            changes=changes,
+        )
+
+        return AdminActorTypeEnvelope(
+            data=AdminActorTypeSchema(
+                id=updated.id,
+                category_id=updated.category_id,
+                slug=updated.slug,
+                label=updated.label,
+                icon=updated.icon,
+                sort_order=updated.sort_order,
+                aliases=updated.aliases or [],
+                spatial_scope=updated.spatial_scope,
+                publication_rule=updated.publication_rule,
+                created_at=updated.created_at,
+                updated_at=updated.updated_at,
+            )
+        )
+
+    # -------------------------------------------------------------------------
     # Category Operations
     # -------------------------------------------------------------------------
 
-    async def list_categories(
-        self, context: AuthorizationContext
-    ) -> AdminCategoryListEnvelope:
+    async def list_categories(self, context: AuthorizationContext) -> AdminCategoryListEnvelope:
         await self.auth_service.require_capability(context, "actor.write")
         categories = await self.repo.list_categories()
         schemas = [
@@ -426,6 +627,7 @@ class ActorAdminService:
         self,
         context: AuthorizationContext,
         category_id: uuid.UUID | None = None,
+        type_id: uuid.UUID | None = None,
         include_deleted: bool = False,
         q: str | None = None,
         limit: int = 50,
@@ -434,6 +636,7 @@ class ActorAdminService:
         await self.auth_service.require_capability(context, "actor.write")
         actors, total = await self.repo.list_actors(
             category_id=category_id,
+            type_id=type_id,
             include_deleted=include_deleted,
             q=q,
             limit=limit,
@@ -496,8 +699,18 @@ class ActorAdminService:
                         detail=f"Funcionalidade de acessibilidade (ID: {fid}) não foi encontrada.",
                     )
 
+        # Type check if provided
+        if body.type_id is not None:
+            t_obj = await self.repo.get_actor_type_by_id(body.type_id)
+            if not t_obj:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Tipo de ator vinculado (ID: {body.type_id}) não foi encontrado.",
+                )
+
         actor = await self.repo.create_actor(
             category_id=body.category_id,
+            type_id=body.type_id,
             slug=body.slug,
             name=body.name,
             description=body.description,
@@ -531,6 +744,7 @@ class ActorAdminService:
                 "slug": actor.slug,
                 "name": actor.name,
                 "category_id": str(actor.category_id),
+                "type_id": str(actor.type_id) if actor.type_id else None,
                 "verification_status": actor.verification_status,
             },
         )
@@ -576,11 +790,17 @@ class ActorAdminService:
                     detail=f"Categoria vinculada (ID: {body.category_id}) não foi encontrada.",
                 )
 
+        # Type check if provided
+        if body.type_id is not None:
+            t_obj = await self.repo.get_actor_type_by_id(body.type_id)
+            if not t_obj:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Tipo de ator vinculado (ID: {body.type_id}) não foi encontrado.",
+                )
+
         # Verification check
-        if (
-            body.verification_status == "verified"
-            and actor.verification_status != "verified"
-        ):
+        if body.verification_status == "verified" and actor.verification_status != "verified":
             await self.auth_service.require_capability(context, "content.publish")
 
         # Accessibility feature check if provided
@@ -596,6 +816,7 @@ class ActorAdminService:
         updated = await self.repo.update_actor(
             actor_id=actor_id,
             category_id=body.category_id,
+            type_id=body.type_id,
             name=body.name,
             description=body.description,
             sub_category=body.sub_category,
@@ -825,9 +1046,7 @@ class ActorAdminService:
             )
         )
 
-    async def delete_route_link(
-        self, context: AuthorizationContext, link_id: uuid.UUID
-    ) -> bool:
+    async def delete_route_link(self, context: AuthorizationContext, link_id: uuid.UUID) -> bool:
         await self.auth_service.require_capability(context, "actor.write")
         link = await self.repo.get_route_actor_by_id(link_id)
         if not link:

@@ -277,9 +277,8 @@ class TerritorialRepository:
                     ),
                 )
             )
-        stmt = (
-            stmt.order_by(RouteActor.sort_order.asc(), Actor.name.asc(), Actor.id.asc())
-            .limit(limit + 1)
+        stmt = stmt.order_by(RouteActor.sort_order.asc(), Actor.name.asc(), Actor.id.asc()).limit(
+            limit + 1
         )
         exec_res = await self.db.execute(stmt)
         results = exec_res.all()
@@ -412,9 +411,7 @@ class TerritorialRepository:
                 Actor.deleted_at.is_(None),
                 Actor.location.is_not(None),
                 ActorCategory.spatial_scope.in_(["route_corridor", "both"]),
-                func.ST_DWithin(
-                    cast(Actor.location, Geography), cast(geom, Geography), buffer_m
-                ),
+                func.ST_DWithin(cast(Actor.location, Geography), cast(geom, Geography), buffer_m),
             )
             .order_by(Actor.green_badge_status.desc(), Actor.name.asc(), Actor.id.asc())
             .limit(limit)
@@ -473,8 +470,10 @@ class TerritorialRepository:
         return formatted_actors
 
     async def origin_belongs_to_route(self, route_id: uuid.UUID, origin_id: uuid.UUID) -> bool:
-        stmt = select(func.count()).select_from(RouteOrigin).where(
-            RouteOrigin.id == origin_id, RouteOrigin.route_id == route_id
+        stmt = (
+            select(func.count())
+            .select_from(RouteOrigin)
+            .where(RouteOrigin.id == origin_id, RouteOrigin.route_id == route_id)
         )
         return bool(await self.db.scalar(stmt))
 
@@ -499,22 +498,17 @@ class TerritorialRepository:
             "max_lng": float(row[3]),
         }
 
-    async def get_region_bounds(
-        self, region_id: uuid.UUID
-    ) -> dict[str, float] | None:
+    async def get_region_bounds(self, region_id: uuid.UUID) -> dict[str, float] | None:
         """Calculate bounding box encompassing all active actors and routes in the region."""
-        stmt = (
-            select(
-                func.min(ST_Y(cast(Actor.location, Geometry))).label("min_lat"),
-                func.max(ST_Y(cast(Actor.location, Geometry))).label("max_lat"),
-                func.min(ST_X(cast(Actor.location, Geometry))).label("min_lng"),
-                func.max(ST_X(cast(Actor.location, Geometry))).label("max_lng"),
-            )
-            .where(
-                Actor.region_id == region_id,
-                Actor.deleted_at.is_(None),
-                Actor.location.is_not(None),
-            )
+        stmt = select(
+            func.min(ST_Y(cast(Actor.location, Geometry))).label("min_lat"),
+            func.max(ST_Y(cast(Actor.location, Geometry))).label("max_lat"),
+            func.min(ST_X(cast(Actor.location, Geometry))).label("min_lng"),
+            func.max(ST_X(cast(Actor.location, Geometry))).label("max_lng"),
+        ).where(
+            Actor.region_id == region_id,
+            Actor.deleted_at.is_(None),
+            Actor.location.is_not(None),
         )
         exec_res = await self.db.execute(stmt)
         row = exec_res.first()
@@ -580,9 +574,27 @@ class TerritorialRepository:
             .join(ExternalSource, ExternalSource.id == ActorExternalRef.source_id)
             .where(
                 ActorExternalRef.actor_id == actor_id,
-                ExternalSource.slug == "google-places",
+                ExternalSource.slug == "google_places",
             )
         )
         google_place_id = await self.db.scalar(ext_stmt)
 
         return actor, lat, lon, features, google_place_id
+
+    async def get_active_google_place_id(self, actor_id: uuid.UUID) -> str | None:
+        """Return only a current, reconciled Google Places identifier for an active actor."""
+        stmt = (
+            select(ActorExternalRef.external_id)
+            .join(ExternalSource, ExternalSource.id == ActorExternalRef.source_id)
+            .join(Actor, Actor.id == ActorExternalRef.actor_id)
+            .where(
+                ActorExternalRef.actor_id == actor_id,
+                ActorExternalRef.status_ref == "active",
+                Actor.deleted_at.is_(None),
+                ExternalSource.slug == "google_places",
+            )
+            .order_by(ActorExternalRef.last_seen_at.desc())
+            .limit(1)
+        )
+        value = await self.db.scalar(stmt)
+        return value if isinstance(value, str) and value.strip() else None

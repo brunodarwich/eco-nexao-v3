@@ -227,17 +227,19 @@ class UserService:
     async def get_trips(self, user_id: uuid.UUID) -> TripListEnvelope:
         trips = await self.repo.get_trips(user_id)
         data = [
-            TripSchema.model_validate({
-                "id": str(t.id),
-                "user_id": str(t.user_id),
-                "route_id": str(t.route_id),
-                "started_at": t.started_at.isoformat() if t.started_at else None,
-                "completed_at": t.completed_at.isoformat() if t.completed_at else None,
-                "status": t.status,
-                "created_at": t.created_at.isoformat() if t.created_at else None,
-                "updated_at": t.updated_at.isoformat() if t.updated_at else None,
-                "route_title": t.route.title if t.route else None,
-            })
+            TripSchema.model_validate(
+                {
+                    "id": str(t.id),
+                    "user_id": str(t.user_id),
+                    "route_id": str(t.route_id),
+                    "started_at": t.started_at.isoformat() if t.started_at else None,
+                    "completed_at": t.completed_at.isoformat() if t.completed_at else None,
+                    "status": t.status,
+                    "created_at": t.created_at.isoformat() if t.created_at else None,
+                    "updated_at": t.updated_at.isoformat() if t.updated_at else None,
+                    "route_title": t.route.title if t.route else None,
+                }
+            )
             for t in trips
         ]
         return TripListEnvelope(data=data)

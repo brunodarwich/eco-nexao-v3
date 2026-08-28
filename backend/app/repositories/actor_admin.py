@@ -16,6 +16,7 @@ from app.models.domain import (
     Actor,
     ActorAccessibilityFeature,
     ActorCategory,
+    ActorType,
     RouteActor,
 )
 
@@ -155,6 +156,87 @@ class ActorAdminRepository:
         return feature
 
     # -------------------------------------------------------------------------
+    # Actor Types (Level-2 Specialized Taxonomy ADR 0015 / ECO-2504)
+    # -------------------------------------------------------------------------
+
+    async def get_actor_type_by_id(self, type_id: uuid.UUID) -> ActorType | None:
+        stmt = select(ActorType).where(ActorType.id == type_id)
+        res = await self.db.execute(stmt)
+        return res.scalar_one_or_none()
+
+    async def get_actor_type_by_slug(self, slug: str) -> ActorType | None:
+        stmt = select(ActorType).where(ActorType.slug == slug)
+        res = await self.db.execute(stmt)
+        return res.scalar_one_or_none()
+
+    async def list_actor_types(self, category_id: uuid.UUID | None = None) -> Sequence[ActorType]:
+        stmt = select(ActorType).order_by(ActorType.sort_order.asc(), ActorType.label.asc())
+        if category_id is not None:
+            stmt = stmt.where(ActorType.category_id == category_id)
+        res = await self.db.execute(stmt)
+        return res.scalars().all()
+
+    async def create_actor_type(
+        self,
+        category_id: uuid.UUID,
+        slug: str,
+        label: str,
+        icon: str,
+        sort_order: int = 0,
+        aliases: list[str] | None = None,
+        spatial_scope: str = "route_corridor",
+        publication_rule: str | None = None,
+    ) -> ActorType:
+        actor_type = ActorType(
+            id=uuid.uuid4(),
+            category_id=category_id,
+            slug=slug,
+            label=label,
+            icon=icon,
+            sort_order=sort_order,
+            aliases=aliases or [],
+            spatial_scope=spatial_scope,
+            publication_rule=publication_rule,
+        )
+        self.db.add(actor_type)
+        await self.db.flush()
+        return actor_type
+
+    async def update_actor_type(
+        self,
+        type_id: uuid.UUID,
+        category_id: uuid.UUID | None = None,
+        label: str | None = None,
+        icon: str | None = None,
+        sort_order: int | None = None,
+        aliases: list[str] | None = None,
+        spatial_scope: str | None = None,
+        publication_rule: str | None = None,
+    ) -> ActorType | None:
+        actor_type = await self.get_actor_type_by_id(type_id)
+        if not actor_type:
+            return None
+
+        if category_id is not None:
+            actor_type.category_id = category_id
+        if label is not None:
+            actor_type.label = label
+        if icon is not None:
+            actor_type.icon = icon
+        if sort_order is not None:
+            actor_type.sort_order = sort_order
+        if aliases is not None:
+            actor_type.aliases = aliases
+        if spatial_scope is not None:
+            actor_type.spatial_scope = spatial_scope
+        if publication_rule is not None:
+            actor_type.publication_rule = publication_rule
+
+        actor_type.updated_at = datetime.now(UTC)
+        await self.db.flush()
+        return actor_type
+
+    # -------------------------------------------------------------------------
     # Actors
     # -------------------------------------------------------------------------
 
@@ -165,6 +247,7 @@ class ActorAdminRepository:
             select(Actor)
             .options(
                 selectinload(Actor.category),
+                selectinload(Actor.type),
                 selectinload(Actor.accessibility_features).selectinload(
                     ActorAccessibilityFeature.feature
                 ),
@@ -184,6 +267,7 @@ class ActorAdminRepository:
     async def list_actors(
         self,
         category_id: uuid.UUID | None = None,
+        type_id: uuid.UUID | None = None,
         include_deleted: bool = False,
         q: str | None = None,
         limit: int = 50,
@@ -191,6 +275,7 @@ class ActorAdminRepository:
     ) -> tuple[Sequence[Actor], int]:
         base_stmt = select(Actor).options(
             selectinload(Actor.category),
+            selectinload(Actor.type),
             selectinload(Actor.accessibility_features).selectinload(
                 ActorAccessibilityFeature.feature
             ),
@@ -200,11 +285,11 @@ class ActorAdminRepository:
             base_stmt = base_stmt.where(Actor.deleted_at.is_(None))
         if category_id is not None:
             base_stmt = base_stmt.where(Actor.category_id == category_id)
+        if type_id is not None:
+            base_stmt = base_stmt.where(Actor.type_id == type_id)
         if q and q.strip():
             pattern = f"%{q.strip()}%"
-            base_stmt = base_stmt.where(
-                Actor.name.ilike(pattern) | Actor.slug.ilike(pattern)
-            )
+            base_stmt = base_stmt.where(Actor.name.ilike(pattern) | Actor.slug.ilike(pattern))
 
         # Count total query
         count_stmt = select(func.count()).select_from(base_stmt.subquery())
@@ -212,11 +297,7 @@ class ActorAdminRepository:
         total = total_res.scalar_one()
 
         # Query page
-        paginated_stmt = (
-            base_stmt.order_by(Actor.name.asc())
-            .limit(limit)
-            .offset(offset)
-        )
+        paginated_stmt = base_stmt.order_by(Actor.name.asc()).limit(limit).offset(offset)
         res = await self.db.execute(paginated_stmt)
         return res.scalars().all(), total
 
@@ -225,6 +306,7 @@ class ActorAdminRepository:
         category_id: uuid.UUID,
         slug: str,
         name: str,
+        type_id: uuid.UUID | None = None,
         description: str | None = None,
         sub_category: str | None = None,
         address: str | None = None,
@@ -248,6 +330,7 @@ class ActorAdminRepository:
         actor = Actor(
             id=uuid.uuid4(),
             category_id=category_id,
+            type_id=type_id,
             slug=slug,
             name=name,
             description=description,
@@ -273,6 +356,7 @@ class ActorAdminRepository:
         self,
         actor_id: uuid.UUID,
         category_id: uuid.UUID | None = None,
+        type_id: uuid.UUID | None = None,
         name: str | None = None,
         description: str | None = None,
         sub_category: str | None = None,
@@ -296,6 +380,8 @@ class ActorAdminRepository:
 
         if category_id is not None:
             actor.category_id = category_id
+        if type_id is not None:
+            actor.type_id = type_id
         if name is not None:
             actor.name = name
         if description is not None:
@@ -362,9 +448,7 @@ class ActorAdminRepository:
             self.db.add(link)
         await self.db.flush()
 
-    async def get_actor_coordinates(
-        self, actor: Actor
-    ) -> tuple[float | None, float | None]:
+    async def get_actor_coordinates(self, actor: Actor) -> tuple[float | None, float | None]:
         if actor.location is None:
             return None, None
         stmt = select(
@@ -382,9 +466,7 @@ class ActorAdminRepository:
     # -------------------------------------------------------------------------
 
     async def get_route_actor_by_id(self, link_id: uuid.UUID) -> RouteActor | None:
-        stmt = select(RouteActor).where(
-            RouteActor.id == link_id, RouteActor.archived_at.is_(None)
-        )
+        stmt = select(RouteActor).where(RouteActor.id == link_id, RouteActor.archived_at.is_(None))
         res = await self.db.execute(stmt)
         return res.scalar_one_or_none()
 
@@ -399,9 +481,7 @@ class ActorAdminRepository:
         res = await self.db.execute(stmt)
         return res.scalar_one_or_none()
 
-    async def list_route_actors_by_actor(
-        self, actor_id: uuid.UUID
-    ) -> Sequence[RouteActor]:
+    async def list_route_actors_by_actor(self, actor_id: uuid.UUID) -> Sequence[RouteActor]:
         stmt = (
             select(RouteActor)
             .where(RouteActor.actor_id == actor_id, RouteActor.archived_at.is_(None))
@@ -410,9 +490,7 @@ class ActorAdminRepository:
         res = await self.db.execute(stmt)
         return res.scalars().all()
 
-    async def list_route_actors_by_route(
-        self, route_id: uuid.UUID
-    ) -> Sequence[RouteActor]:
+    async def list_route_actors_by_route(self, route_id: uuid.UUID) -> Sequence[RouteActor]:
         stmt = (
             select(RouteActor)
             .where(RouteActor.route_id == route_id, RouteActor.archived_at.is_(None))

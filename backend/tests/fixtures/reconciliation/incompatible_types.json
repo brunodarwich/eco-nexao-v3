@@ -1,0 +1,23 @@
+{
+  "semtur_record": {
+    "external_id": "semtur-poi-006",
+    "titulo": "Hospital Municipal de Santarém - Pronto Socorro",
+    "categoria": "Utilidade Pública",
+    "tipo_normalizado": "saude",
+    "telefone": "(93) 3523-9999",
+    "website": null,
+    "latitude": -2.4350,
+    "longitude": -54.7200,
+    "known_place_id": null
+  },
+  "google_candidate": {
+    "place_id": "ChIJ_bar_da_orla_incompatible_006",
+    "name": "Bar e Petiscaria do Pronto Socorro",
+    "types": ["bar", "restaurant", "food", "point_of_interest"],
+    "latitude": -2.4352,
+    "longitude": -54.7202,
+    "formatted_address": "Av. Marechal Rondon, Santarém",
+    "phone": "(93) 3523-9999",
+    "website": null
+  }
+}

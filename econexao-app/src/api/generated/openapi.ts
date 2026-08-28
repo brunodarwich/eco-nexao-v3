@@ -821,6 +821,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/actors/{actor_id}/google-photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Foto Google temporária do ator
+         * @description Emite um grant opaco a partir de Place Details recente; não expõe URLs Google.
+         */
+        get: operations["get_actor_google_photo_api_v1_actors__actor_id__google_photo_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -1015,6 +1035,43 @@ export interface paths {
          * @description Cria um novo registro de viagem para o usuário autenticado na rota informada.
          */
         post: operations["create_trip_api_v1_me_trips_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/places/photos/{token}/metadata": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Place Photo Metadata
+         * @description Metadata is intentionally only available after a trusted server-side grant.
+         */
+        get: operations["get_place_photo_metadata_api_v1_places_photos__token__metadata_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/places/photos/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Place Photo */
+        get: operations["get_place_photo_api_v1_places_photos__token__get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1269,6 +1326,8 @@ export interface components {
              * Format: uuid
              */
             category_id: string;
+            /** Type Id */
+            type_id?: string | null;
             /** Slug */
             slug: string;
             /** Name */
@@ -1337,6 +1396,9 @@ export interface components {
              */
             category_id: string;
             category?: components["schemas"]["AdminCategorySchema"] | null;
+            /** Type Id */
+            type_id?: string | null;
+            type?: components["schemas"]["AdminActorTypeSchema"] | null;
             /** Slug */
             slug: string;
             /** Name */
@@ -1392,10 +1454,49 @@ export interface components {
             /** Deleted At */
             deleted_at?: string | null;
         };
+        /** AdminActorTypeSchema */
+        AdminActorTypeSchema: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Category Id
+             * Format: uuid
+             */
+            category_id: string;
+            /** Slug */
+            slug: string;
+            /** Label */
+            label: string;
+            /** Icon */
+            icon: string;
+            /** Sort Order */
+            sort_order: number;
+            /** Aliases */
+            aliases?: string[];
+            /** Spatial Scope */
+            spatial_scope: string;
+            /** Publication Rule */
+            publication_rule?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
         /** AdminActorUpdateSchema */
         AdminActorUpdateSchema: {
             /** Category Id */
             category_id?: string | null;
+            /** Type Id */
+            type_id?: string | null;
             /** Name */
             name?: string | null;
             /** Description */
@@ -2142,13 +2243,17 @@ export interface components {
              * @enum {string}
              */
             license_code: "CC-BY-4.0" | "SEMTUR_INSTITUTIONAL" | "PROPRIETARY";
-            /** Image */
+            /**
+             * Image
+             * Format: binary
+             */
             image: string;
         };
         /** Body_replace_avatar_api_v1_me_avatar_post */
         Body_replace_avatar_api_v1_me_avatar_post: {
             /**
              * File
+             * Format: binary
              * @description Imagem JPEG, PNG ou WebP; máximo 5 MiB
              */
             file: string;
@@ -2376,6 +2481,35 @@ export interface components {
              */
             category: string;
         };
+        /** GooglePhotoAttributionSchema */
+        GooglePhotoAttributionSchema: {
+            /** Display Name */
+            display_name: string;
+            /** Uri */
+            uri?: string | null;
+        };
+        /** GooglePhotoMetadataEnvelope */
+        GooglePhotoMetadataEnvelope: {
+            data: components["schemas"]["GooglePhotoMetadataSchema"];
+        };
+        /**
+         * GooglePhotoMetadataSchema
+         * @description Ephemeral photo metadata; deliberately excludes Google resource/photo URLs.
+         */
+        GooglePhotoMetadataSchema: {
+            /** Proxy Url */
+            proxy_url: string;
+            /** Expires At */
+            expires_at: number;
+            /** Width Px */
+            width_px: number;
+            /** Height Px */
+            height_px: number;
+            /** Author Attributions */
+            author_attributions?: components["schemas"]["GooglePhotoAttributionSchema"][];
+            /** Google Maps Uri */
+            google_maps_uri: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -2534,17 +2668,6 @@ export interface components {
             rejected_reason?: string | null;
             /** Deleted At */
             deleted_at?: string | null;
-            /**
-             * Media Kind
-             * @default stored
-             */
-            media_kind: string;
-            /** External Photo Reference */
-            external_photo_reference?: string | null;
-            /** External Attributions */
-            external_attributions?: unknown[] | null;
-            /** External Cache Expires At */
-            external_cache_expires_at?: string | null;
             /**
              * Sort Order
              * @default 0
@@ -2724,11 +2847,6 @@ export interface components {
             credit?: string | null;
             /** License Code */
             license_code?: string | null;
-            /**
-             * Media Kind
-             * @default stored
-             */
-            media_kind: string;
             /**
              * Sort Order
              * @default 0
@@ -3274,10 +3392,6 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
-            /** Input */
-            input?: unknown;
-            /** Context */
-            ctx?: Record<string, never>;
         };
     };
     responses: never;
@@ -6358,6 +6472,55 @@ export interface operations {
             };
         };
     };
+    get_actor_google_photo_api_v1_actors__actor_id__google_photo_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                actor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GooglePhotoMetadataEnvelope"];
+                };
+            };
+            /** @description Foto indisponível. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Foto temporariamente indisponível. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     get_my_profile_api_v1_me_get: {
         parameters: {
             query?: never;
@@ -6847,6 +7010,85 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["TripEnvelope"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_place_photo_metadata_api_v1_places_photos__token__metadata_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GooglePhotoMetadataEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_place_photo_api_v1_places_photos__token__get: {
+        parameters: {
+            query?: {
+                maxHeightPx?: number;
+                maxWidthPx?: number;
+            };
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Foto indisponível */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Foto expirada */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

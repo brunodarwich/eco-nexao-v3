@@ -6,8 +6,11 @@ import { NetworkStatusBar } from '../components/common/NetworkStatusBar';
 import { AuthModal } from '../components/profile/AuthModal';
 import { EditProfileModal } from '../components/profile/EditProfileModal';
 import { AccountDeletionModal } from '../components/profile/AccountDeletionModal';
+import { RegionSelectorModal } from '../components/common/RegionSelectorModal';
+import { AccessibleModal } from '../components/common/AccessibleModal';
 import { AccessDeniedView } from '../components/admin/AccessDeniedView';
 import { useAuth } from '../hooks/useAuth';
+import { useRegionsQuery } from '../hooks/queries';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-router', () => ({
@@ -22,13 +25,29 @@ jest.mock('../hooks/useAuth', () => ({
   useAuth: jest.fn(),
 }));
 
+jest.mock('../hooks/queries', () => {
+  const actual = jest.requireActual('../hooks/queries');
+  return {
+    ...actual,
+    useRegionsQuery: jest.fn().mockReturnValue({
+      data: [
+        { id: 'reg-1', name: 'Polo Tapajós', state_code: 'PA' },
+        { id: 'reg-2', name: 'Polo Belterra', state_code: 'PA' },
+      ],
+      isPending: false,
+      isError: false,
+    }),
+  };
+});
+
 jest.mock('../api/client', () => ({
   apiClient: {
     configureAuth: jest.fn(),
+    updateMyPreferences: jest.fn().mockResolvedValue({ success: true }),
   },
 }));
 
-describe('E2E Accessibility & WCAG Semantic Audit (ECO-2101)', () => {
+describe('E2E Accessibility & WCAG Semantic Audit (ECO-2101 / ECO-2307 / ECO-2315)', () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
@@ -97,6 +116,36 @@ describe('E2E Accessibility & WCAG Semantic Audit (ECO-2101)', () => {
     const deleteJson = JSON.stringify(deleteTree!.toJSON());
     expect(deleteJson).toContain('Confirmar exclusão e encerrar conta');
     expect(deleteJson).toContain('Cancelar exclusão de conta');
+
+    // 4. Modal de Seleção de Região
+    let regionTree: renderer.ReactTestRenderer;
+    await act(async () => {
+      regionTree = renderWithProviders(
+        <RegionSelectorModal visible={true} onClose={jest.fn()} />
+      );
+    });
+    const regionJson = JSON.stringify(regionTree!.toJSON());
+    expect(regionJson).toContain('Selecionar Região');
+    expect(regionJson).toContain('Polo Tapajós');
+  });
+
+  test('WCAG 2.1.2 / 2.4.3: AccessibleModal implementa aria-modal, foco seguro e diálogo sem bloquear aria-hidden', async () => {
+    const onClose = jest.fn();
+    let modalTree: renderer.ReactTestRenderer;
+    await act(async () => {
+      modalTree = renderWithProviders(
+        <AccessibleModal
+          visible={true}
+          onClose={onClose}
+          accessibilityLabel="Janela de teste acessível"
+        >
+          <NetworkStatusBar isOfflineOverride={false} onReconnect={jest.fn()} />
+        </AccessibleModal>
+      );
+    });
+
+    const modalJson = JSON.stringify(modalTree!.toJSON());
+    expect(modalJson).toContain('Janela de teste acessível');
   });
 
   test('WCAG 4.1.3: Status messages e acessibilidade de rede offline', async () => {

@@ -70,9 +70,7 @@ DENIED_ORIGINS = [
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("origin", ALLOWED_ORIGINS)
-async def test_cors_preflight_and_get_allowed_origins(
-    client: AsyncClient, origin: str
-) -> None:
+async def test_cors_preflight_and_get_allowed_origins(client: AsyncClient, origin: str) -> None:
     """Test that all approved origins receive correct CORS headers on OPTIONS and GET."""
     # 1. Preflight (OPTIONS)
     res_preflight = await client.options(
@@ -99,9 +97,7 @@ async def test_cors_preflight_and_get_allowed_origins(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("origin", DENIED_ORIGINS)
-async def test_cors_preflight_and_get_denied_origins(
-    client: AsyncClient, origin: str
-) -> None:
+async def test_cors_preflight_and_get_denied_origins(client: AsyncClient, origin: str) -> None:
     """Test that unauthorized/malicious origins never receive access-control-allow-origin."""
     # 1. Preflight (OPTIONS)
     res_preflight = await client.options(
@@ -283,7 +279,9 @@ async def test_rate_limiting_enforcement(client: AsyncClient) -> None:
 
 def test_sensitive_text_redaction() -> None:
     """Test redaction of connection strings, bearer tokens, passwords, and JWTs in logging."""
-    raw_log = "Error connecting postgresql+psycopg://user:supersecretpassword@db.host.com:5432/econexao"
+    raw_log = (
+        "Error connecting postgresql+psycopg://user:supersecretpassword@db.host.com:5432/econexao"
+    )
     redacted = redact_sensitive_text(raw_log)
     assert "supersecretpassword" not in redacted
     assert "***" in redacted
