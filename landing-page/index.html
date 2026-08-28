@@ -15,6 +15,7 @@
       content="Rotas, praias e negócios locais em um só lugar."
     />
     <meta property="og:image" content="assets/images/alter3.png" />
+    <link rel="icon" href="assets/brand/logo-econexao-transparent.png" type="image/png" />
     <title>ECOnexão — Descubra destinos. Viva experiências.</title>
 
     <style>
@@ -326,20 +327,69 @@
         position: relative;
         z-index: 2;
         display: grid;
-        grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
-        align-items: end;
+        grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.95fr);
+        align-items: center;
         gap: 4rem;
-        padding: 13rem 0 6rem;
+        padding: 8.5rem 0 4rem;
       }
 
       .hero__copy .eyebrow {
         color: var(--mint);
       }
 
+      .hero__logo {
+        width: min(100%, 390px);
+        height: auto;
+        margin-bottom: 1.7rem;
+        filter: drop-shadow(0 16px 28px rgba(3, 28, 24, 0.28));
+      }
+
+      .hero__copy h1 {
+        font-size: clamp(3.35rem, 6.2vw, 6.5rem);
+      }
+
       .hero__copy .lead {
         max-width: 590px;
         margin-bottom: 2rem;
         color: rgba(255, 255, 255, 0.78);
+      }
+
+      .hero__visual {
+        position: relative;
+        display: grid;
+        min-height: 670px;
+        place-items: center;
+      }
+
+      .phone-mockup {
+        position: relative;
+        z-index: 1;
+        width: min(100%, 258px);
+        padding: 9px;
+        border: 3px solid rgba(255, 255, 255, 0.24);
+        border-radius: 2.8rem;
+        background: #071815;
+        box-shadow: 0 30px 80px rgba(1, 20, 17, 0.5);
+        transform: rotate(1.5deg);
+      }
+
+      .phone-mockup::before {
+        position: absolute;
+        z-index: 2;
+        top: 1rem;
+        left: 50%;
+        width: 5.2rem;
+        height: 1.35rem;
+        border-radius: 999px;
+        background: #07100f;
+        content: "";
+        transform: translateX(-50%);
+      }
+
+      .phone-mockup img {
+        width: 100%;
+        height: auto;
+        border-radius: 2.15rem;
       }
 
       .route-card {
@@ -349,6 +399,14 @@
         background: rgba(5, 43, 37, 0.45);
         box-shadow: var(--shadow);
         backdrop-filter: blur(18px);
+      }
+
+      .hero__visual .route-card {
+        position: absolute;
+        z-index: 3;
+        right: -1rem;
+        bottom: 3.5rem;
+        width: min(285px, 78%);
       }
 
       .route-card__label {
@@ -921,6 +979,10 @@
           gap: 2.5rem;
         }
 
+        .hero__visual {
+          min-height: 650px;
+        }
+
         .route-card {
           max-width: 460px;
         }
@@ -999,14 +1061,36 @@
         }
 
         .hero {
-          min-height: 820px;
+          min-height: auto;
           background:
             linear-gradient(0deg, rgba(2, 32, 28, 0.94), rgba(2, 32, 28, 0.24)),
             url("assets/images/pindobal4.png") 52% center / cover no-repeat;
         }
 
         .hero__content {
-          padding: 10rem 0 4rem;
+          padding: 8rem 0 3.5rem;
+        }
+
+        .hero__logo {
+          width: min(100%, 360px);
+          margin-bottom: 1.35rem;
+        }
+
+        .hero__copy h1 {
+          font-size: clamp(3.1rem, 15vw, 5rem);
+        }
+
+        .hero__visual {
+          min-height: 660px;
+        }
+
+        .hero__visual .route-card {
+          display: none;
+        }
+
+        .phone-mockup {
+          width: min(100%, 232px);
+          transform: none;
         }
 
         .problem,
@@ -1111,6 +1195,14 @@
       }
 
       @media (max-width: 520px) {
+        .hero__visual {
+          min-height: 620px;
+        }
+
+        .phone-mockup {
+          width: min(100%, 218px);
+        }
+
         .destination-grid {
           display: grid;
           grid-template-columns: 1fr;
@@ -1175,30 +1267,50 @@
       <section class="hero" id="inicio" aria-labelledby="titulo-principal">
         <div class="hero__content container">
           <div class="hero__copy">
+            <img
+              class="hero__logo"
+              src="assets/brand/logo-econexao-white-eco.png"
+              alt="ECOnexão — Descubra destinos, viva experiências"
+              width="1600"
+              height="533"
+              fetchpriority="high"
+            />
             <h1 id="titulo-principal">Descubra destinos. Viva experiências.</h1>
             <p class="lead">
               Rotas, praias e negócios locais reunidos para você aproveitar melhor cada caminho.
             </p>
-            <a class="button button--light" href="https://app.econexaoturismo.com/">
+            <a class="button button--light" href="#descoberta">
               Conheça o ECOnexão
               <span class="button__arrow" aria-hidden="true">→</span>
             </a>
           </div>
 
-          <aside class="route-card" aria-label="Exemplo de rota no ECOnexão">
-            <p class="route-card__label">Sua próxima rota</p>
-            <ol class="route-card__path">
-              <li>
-                <span><strong>Escolha sua saída</strong>Aeroporto, rodoviária ou porto</span>
-              </li>
-              <li>
-                <span><strong>Trace o caminho</strong>Rotas claras para os destinos</span>
-              </li>
-              <li>
-                <span><strong>Descubra ao redor</strong>Serviços e experiências locais</span>
-              </li>
-            </ol>
-          </aside>
+          <div class="hero__visual">
+            <div class="phone-mockup">
+              <img
+                src="assets/screens/app-home.png"
+                alt="Tela inicial do aplicativo ECOnexão com destinos e rotas da Amazônia"
+                width="575"
+                height="1600"
+                fetchpriority="high"
+              />
+            </div>
+
+            <aside class="route-card" aria-label="Exemplo de rota no ECOnexão">
+              <p class="route-card__label">Sua próxima rota</p>
+              <ol class="route-card__path">
+                <li>
+                  <span><strong>Escolha sua saída</strong>Aeroporto, rodoviária ou porto</span>
+                </li>
+                <li>
+                  <span><strong>Trace o caminho</strong>Rotas claras para os destinos</span>
+                </li>
+                <li>
+                  <span><strong>Descubra ao redor</strong>Serviços e experiências locais</span>
+                </li>
+              </ol>
+            </aside>
+          </div>
         </div>
       </section>
 
