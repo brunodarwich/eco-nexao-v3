@@ -81,7 +81,7 @@ async def verify() -> int:
     checks = (
         len(regions.json().get("data", [])) > 0,
         bootstrap_region == "santarem-belterra",
-        detail.json().get("data", {}).get("title") == "Rota Pindobal",
+        detail.json().get("data", {}).get("title") == "Pindobal",
         len(origin_items) == 3,
         actor_total == 313,
         len(pins) > 0,

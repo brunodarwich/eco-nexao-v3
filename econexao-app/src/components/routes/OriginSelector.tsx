@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Modal, AccessibilityInfo } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, AccessibilityInfo } from 'react-native';
 import * as Linking from 'expo-linking';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
 import { makeAccessibleButton, setAccessibilityFocusSafely } from '../../utils/accessibility';
+import { AccessibleModal } from '../common/AccessibleModal';
 import type { RouteOrigin } from '../../api/types';
 import { useCurrentLocation, LocationCoordinates } from '../../hooks/useCurrentLocation';
 import { useAppContext } from '../../state/useAppContext';
@@ -173,7 +174,7 @@ export const OriginSelector: React.FC<OriginSelectorProps> = ({
     <View style={styles.container}>
       <View style={styles.headerRow}>
         <Ionicons name="navigate-outline" size={16} color={theme.colors.brandForest} />
-        <Text style={styles.headerTitle}>Simulador de Origem da Rota</Text>
+        <Text style={styles.headerTitle}>saindo de onde?</Text>
       </View>
 
       {/* Compact Segmented Pills Row */}
@@ -334,13 +335,16 @@ export const OriginSelector: React.FC<OriginSelectorProps> = ({
       )}
 
       {/* Confirmation Modal with Full Accessibility */}
-      <Modal
+      <AccessibleModal
         visible={showConfirmModal}
         transparent
         animationType="fade"
-        onRequestClose={handleCancelLocation}
+        onClose={handleCancelLocation}
+        initialFocusRef={modalTitleRef}
+        returnFocusRef={myLocationButtonRef}
+        accessibilityLabel="Confirmar cálculo de trajeto"
       >
-        <View style={styles.modalOverlay} accessibilityViewIsModal={true}>
+        <View style={styles.modalOverlay}>
           <View style={styles.modalContainer} accessibilityRole="alert">
             <View style={styles.modalHeader}>
               <Ionicons name="location" size={24} color={theme.colors.brandForest} />
@@ -369,7 +373,7 @@ export const OriginSelector: React.FC<OriginSelectorProps> = ({
             </View>
           </View>
         </View>
-      </Modal>
+      </AccessibleModal>
     </View>
   );
 };

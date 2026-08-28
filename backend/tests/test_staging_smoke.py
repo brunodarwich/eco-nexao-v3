@@ -139,8 +139,7 @@ def test_validate_map_payload_detects_legend_reconciliation_mismatch() -> None:
 
     errors = validate_map_payload(payload, route_id, origin_id)
     assert any(
-        "does not match pin count" in e or "does not match legend count" in e
-        for e in errors
+        "does not match pin count" in e or "does not match legend count" in e for e in errors
     )
 
 
@@ -163,10 +162,15 @@ def test_check_cors_preflight_and_get_success() -> None:
         headers: dict[str, str] | None = None,
         method: str | None = None,
     ) -> tuple[bool, int, dict[str, str], dict[str, Any]]:
-        return True, 200, {
-            "Access-Control-Allow-Origin": origin,
-            "Access-Control-Allow-Credentials": "true",
-        }, {"status": "ok"}
+        return (
+            True,
+            200,
+            {
+                "Access-Control-Allow-Origin": origin,
+                "Access-Control-Allow-Credentials": "true",
+            },
+            {"status": "ok"},
+        )
 
     with patch("scripts.staging_smoke.check_endpoint", side_effect=mock_check_endpoint):
         ok, msg = check_cors_preflight_and_get("https://test-host", origin)
@@ -389,7 +393,7 @@ def test_run_smoke_test_complete_success() -> None:
                 True,
                 200,
                 {},
-                {"data": [{"id": route_id, "slug": "rota-pindobal", "title": "Rota Pindobal"}]},
+                {"data": [{"id": route_id, "slug": "rota-pindobal", "title": "Pindobal"}]},
             )
         if url.endswith(f"/api/v1/routes/{route_id}/origins"):
             return (
@@ -469,4 +473,3 @@ def test_run_smoke_test_fails_closed_on_cors_rejection() -> None:
             delay_seconds=0.01,
         )
         assert exit_code == 1
-

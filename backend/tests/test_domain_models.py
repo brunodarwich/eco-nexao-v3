@@ -66,7 +66,7 @@ def test_route_and_origin_relationship() -> None:
         id=route_id,
         region_id=region_id,
         slug="rota-pindobal",
-        title="Rota Pindobal",
+        title="Pindobal",
         city="Belterra",
         state_code="PA",
         status="active",
@@ -82,7 +82,7 @@ def test_route_and_origin_relationship() -> None:
     )
     route.origins.append(origin_porto)
 
-    assert route.title == "Rota Pindobal"
+    assert route.title == "Pindobal"
     assert len(route.origins) == 1
     assert route.origins[0].code == "porto"
     assert route.origins[0].distance_m == 45229
@@ -111,6 +111,43 @@ def test_actor_and_category_instantiation() -> None:
     assert actor.name == "Restaurante Pindobal"
     assert actor.category.label == "Gastronomia"
     assert actor.google_rating == 4.8
+
+
+def test_actor_type_and_actor_relationship() -> None:
+    from app.models.domain import ActorType
+
+    cat_id = uuid.uuid4()
+    type_id = uuid.uuid4()
+    category = ActorCategory(
+        id=cat_id,
+        slug="alimentacao",
+        label="Alimentação",
+        icon="utensils",
+    )
+    actor_type = ActorType(
+        id=type_id,
+        category_id=cat_id,
+        slug="restaurante",
+        label="Restaurante & Gastronomia",
+        icon="utensils",
+        sort_order=10,
+        aliases=["restaurante", "culinaria"],
+        spatial_scope="route_corridor",
+    )
+    actor = Actor(
+        id=uuid.uuid4(),
+        slug="restaurante-tapajos",
+        name="Restaurante Tapajós",
+        category_id=cat_id,
+        type_id=type_id,
+    )
+    actor_type.category = category
+    actor.type = actor_type
+
+    assert actor.type.slug == "restaurante"
+    assert actor.type.category.slug == "alimentacao"
+    assert actor.type.spatial_scope == "route_corridor"
+    assert "restaurante" in actor.type.aliases
 
 
 def test_user_profile_and_preferences() -> None:

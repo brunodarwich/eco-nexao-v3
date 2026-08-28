@@ -36,7 +36,7 @@ def mock_user_service() -> SimpleNamespace:
         "status": "in_progress",
         "created_at": "2026-08-12T10:00:00Z",
         "updated_at": "2026-08-12T10:00:00Z",
-        "route_title": "Rota Pindobal",
+        "route_title": "Pindobal",
     }
 
     async def mock_create_trip(user_id: uuid.UUID, route_id: uuid.UUID) -> TripEnvelope:
@@ -53,7 +53,7 @@ def mock_user_service() -> SimpleNamespace:
                 "status": "in_progress",
                 "created_at": "2026-08-12T10:00:00Z",
                 "updated_at": "2026-08-12T10:00:00Z",
-                "route_title": "Rota Pindobal",
+                "route_title": "Pindobal",
             }
         )
 
@@ -150,7 +150,7 @@ def test_get_my_trips_success(
     assert "data" in res_json
     assert isinstance(res_json["data"], list)
     assert len(res_json["data"]) == 1
-    assert res_json["data"][0]["route_title"] == "Rota Pindobal"
+    assert res_json["data"][0]["route_title"] == "Pindobal"
 
 
 def test_create_trip_success(

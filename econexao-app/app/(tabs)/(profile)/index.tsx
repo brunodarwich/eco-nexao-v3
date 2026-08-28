@@ -70,28 +70,6 @@ export default function ProfileScreen() {
       <AppHeader title="Meu Perfil" />
 
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Guest Linking Banner (ADR 0007 / ECO-1902) */}
-        {isAnonymous && (
-          <View style={styles.guestBanner}>
-            <View style={styles.guestBannerTextCol}>
-              <View style={styles.guestBannerHeader}>
-                <Ionicons name="sparkles" size={16} color="#065F46" />
-                <Text style={styles.guestBannerTitle}>Sessão de Convidado</Text>
-              </View>
-              <Text style={styles.guestBannerBody}>
-                Salve seus favoritos e histórico de viagens vinculando um e-mail.
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={styles.guestBannerButton}
-              onPress={() => setIsAuthModalVisible(true)}
-              {...makeAccessibleButton('Criar conta ou fazer login', 'Abrir tela de autenticação')}
-            >
-              <Text style={styles.guestBannerButtonText}>Salvar Conta</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
         {/* Profile Info Header (ECO-1101) */}
         <View style={styles.profileHeaderCard}>
           <View style={styles.avatarRow}>

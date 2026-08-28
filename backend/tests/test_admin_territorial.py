@@ -315,7 +315,7 @@ async def test_service_list_routes_success() -> None:
         id=uuid.uuid4(),
         region_id=uuid.uuid4(),
         slug="rota-pindobal",
-        title="Rota Pindobal",
+        title="Pindobal",
         summary="Resumo",
         city="Belterra",
         state_code="PA",
@@ -330,7 +330,7 @@ async def test_service_list_routes_success() -> None:
     res = await service.list_routes(ctx)
 
     assert res.meta.total == 1
-    assert res.data[0].title == "Rota Pindobal"
+    assert res.data[0].title == "Pindobal"
 
 
 @pytest.mark.asyncio
@@ -367,7 +367,7 @@ async def test_service_create_route_publish_requires_capability() -> None:
     body = AdminRouteCreateSchema(
         region_id=region.id,
         slug="rota-pindobal",
-        title="Rota Pindobal",
+        title="Pindobal",
         city="Belterra",
         state_code="PA",
         status="published",
@@ -389,7 +389,7 @@ async def test_service_create_route_success() -> None:
         id=uuid.uuid4(),
         region_id=region.id,
         slug="rota-pindobal",
-        title="Rota Pindobal",
+        title="Pindobal",
         city="Belterra",
         state_code="PA",
         status="draft",
@@ -406,14 +406,14 @@ async def test_service_create_route_success() -> None:
     body = AdminRouteCreateSchema(
         region_id=region.id,
         slug="rota-pindobal",
-        title="Rota Pindobal",
+        title="Pindobal",
         city="Belterra",
         state_code="PA",
         status="draft",
     )
     res = await service.create_route(ctx, body)
 
-    assert res.data.title == "Rota Pindobal"
+    assert res.data.title == "Pindobal"
 
 
 @pytest.mark.asyncio
@@ -457,7 +457,7 @@ async def test_service_archive_route_success() -> None:
         id=uuid.uuid4(),
         region_id=uuid.uuid4(),
         slug="rota-pindobal",
-        title="Rota Pindobal",
+        title="Pindobal",
         city="Belterra",
         state_code="PA",
         status="archived",
@@ -671,7 +671,7 @@ async def test_repo_route_crud() -> None:
         id=route_id,
         region_id=region_id,
         slug="rota-pindobal",
-        title="Rota Pindobal",
+        title="Pindobal",
         city="Belterra",
         state_code="PA",
         status="draft",

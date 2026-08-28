@@ -59,7 +59,6 @@ export const RouteCard: React.FC<RouteCardProps> = ({
               </Text>
             </View>
             <Text style={styles.title}>{route.title}</Text>
-            {route.summary ? <Text style={styles.metaText} numberOfLines={2}>{route.summary}</Text> : null}
           </View>
         </View>
       </Pressable>

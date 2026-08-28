@@ -79,25 +79,23 @@ export default function RouteDetailScreen() {
     if (initialOriginId && initialOriginId !== MY_LOCATION_ORIGIN_ID && initialOriginId !== CHOOSE_ON_MAP_ORIGIN_ID) {
       lastValidOriginIdRef.current = initialOriginId;
     }
-  }, [initialOriginId, routeId]);
 
-  // Read ephemeral preview transferred from map screen via memory cache
-  useEffect(() => {
-    if (!isDynamicRoutingEnabled || !queryClient || !routeId) return;
-    const ephemeralKey = queryKeys.routes.ephemeralPreview(routeId);
-    const cachedData = queryClient.getQueryData<{
-      previewData: RoutePreviewData;
-      originType: string;
-    }>(ephemeralKey);
+    if (isDynamicRoutingEnabled && queryClient && routeId) {
+      const ephemeralKey = queryKeys.routes.ephemeralPreview(routeId);
+      const cachedData = queryClient.getQueryData<{
+        previewData: RoutePreviewData;
+        originType: string;
+      }>(ephemeralKey);
 
-    if (cachedData?.previewData) {
-      setPreviewData(cachedData.previewData);
-      setOriginId(cachedData.originType || CHOOSE_ON_MAP_ORIGIN_ID);
-      AccessibilityInfo.announceForAccessibility('Trajeto sugerido a partir do ponto escolhido no mapa carregado.');
-      // Consume/clear ephemeral preview so subsequent back/focus operations don't re-trigger
-      queryClient.removeQueries({ queryKey: ephemeralKey });
+      if (cachedData?.previewData) {
+        setPreviewData(cachedData.previewData);
+        setOriginId(cachedData.originType || CHOOSE_ON_MAP_ORIGIN_ID);
+        AccessibilityInfo.announceForAccessibility('Trajeto sugerido a partir do ponto escolhido no mapa carregado.');
+        // Consume/clear ephemeral preview so subsequent back/focus operations don't re-trigger
+        queryClient.removeQueries({ queryKey: ephemeralKey });
+      }
     }
-  }, [queryClient, routeId, isDynamicRoutingEnabled]);
+  }, [initialOriginId, routeId, isDynamicRoutingEnabled]);
 
   const alerts = useRouteAlertsQuery(routeId);
 
@@ -256,7 +254,6 @@ export default function RouteDetailScreen() {
                   {route.city}, {route.state_code}
                   {route.is_verified && ' • Rota Verificada'}
                 </Text>
-                <Text style={[styles.description, styles.descriptionOnImage]}>{route.description ?? route.summary}</Text>
               </View>
               <LinearGradient
                 pointerEvents="none"
@@ -281,7 +278,6 @@ export default function RouteDetailScreen() {
                 {route.city}, {route.state_code}
                 {route.is_verified && ' • Rota Verificada'}
               </Text>
-              <Text style={styles.description}>{route.description ?? route.summary}</Text>
             </View>
             {originSelector}
           </>

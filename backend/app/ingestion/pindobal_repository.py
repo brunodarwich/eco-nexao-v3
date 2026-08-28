@@ -205,7 +205,7 @@ class PindobalPersistenceRepository:
                     id=uuid.uuid4(),
                     region_id=region.id,
                     slug="rota-pindobal",
-                    title="Rota Pindobal",
+                    title="Pindobal",
                     summary="Rota territorial entre Santarém, Belterra e Pindobal.",
                     city="Belterra",
                     state_code="PA",
@@ -461,9 +461,7 @@ class PindobalPersistenceRepository:
                 else:
                     counts.rejected += 1
 
-            fuzzy_match_count = sum(
-                1 for match in matches if match.match_type == "fuzzy_candidate"
-            )
+            fuzzy_match_count = sum(1 for match in matches if match.match_type == "fuzzy_candidate")
             stats = {
                 "reconciliation": {
                     **asdict(counts),

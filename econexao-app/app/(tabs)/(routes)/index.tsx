@@ -1,11 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { AppHeader } from '../../../src/components/common/AppHeader';
 import { EmptyStateView, ErrorStateView, LoadingView } from '../../../src/components/common/UIStateViews';
-import { FilterChip } from '../../../src/components/common/FilterChip';
-import { SearchInput } from '../../../src/components/common/SearchInput';
 import { RouteCard } from '../../../src/components/routes/RouteCard';
 import { useApp } from '../../../src/hooks/useApp';
 import { useAuth } from '../../../src/hooks/useAuth';
@@ -20,28 +18,12 @@ export default function RoutesScreen() {
   const { user } = useAuth();
   const regionsQuery = useRegionsQuery();
 
-  const [savedOnly, setSavedOnly] = useState(false);
-  const [verifiedOnly, setVerifiedOnly] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-    }, 350);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
   const activeRegionId = state.activeRegionId ?? regionsQuery.data?.[0]?.id;
   const hasNoRegions = regionsQuery.isSuccess && !activeRegionId;
 
   const routesQuery = useInfiniteRoutesQuery(
     activeRegionId,
-    {
-      q: debouncedSearch || undefined,
-      saved: savedOnly || undefined,
-      verified: verifiedOnly || undefined,
-    },
+    {},
     user?.id
   );
 
@@ -51,44 +33,10 @@ export default function RoutesScreen() {
   const savedRouteIds = new Set(savedRoutesQuery.data?.data?.map((r) => r.id));
   const allRoutes: RouteSummary[] = flattenUniquePages(routesQuery.data?.pages);
 
-  const handleResetFilters = () => {
-    setSearchQuery('');
-    setDebouncedSearch('');
-    setSavedOnly(false);
-    setVerifiedOnly(false);
-  };
-
   return (
     <View style={styles.container}>
       <AppHeader />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Rotas da Região</Text>
-
-        <SearchInput
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          onClear={() => setSearchQuery('')}
-          placeholder="Buscar por nome ou município..."
-        />
-
-        <View style={styles.filters}>
-          <FilterChip
-            label="Todas"
-            isSelected={!savedOnly && !verifiedOnly}
-            onPress={() => { setSavedOnly(false); setVerifiedOnly(false); }}
-          />
-          <FilterChip
-            label="Salvas"
-            isSelected={savedOnly}
-            onPress={() => setSavedOnly((value) => !value)}
-          />
-          <FilterChip
-            label="Verificadas"
-            isSelected={verifiedOnly}
-            onPress={() => setVerifiedOnly((value) => !value)}
-          />
-        </View>
-
         {regionsQuery.isPending ? (
           <LoadingView message="Carregando regiões..." />
         ) : regionsQuery.isError ? (
@@ -148,8 +96,7 @@ export default function RoutesScreen() {
         ) : (
           <EmptyStateView
             title="Nenhuma rota encontrada"
-            message="Não encontramos rotas com os filtros selecionados."
-            onReset={searchQuery || savedOnly || verifiedOnly ? handleResetFilters : undefined}
+            message="Não há rotas cadastradas para a região selecionada."
           />
         )}
       </ScrollView>
@@ -166,15 +113,6 @@ const styles = StyleSheet.create({
     padding: theme.spacing.marginMobile,
     gap: 16,
     paddingBottom: 40,
-  },
-  title: {
-    ...theme.typography.headlineLg,
-    color: theme.colors.brandDeep,
-  },
-  filters: {
-    flexDirection: 'row',
-    gap: 8,
-    flexWrap: 'wrap',
   },
   loadMoreButton: {
     backgroundColor: '#FFFFFF',

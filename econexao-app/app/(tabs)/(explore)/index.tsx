@@ -64,10 +64,7 @@ export default function HomeScreen() {
           <View style={styles.heroBlock}>
             <View style={styles.heroTextContainer}>
               <Text style={styles.heroTitle}>
-                Conecte-se{'\n'}à oferta real{'\n'}da Amazônia.
-              </Text>
-              <Text style={styles.heroSubtitle}>
-                Descubra roteiros autênticos e sustentáveis, guiados por quem vive e preserva a floresta.
+                Descubra destinos,{'\n'}viva experiências
               </Text>
             </View>
 
@@ -102,17 +99,6 @@ export default function HomeScreen() {
 
           {/* Seção 1: Rotas em Destaque */}
           <View style={styles.carouselSection}>
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitleOnImage}>Rotas em Destaque</Text>
-              <TouchableOpacity
-                onPress={() => router.push('/(tabs)/(routes)')}
-                style={styles.seeAllLink}
-                {...makeAccessibleButton('Ver todas as rotas em destaque')}
-              >
-                <Text style={styles.seeAllTextOnImage}>Ver todas</Text>
-                <Ionicons name="chevron-forward" size={15} color="rgba(255, 255, 255, 0.85)" />
-              </TouchableOpacity>
-            </View>
 
             {regionsQuery.isPending ? (
               <View style={styles.stateWrapper}>
