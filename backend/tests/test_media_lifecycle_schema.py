@@ -6,35 +6,27 @@ from app.models.domain import MediaAsset
 from app.schemas.domain import MediaAssetRead
 
 ROOT = Path(__file__).resolve().parents[2]
-MIGRATION = (
-    ROOT
-    / "supabase"
-    / "migrations"
-    / "20260813141416_add_editorial_media_lifecycle.sql"
-)
+MIGRATION = ROOT / "supabase" / "migrations" / "20260813141416_add_editorial_media_lifecycle.sql"
 HARDENING_MIGRATION = (
-    ROOT
-    / "supabase"
-    / "migrations"
-    / "20260813142059_harden_editorial_media_lifecycle.sql"
+    ROOT / "supabase" / "migrations" / "20260813142059_harden_editorial_media_lifecycle.sql"
 )
 FINAL_MIGRATION = (
-    ROOT
-    / "supabase"
-    / "migrations"
-    / "20260813142447_finalize_media_kind_invariants.sql"
+    ROOT / "supabase" / "migrations" / "20260813142447_finalize_media_kind_invariants.sql"
 )
 NULL_GAP_MIGRATION = (
-    ROOT
-    / "supabase"
-    / "migrations"
-    / "20260813142802_close_derivative_metadata_null_gap.sql"
+    ROOT / "supabase" / "migrations" / "20260813142802_close_derivative_metadata_null_gap.sql"
 )
 PROCESSING_KEY_MIGRATION = (
     ROOT
     / "supabase"
     / "migrations"
     / "20260813152038_allow_media_processing_without_storage_key.sql"
+)
+GOOGLE_PROXY_REMOVAL_MIGRATION = (
+    ROOT
+    / "supabase"
+    / "migrations"
+    / ("20260827221358_eco_2510_remove_legacy_google_photo_persistence.sql")
 )
 
 
@@ -70,14 +62,18 @@ def test_media_lifecycle_model_and_read_schema_are_synchronized() -> None:
         "processed_at",
         "rejected_reason",
         "deleted_at",
+    }
+
+    assert expected <= set(columns.keys())
+    assert expected <= set(MediaAssetRead.model_fields)
+    forbidden = {
         "media_kind",
         "external_photo_reference",
         "external_attributions",
         "external_cache_expires_at",
     }
-
-    assert expected <= set(columns.keys())
-    assert expected <= set(MediaAssetRead.model_fields)
+    assert not forbidden & set(columns.keys())
+    assert not forbidden & set(MediaAssetRead.model_fields)
 
 
 def test_media_lifecycle_hardening_closes_null_and_google_storage_gaps() -> None:
@@ -113,11 +109,16 @@ def test_derivative_metadata_nulls_are_forced_to_false() -> None:
     assert "coalesce(derivatives -> 'hero' ->> 'checksum_sha256', '')" in sql
 
 
-def test_stored_media_requires_storage_key_only_when_ready() -> None:
-    sql = PROCESSING_KEY_MIGRATION.read_text(encoding="utf-8")
+def test_eco_2510_removes_legacy_google_proxy_persistence() -> None:
+    sql = GOOGLE_PROXY_REMOVAL_MIGRATION.read_text(encoding="utf-8")
 
-    assert "DROP CONSTRAINT media_assets_storage_mode_check" in sql
-    assert "ADD CONSTRAINT media_assets_storage_mode_check" in sql
+    assert "DELETE FROM app_private.media_assets" in sql
+    assert "media_kind = 'google_proxy'" in sql
+    assert "DROP COLUMN IF EXISTS external_photo_reference" in sql
+    assert "DROP COLUMN IF EXISTS external_attributions" in sql
+    assert "DROP COLUMN IF EXISTS external_cache_expires_at" in sql
+    assert "DROP COLUMN IF EXISTS media_kind" in sql
+    license_constraint_sql = sql.split("ADD CONSTRAINT media_assets_license_code_check", 1)[1]
+    assert "'GOOGLE_PLACES_PROXY'" not in license_constraint_sql
     assert "processing_status = 'ready' AND storage_key IS NOT NULL" in sql
     assert "processing_status <> 'ready' AND storage_key IS NULL" in sql
-    assert "media_kind = 'google_proxy'" in sql

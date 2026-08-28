@@ -382,12 +382,6 @@ class MediaAsset(Base):
     processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     rejected_reason: Mapped[str | None] = mapped_column(TEXT, nullable=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    media_kind: Mapped[str] = mapped_column(VARCHAR(20), default="stored", nullable=False)
-    external_photo_reference: Mapped[str | None] = mapped_column(TEXT, nullable=True)
-    external_attributions: Mapped[list[Any] | None] = mapped_column(JSONB, nullable=True)
-    external_cache_expires_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
     sort_order: Mapped[int] = mapped_column(INTEGER, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.clock_timestamp(), nullable=False

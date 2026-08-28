@@ -22,9 +22,7 @@ class MediaResolutionService:
         main_url = ""
         derivatives_urls: dict[str, str] = {}
 
-        if asset.media_kind == "google_proxy" and asset.external_photo_reference:
-            main_url = asset.external_photo_reference
-        elif asset.storage_key:
+        if asset.storage_key:
             # Handle storage key prefixing if necessary
             key = asset.storage_key
             bucket = "editorial-media"
@@ -58,7 +56,6 @@ class MediaResolutionService:
             alt_text=asset.alt_text,
             credit=asset.credit,
             license_code=asset.license_code,
-            media_kind=asset.media_kind,
             sort_order=asset.sort_order,
         )
 
@@ -82,7 +79,7 @@ class MediaResolutionService:
         if not assets:
             return None, []
 
-        resolved_items = [self.resolve_asset_urls(a) for a in assets]
+        resolved_items = [self.resolve_asset_urls(asset) for asset in assets]
         cover_item = resolved_items[0] if resolved_items else None
         return cover_item, resolved_items
 
