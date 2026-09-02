@@ -16,6 +16,7 @@ from scripts.staging_migration_gate import (
     check_migration_drift,
     check_supabase_advisors,
     extract_project_ref_from_url,
+    link_staging_project,
     main,
     run_cli_command,
     run_gate,
@@ -252,6 +253,30 @@ def test_check_migration_drift_handles_cli_error() -> None:
         assert unapplied == []
 
 
+def test_link_staging_project_uses_pinned_cli_and_redacts_secrets() -> None:
+    """The CI link is staging-only, uses the pinned CLI and never exposes credentials."""
+    with patch(
+        "scripts.staging_migration_gate.run_cli_command", return_value=(0, "Linked project")
+    ) as mock_cli:
+        ok, output = link_staging_project(VALID_REF, VALID_PASS, VALID_TOKEN)
+
+    assert ok is True
+    assert output == "Linked project"
+    args = mock_cli.call_args.args[0]
+    assert args[:4] == ["npx", "--yes", "supabase@2.113.0", "link"]
+    assert "--project-ref" in args
+    assert "--password" in args
+
+
+def test_link_staging_project_fails_closed_on_cli_error() -> None:
+    with patch(
+        "scripts.staging_migration_gate.run_cli_command", return_value=(1, "connection failed")
+    ):
+        ok, output = link_staging_project(VALID_REF, VALID_PASS, VALID_TOKEN)
+    assert ok is False
+    assert "supabase link failed" in output
+
+
 def test_run_gate_drift_detected_without_apply_authorization_fails() -> None:
     """If unapplied migrations exist and apply_migrations=False, gate fails closed."""
     with (
@@ -259,6 +284,7 @@ def test_run_gate_drift_detected_without_apply_authorization_fails() -> None:
             "scripts.staging_migration_gate.check_migration_drift",
             return_value=(True, "drift", ["20260826000001"]),
         ),
+        patch("scripts.staging_migration_gate.link_staging_project", return_value=(True, "linked")),
         patch("scripts.staging_migration_gate.apply_staging_migrations") as mock_apply,
         patch("scripts.staging_migration_gate.check_supabase_advisors") as mock_advisors,
     ):
@@ -275,6 +301,7 @@ def test_run_gate_drift_detected_with_apply_authorization_apply_fails() -> None:
             "scripts.staging_migration_gate.check_migration_drift",
             return_value=(True, "drift", ["20260826000001"]),
         ),
+        patch("scripts.staging_migration_gate.link_staging_project", return_value=(True, "linked")),
         patch(
             "scripts.staging_migration_gate.apply_staging_migrations",
             return_value=(False, "Failed to apply migration"),
@@ -293,6 +320,7 @@ def test_run_gate_drift_detected_with_apply_authorization_success() -> None:
             "scripts.staging_migration_gate.check_migration_drift",
             return_value=(True, "drift", ["20260826000001"]),
         ),
+        patch("scripts.staging_migration_gate.link_staging_project", return_value=(True, "linked")),
         patch(
             "scripts.staging_migration_gate.apply_staging_migrations",
             return_value=(True, "All applied"),
@@ -369,6 +397,7 @@ def test_run_gate_fails_when_advisors_fail() -> None:
             "scripts.staging_migration_gate.check_migration_drift",
             return_value=(True, "in sync", []),
         ),
+        patch("scripts.staging_migration_gate.link_staging_project", return_value=(True, "linked")),
         patch(
             "scripts.staging_migration_gate.check_supabase_advisors",
             return_value=(False, "RLS violation"),
@@ -451,6 +480,7 @@ def test_run_gate_short_circuit_on_drift_check_failure() -> None:
             "scripts.staging_migration_gate.check_migration_drift",
             return_value=(False, "CLI crashed", []),
         ),
+        patch("scripts.staging_migration_gate.link_staging_project", return_value=(True, "linked")),
         patch("scripts.staging_migration_gate.check_supabase_advisors") as mock_advisors,
     ):
         code = run_gate(VALID_REF, VALID_PASS, VALID_TOKEN)
@@ -465,6 +495,7 @@ def test_run_gate_returns_zero_only_when_all_steps_succeed() -> None:
             "scripts.staging_migration_gate.check_migration_drift",
             return_value=(True, "in sync", []),
         ) as mock_drift,
+        patch("scripts.staging_migration_gate.link_staging_project", return_value=(True, "linked")),
         patch(
             "scripts.staging_migration_gate.check_supabase_advisors", return_value=(True, "clean")
         ) as mock_advisors,

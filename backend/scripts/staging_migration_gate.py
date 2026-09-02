@@ -194,6 +194,33 @@ def check_migration_drift(
     return True, output, unapplied
 
 
+def link_staging_project(
+    project_ref: str,
+    db_password: str,
+    access_token: str,
+) -> tuple[bool, str]:
+    """Establish the runner-local IPv4 database link for the validated staging project."""
+    secrets = [db_password, access_token]
+    code, output = run_cli_command(
+        [
+            "npx",
+            "--yes",
+            "supabase@2.113.0",
+            "link",
+            "--project-ref",
+            project_ref,
+            "--password",
+            db_password,
+        ],
+        env_vars={"SUPABASE_ACCESS_TOKEN": access_token},
+        secrets_to_redact=secrets,
+        timeout_seconds=120.0,
+    )
+    if code != 0:
+        return False, f"supabase link failed (exit {code}):\n{output}"
+    return True, output
+
+
 def check_supabase_advisors(
     project_ref: str,
     db_password: str,
@@ -317,7 +344,19 @@ def run_gate(
         print(f"[GATE][ERROR] Project ref validation failed: {err}")
         return 1
 
-    # 3. Migration Drift Inspection
+    # 3. Establish an IPv4-capable link only after target isolation is validated.
+    # GitHub-hosted runners do not support direct IPv6 connections to Supabase.
+    print("[GATE] Linking the validated staging project for IPv4 database access...")
+    linked, link_output = link_staging_project(
+        project_ref=valid_ref,
+        db_password=db_password,
+        access_token=access_token,
+    )
+    if not linked:
+        print(f"[GATE][ERROR] Staging project link failed:\n{link_output}")
+        return 1
+
+    # 4. Migration Drift Inspection
     print("[GATE] Checking remote migration list and drift status...")
     ok, list_output, unapplied = check_migration_drift(
         project_ref=valid_ref,
