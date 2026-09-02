@@ -23,8 +23,7 @@ DEFAULT_STAGING_HOST = "econexao-backend-staging-30dt.onrender.com"
 FORBIDDEN_HOST_PATTERNS = ("eco-nexao-v3.onrender.com", "econexao.app", "prod")
 
 DEFAULT_REQUIRED_ORIGINS = (
-    "https://eco-nexao-v3-git-staging-bruno-darwichs-projects.vercel.app",
-    "https://staging.econexao.app",
+    "https://econexao-app-staging.vercel.app",
 )
 FORBIDDEN_TEST_ORIGIN = "https://evil.com"
 

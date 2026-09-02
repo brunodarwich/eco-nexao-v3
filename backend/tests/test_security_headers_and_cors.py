@@ -56,7 +56,7 @@ ALLOWED_ORIGINS = [
     "https://econexao.app",
     "https://staging.econexao.app",
     "https://eco-nexao-v3.vercel.app",
-    "https://eco-nexao-v3-git-staging-bruno-darwichs-projects.vercel.app",
+    "https://econexao-app-staging.vercel.app",
 ]
 
 DENIED_ORIGINS = [
@@ -119,7 +119,7 @@ async def test_cors_preflight_and_get_denied_origins(client: AsyncClient, origin
 @pytest.mark.parametrize(
     "origin",
     [
-        "https://eco-nexao-v3-git-staging-bruno-darwichs-projects.vercel.app",
+        "https://econexao-app-staging.vercel.app",
         "https://staging.econexao.app",
         "http://localhost:8081",
     ],

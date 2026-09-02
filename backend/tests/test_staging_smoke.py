@@ -154,7 +154,7 @@ def test_validate_map_payload_detects_missing_pins_or_bounds() -> None:
 
 
 def test_check_cors_preflight_and_get_success() -> None:
-    origin = "https://eco-nexao-v3-git-staging-bruno-darwichs-projects.vercel.app"
+    origin = "https://econexao-app-staging.vercel.app"
 
     def mock_check_endpoint(
         url: str,
@@ -179,7 +179,7 @@ def test_check_cors_preflight_and_get_success() -> None:
 
 
 def test_check_cors_preflight_and_get_fails_on_missing_or_mismatched_origin() -> None:
-    origin = "https://eco-nexao-v3-git-staging-bruno-darwichs-projects.vercel.app"
+    origin = "https://econexao-app-staging.vercel.app"
 
     def mock_check_endpoint(
         url: str,
@@ -282,7 +282,7 @@ def test_check_cors_denied_origin_fails_on_unexpected_status_code() -> None:
 
 
 def test_check_cors_error_responses_success() -> None:
-    origin = "https://eco-nexao-v3-git-staging-bruno-darwichs-projects.vercel.app"
+    origin = "https://econexao-app-staging.vercel.app"
 
     def mock_check_endpoint(
         url: str,
@@ -315,7 +315,7 @@ def test_check_cors_error_responses_success() -> None:
 
 
 def test_check_cors_error_responses_fails_on_missing_cors_header() -> None:
-    origin = "https://eco-nexao-v3-git-staging-bruno-darwichs-projects.vercel.app"
+    origin = "https://econexao-app-staging.vercel.app"
 
     def mock_check_endpoint(
         url: str,

@@ -30,7 +30,7 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "exp://localhost:8081",
         "https://eco-nexao-v3.vercel.app",
-        "https://eco-nexao-v3-git-staging-bruno-darwichs-projects.vercel.app",
+        "https://econexao-app-staging.vercel.app",
         "https://econexao.app",
         "https://staging.econexao.app",
         "https://econexaoturismo.com",
