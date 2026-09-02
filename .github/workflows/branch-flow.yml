@@ -1,0 +1,32 @@
+name: Branch flow policy
+
+on:
+  pull_request:
+    branches:
+      - main
+      - staging
+
+permissions:
+  contents: read
+
+jobs:
+  policy:
+    name: Validate branch promotion flow
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce staging before main
+        env:
+          BASE_BRANCH: ${{ github.base_ref }}
+          HEAD_BRANCH: ${{ github.head_ref }}
+        run: |
+          if [[ "$BASE_BRANCH" == "main" && "$HEAD_BRANCH" != "staging" ]]; then
+            echo "::error::main only accepts promotion pull requests from staging."
+            exit 1
+          fi
+
+          if [[ "$BASE_BRANCH" == "staging" && "$HEAD_BRANCH" == "main" ]]; then
+            echo "::error::Reverse promotion from main to staging is not allowed."
+            exit 1
+          fi
+
+          echo "Branch flow accepted: $HEAD_BRANCH -> $BASE_BRANCH"
