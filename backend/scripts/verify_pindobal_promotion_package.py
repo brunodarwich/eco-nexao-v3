@@ -9,8 +9,14 @@ from pathlib import Path
 from scripts.build_pindobal_promotion_package import CHECKSUM_PATH, MANIFEST_PATH, ROOT
 
 
+def read_normalized(path: Path) -> tuple[int, str]:
+    content = path.read_bytes().replace(b"\r\n", b"\n")
+    return len(content), hashlib.sha256(content).hexdigest()
+
+
 def sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    content = path.read_bytes().replace(b"\r\n", b"\n")
+    return hashlib.sha256(content).hexdigest()
 
 
 def main() -> int:
@@ -21,18 +27,21 @@ def main() -> int:
         return 1
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     files = manifest["migrations"] + manifest["implementation"] + manifest["support_files"]
-    invalid = [
-        item["path"]
-        for item in files
-        if not (ROOT / item["path"]).is_file()
-        or sha256(ROOT / item["path"]) != item["sha256"]
-        or (ROOT / item["path"]).stat().st_size != item["bytes"]
-    ]
+    invalid = []
+    for item in files:
+        file_path = ROOT / item["path"]
+        if not file_path.is_file():
+            invalid.append(item["path"])
+            continue
+        size, digest = read_normalized(file_path)
+        if digest != item["sha256"] or size != item["bytes"]:
+            invalid.append(item["path"])
+
     snapshot = manifest["source_snapshot"]
     state = manifest["verified_test_state"]
     semantic_ok = (
         len(snapshot) == 9
-        and len(manifest["migrations"]) == 23
+        and len(manifest["migrations"]) == 25
         and state["second_load_created"] == 0
         and state["second_load_updated"] == 0
         and state["route_actors"] == 313
@@ -49,7 +58,7 @@ def main() -> int:
         return 1
     print("PINDOBAL_PACKAGE_VERIFY=OK")
     print(f"- package checksum: {expected}")
-    print("- snapshot files: 9; migrations: 23; route actors: 313")
+    print("- snapshot files: 9; migrations: 25; route actors: 313")
     print("- promotion remains blocked pending editorial acceptance")
     return 0
 
