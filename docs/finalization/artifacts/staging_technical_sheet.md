@@ -21,8 +21,8 @@
 | **Supabase Storage URL**| `https://rgfuqmwxjuceqpxcraxm.supabase.co/storage/v1` | Endpoint de mídia e avatares |
 | **Database Hostname** | `db.rgfuqmwxjuceqpxcraxm.supabase.co` | PostgreSQL 17 com PostGIS |
 | **Connection Pooler** | `aws-0-sa-east-1.pooler.supabase.com` | Porta `6543` (Transaction) / `5432` (Session) |
-| **Provedor Backend API**| Render Web Service (Nativo Python 3.13) | `https://econexao-backend-staging.onrender.com` |
-| **Frontend Web Host** | Cloudflare Pages / Vercel Staging (`https://eco-nexao-v3-git-staging-bruno-darwichs-projects.vercel.app`) | Origens permitidas estritas em CORS |
+| **Provedor Backend API**| Render Web Service (Nativo Python 3.13) | `https://econexao-backend-staging-30dt.onrender.com` |
+| **Frontend Web Host** | Vercel Staging (`https://econexao-app-staging.vercel.app`) | Origem oficial permitida em CORS |
 
 > [!IMPORTANT]
 > **Isolamento de Ambientes:**
@@ -45,7 +45,7 @@
 # Configurações públicas do Expo (seguras para bundle cliente)
 EXPO_PUBLIC_SUPABASE_URL=https://rgfuqmwxjuceqpxcraxm.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=<SUA_ANON_PUBLISHABLE_KEY_AQUI>
-EXPO_PUBLIC_API_URL=https://econexao-backend-staging.onrender.com/api/v1
+EXPO_PUBLIC_API_URL=https://econexao-backend-staging-30dt.onrender.com/api/v1
 EXPO_PUBLIC_APP_ENV=staging
 ```
 
@@ -57,7 +57,7 @@ SUPABASE_PUBLISHABLE_KEY=<SUA_ANON_PUBLISHABLE_KEY_AQUI>
 # AVISO: A chave secret_key DEVE ser mantida apenas no .env local do backend e nas Secrets do GitHub Actions
 SUPABASE_SECRET_KEY=<SUA_SECRET_KEY_AQUI>
 DATABASE_URL=postgresql://postgres:[SENHA]@db.rgfuqmwxjuceqpxcraxm.supabase.co:5432/postgres
-CORS_ORIGINS=["https://econexao.app","https://staging.econexao.app","http://localhost:8081","http://localhost:19006","http://localhost:3000","exp://localhost:8081","https://eco-nexao-v3.vercel.app","https://eco-nexao-v3-git-staging-bruno-darwichs-projects.vercel.app"]
+CORS_ORIGINS=["https://econexao.app","https://staging.econexao.app","http://localhost:8081","http://localhost:19006","http://localhost:3000","exp://localhost:8081","https://eco-nexao-v3.vercel.app","https://econexao-app-staging.vercel.app"]
 ```
 
 > [!TIP]
@@ -171,7 +171,7 @@ Todas as 23 migrations oficiais estão registradas, ordenadas por timestamp e ap
 - **CORS em Respostas de Erro:** **VERIFICADO** para 401 Unauthorized, 404 Not Found, 422 Unprocessable Entity e 500 Internal Server Error.
 - **Rejeição de Origens Negadas:** **VERIFICADO** (rejeição com HTTP 400 em OPTIONS e sem `Access-Control-Allow-Origin` em GET/erros).
 - **Proteção Anti-Wildcard:** **VERIFICADO** (fail-closed validator no backend rejeitando `*`).
-- **Smoke Remoto Staging (`staging_smoke.py`):** **VERIFICADO E HOMOLOGADO** (100% de sucesso contra `https://econexao-backend-staging.onrender.com`).
+- **Smoke Remoto Staging (`staging_smoke.py`):** liveness, readiness, banco/PostGIS e CORS positivo/negativo verificados contra `https://econexao-backend-staging-30dt.onrender.com`, no commit `7771c49`. A verificação de catálogo permanece pendente porque o staging ainda não contém regiões.
 
 ### 4.1 Evidências Reais Capturadas no Navegador (Staging Web)
 - **Home Screen:** [`docs/finalization/evidence/ECO-2003/01_home_screen.png`](file:///c:/Users/Bruno/Downloads/eco-nexao-v3/docs/finalization/evidence/ECO-2003/01_home_screen.png)
@@ -192,7 +192,7 @@ Para a automação segura de deploy e verificação no GitHub Actions, as seguin
 ### 5.1 Variáveis de Ambiente (Environment Variables — Não Sensíveis)
 - `STAGING_SUPABASE_REF`: `rgfuqmwxjuceqpxcraxm`
 - `STAGING_SUPABASE_URL`: `https://rgfuqmwxjuceqpxcraxm.supabase.co`
-- `STAGING_BACKEND_URL`: `https://econexao-backend-staging.onrender.com`
+- `STAGING_BACKEND_URL`: `https://econexao-backend-staging-30dt.onrender.com`
 - `EXPO_PUBLIC_APP_ENV`: `staging`
 
 ### 5.2 Segredos (Secrets — Estritamente Sigilosos)
@@ -209,7 +209,8 @@ Para a automação segura de deploy e verificação no GitHub Actions, as seguin
 ## 6. Pendências, Riscos Residuais e Próximos Passos
 
 1. **Ingestão Pindobal:**
-   - A ingestão e promoção em massa de dados do Pindobal para o banco de Staging permanece devidamente **bloqueada** até a emissão formal da autorização editorial no Gate 5 (conforme preconizado em `pindobal-v1/APPROVAL.md`).
+   - O dry-run aprovado leu 1.714 registros, identificou 1.661 potenciais e 53 candidatos, sem rejeições.
+   - A promoção para Staging permanece bloqueada até o fluxo formal ECO-1505/ECO-2202; `seed_pindobal --apply` aceita somente `backend/.env.test` e não deve ser contornado para alcançar staging.
 2. **Homologação E2E em Staging:**
    - Script `staging_smoke.py` totalmente integrado à esteira de CI (`staging-deploy.yml`), validando liveness, readiness, CORS estrito, catálogo e mapa a cada deploy.
 3. **Produção Bloqueada:**
