@@ -122,7 +122,9 @@ fixtures; reabrir task dona.
 **Estado em 2026-08-12: `MISSING`.** Não há Dockerfile, `eas.json`, pipeline de release,
 deploy/domain staging ou observabilidade integrados comprovados.
 
-**Pré-condições:** Gate 3; ECO-2001–2004; provedor, domínio e orçamento decididos.
+**Pré-condições:** Gate 3; ECO-2001–2005; provedor, domínio e orçamento decididos.
+
+**Nota normativa ECO-2005 (Fase 1 — 02/09/2026):** O runner de promoção Pindobal para staging foi implementado e testado localmente com status `APPROVED FOR LOCAL IMPLEMENTATION ONLY`. O Gate 4 **não deve ser declarado concluído apenas pela carga de dados**. Staging é exclusivamente o ref `kchzucvrnzwzehfdwzwi`. Production permanece terminantemente fora de escopo (reservada para a ECO-2202 no Marco 22). As 25 migrations oficiais já estão alinhadas no schema e requerem apenas verificação de drift/advisors. A promoção remota em staging (Fase 2) requer autorização formal e novo GO explícito do Human Owner.
 
 - [ ] Imagem imutável non-root, startup/readiness/shutdown e SBOM/scans passam.
 - [ ] CI gera artefato; migration gate, approvals, smoke e rollback bloqueiam falha.

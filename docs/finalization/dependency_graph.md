@@ -16,7 +16,7 @@ flowchart TD
   M --> P
   I --> F["ECO-1901–1905 App público"]
   M --> F
-  S --> T["ECO-2001–2004 Staging e operação"]
+  S --> T["ECO-2001–2005 Staging e operação"]
   A --> T
   P --> H["ECO-2101–2104 Homologação"]
   F --> H
@@ -65,6 +65,7 @@ flowchart TD
 | ECO-2002 | Codex | ECO-2003 | workflows/migration scripts | obrigatória |
 | ECO-2003 | Codex | ECO-2002, 2004 | hosting config/CORS/domains | sim |
 | ECO-2004 | Codex | ECO-2003 | observability/runbooks/workflows | obrigatória |
+| ECO-2005 | Google Antigravity | ECO-2004 | escritas concorrentes no banco de staging | obrigatória |
 | ECO-2101 | Google Antigravity | ECO-2102, 2103 em runners separados | E2E fixtures/shared reports | sim |
 | ECO-2102 | Google Antigravity | ECO-2101, 2103 | Android build/E2E config | sim |
 | ECO-2103 | humano/owner + Antigravity | ECO-2101, 2102 | iOS signing/build config | sim |
