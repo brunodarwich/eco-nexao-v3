@@ -271,7 +271,8 @@ def test_verify_migrations_alignment():
     """Migrations directory with 25 migrations is aligned."""
     migrations_dir = Path(__file__).resolve().parents[2] / "supabase" / "migrations"
     info = verify_migrations_alignment(migrations_dir)
-    assert info["status"] == "aligned"
+    assert info["status"] == "aligned_locally"
+    assert info["scope"] == "local_directory_only"
     assert info["count"] == 25
 
 
@@ -313,6 +314,8 @@ def test_execute_phase1_preflight_end_to_end():
     assert report["remote_write_performed"] is False
     assert report["phase"] == 1
     assert report["target_project_ref"] == CANONICAL_STAGING_PROJECT_REF
+    assert report["migrations"]["status"] == "aligned_locally"
+    assert report["canonical_counts"]["reconciliation"]["matches_count"] == 53
     assert report["governance"]["phase2_remote_write"] == "BLOCKED_PENDING_EXPLICIT_OWNER_GO"
     assert report["governance"]["schema_rollback"] == "PITR_snapshot_only"
     assert report["governance"]["data_rollback"] == "logical_unpublish_draft_only"

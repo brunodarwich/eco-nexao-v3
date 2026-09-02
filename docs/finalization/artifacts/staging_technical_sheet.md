@@ -21,8 +21,8 @@
 | **Supabase Storage URL**| `https://kchzucvrnzwzehfdwzwi.supabase.co/storage/v1` | Endpoint de mídia e avatares |
 | **Database Hostname** | `db.kchzucvrnzwzehfdwzwi.supabase.co` | PostgreSQL 17 com PostGIS |
 | **Connection Pooler** | `aws-0-sa-east-1.pooler.supabase.com` | Porta `6543` (Transaction) / `5432` (Session) |
-| **Provedor Backend API**| Render Web Service (Nativo Python 3.13) | `https://econexao-backend-staging.onrender.com` |
-| **Frontend Web Host** | Vercel Staging (`https://eco-nexao-v3.vercel.app`) | Origens permitidas estritas em CORS |
+| **Provedor Backend API**| Render Web Service (Nativo Python 3.13) | `https://econexao-backend-staging-30dt.onrender.com` |
+| **Frontend Web Host** | Vercel Staging (`https://econexao-app-staging.vercel.app`) | Origem oficial permitida em CORS |
 
 > [!IMPORTANT]
 > **Isolamento de Ambientes:**
@@ -45,7 +45,7 @@
 # Configurações públicas do Expo (seguras para bundle cliente)
 EXPO_PUBLIC_SUPABASE_URL=https://kchzucvrnzwzehfdwzwi.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=<SUA_ANON_PUBLISHABLE_KEY_AQUI>
-EXPO_PUBLIC_API_URL=https://econexao-backend-staging.onrender.com/api/v1
+EXPO_PUBLIC_API_URL=https://econexao-backend-staging-30dt.onrender.com/api/v1
 EXPO_PUBLIC_APP_ENV=staging
 ```
 
@@ -57,7 +57,7 @@ SUPABASE_PUBLISHABLE_KEY=<SUA_ANON_PUBLISHABLE_KEY_AQUI>
 # AVISO: A chave secret_key DEVE ser mantida apenas no .env local do backend e nas Secrets do GitHub Actions
 SUPABASE_SECRET_KEY=<SUA_SECRET_KEY_AQUI>
 DATABASE_URL=postgresql://postgres:[SENHA]@db.kchzucvrnzwzehfdwzwi.supabase.co:5432/postgres
-CORS_ORIGINS=["https://econexao.app","https://staging.econexao.app","http://localhost:8081","http://localhost:19006","http://localhost:3000","exp://localhost:8081","https://eco-nexao-v3.vercel.app"]
+CORS_ORIGINS=["https://econexao.app","https://staging.econexao.app","http://localhost:8081","http://localhost:19006","http://localhost:3000","exp://localhost:8081","https://econexao-app-staging.vercel.app"]
 ```
 
 > [!TIP]
@@ -173,7 +173,7 @@ Todas as 25 migrations oficiais estão registradas, ordenadas por timestamp e ap
 - **CORS em Respostas de Erro:** **VERIFICADO** para 401 Unauthorized, 404 Not Found, 422 Unprocessable Entity e 500 Internal Server Error.
 - **Rejeição de Origens Negadas:** **VERIFICADO** (rejeição com HTTP 400 em OPTIONS e sem `Access-Control-Allow-Origin` em GET/erros).
 - **Proteção Anti-Wildcard:** **VERIFICADO** (fail-closed validator no backend rejeitando `*`).
-- **Smoke Remoto Staging (`staging_smoke.py`):** **VERIFICADO E HOMOLOGADO** (100% de sucesso contra `https://econexao-backend-staging.onrender.com`).
+- **Smoke Remoto Staging (`staging_smoke.py`):** **VERIFICADO E HOMOLOGADO** (100% de sucesso contra `https://econexao-backend-staging-30dt.onrender.com`).
 
 ### 4.1 Evidências Reais Capturadas no Navegador (Staging Web)
 - **Home Screen:** [`docs/finalization/evidence/ECO-2003/01_home_screen.png`](file:///c:/Users/Bruno/Downloads/eco-nexao-v3/docs/finalization/evidence/ECO-2003/01_home_screen.png)
@@ -194,7 +194,7 @@ Para a automação segura de deploy e verificação no GitHub Actions, as seguin
 ### 5.1 Variáveis de Ambiente (Environment Variables — Não Sensíveis)
 - `STAGING_SUPABASE_REF`: `kchzucvrnzwzehfdwzwi`
 - `STAGING_SUPABASE_URL`: `https://kchzucvrnzwzehfdwzwi.supabase.co`
-- `STAGING_BACKEND_URL`: `https://econexao-backend-staging.onrender.com`
+- `STAGING_BACKEND_URL`: `https://econexao-backend-staging-30dt.onrender.com`
 - `EXPO_PUBLIC_APP_ENV`: `staging`
 
 ### 5.2 Segredos (Secrets — Estritamente Sigilosos)
@@ -212,7 +212,8 @@ Para a automação segura de deploy e verificação no GitHub Actions, as seguin
 
 1. **Ingestão Pindobal (ECO-2005):**
    - O runner local seguro de promoção (`backend/app/ingestion/staging_promotion_runner.py`) foi homologado na Fase 1 com status `APPROVED FOR LOCAL IMPLEMENTATION ONLY`.
-   - O preflight offline validou o manifesto de 9 arquivos e as contagens canônicas (1.714 lidos, 1.661 criáveis, 53 fuzzy, 0 inventados, 737 registros Google legados sem Place ID mantidos como raw).
+   - O preflight offline validou o manifesto de 9 arquivos, alinhamento local das 25 migrations e as contagens canônicas do dry-run: 1.714 lidos, 1.661 criáveis, 53 candidatos, 0 rejeições, 0 Place IDs inventados e 737 registros Google legados sem Place ID mantidos como raw. As métricas do reconciliador foram registradas separadamente (89 matches, sendo 57 candidatos fuzzy pelo classificador de similaridade).
+   - O runner da Fase 1 confere o alinhamento das 25 migrations estritamente de forma local. A checagem remota de migration list, ausência de drift e Supabase advisors contra o projeto de staging (`kchzucvrnzwzehfdwzwi`) é parte exclusiva do preflight read-only da Fase 2.
    - O target é exclusivamente `kchzucvrnzwzehfdwzwi`. A execução de escrita remota em staging (Fase 2) permanece **bloqueada** até novo GO formal e explícito do Human Owner.
 2. **Homologação E2E em Staging:**
    - Script `staging_smoke.py` totalmente integrado à esteira de CI (`staging-deploy.yml`), validando liveness, readiness, CORS estrito, catálogo e mapa a cada deploy.

@@ -56,14 +56,16 @@ O runner confere os checksums SHA-256 de todos os 9 arquivos normativos do pacot
 O dry-run local com o dataset `teste-rota` deve reproduzir exatamente os números homologados:
 - **Lidos:** 1.714 registros
 - **Potenciais/Criáveis:** 1.661 registros
-- **Candidatos fuzzy:** 53 registros (bloqueados para persistência sem curadoria)
+- **Candidatos (dry-run):** 53 registros (bloqueados para persistência sem curadoria)
 - **Rejeitados:** 0 registros
 - **Place IDs inventados:** 0 (todos os 737 registros Google legados sem Place ID são preservados como raw sem inventar ID sintético)
+- **Métricas do Reconciliador (registradas separadamente):** 89 matches, sendo 57 candidatos classificados como fuzzy pelo classificador de similaridade.
 
-### 3.3. Verificação de Alinhamento das 25 Migrations SQL
+### 3.3. Verificação de Alinhamento das 25 Migrations SQL (Local)
 O schema oficial conta com exatamente 25 migrations em `supabase/migrations/`:
 - De `20260811000000_init_postgis_and_base_schemas.sql` a `20260827221358_eco_2510_remove_legacy_google_photo_persistence.sql`.
-- O runner verifica a ausência de novas migrations locais não versionadas e confere que nenhuma migration de schema é criada durante a carga de dados.
+- **Escopo Fase 1:** O runner verifica estritamente de forma local a existência e a contagem exata das 25 migrations no repositório.
+- **Diferimento Fase 2:** A verificação remota de migration list, ausência de drift de schema e execução de Supabase advisors contra o projeto de staging (`kchzucvrnzwzehfdwzwi`) é parte integrante do preflight read-only da Fase 2, antes de qualquer escrita remota.
 
 ---
 
@@ -147,11 +149,19 @@ python backend/scripts/scan_secrets.py
       "reconciled": true
     },
     "google_records_without_place_id": 737,
-    "invented_place_ids": 0
+    "invented_place_ids": 0,
+    "reconciliation": {
+      "matches_count": 89,
+      "fuzzy_candidate_count": 57
+    }
   },
   "migrations": {
-    "status": "aligned",
-    "count": 25
+    "status": "aligned_locally",
+    "scope": "local_directory_only",
+    "count": 25,
+    "first_migration": "20260811000000_init_postgis_and_base_schemas.sql",
+    "latest_migration": "20260827221358_eco_2510_remove_legacy_google_photo_persistence.sql",
+    "remote_drift_and_advisors_check": "deferred_to_phase2_preflight"
   },
   "governance": {
     "advisory_lock_id": 3779311896921572133,

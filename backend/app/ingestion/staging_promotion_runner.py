@@ -232,10 +232,12 @@ def verify_canonical_counts(snapshot_dir: Path) -> dict[str, Any]:
         "counts": counts,
         "google_records_without_place_id": missing_place_ids,
         "invented_place_ids": 0,
-        "matches_count": dry_run_report.get("reconciliation", {}).get("matches_count", 0),
-        "fuzzy_candidates": dry_run_report.get("reconciliation", {}).get(
-            "fuzzy_candidate_count", 0
-        ),
+        "reconciliation": {
+            "matches_count": dry_run_report.get("reconciliation", {}).get("matches_count", 0),
+            "fuzzy_candidate_count": dry_run_report.get("reconciliation", {}).get(
+                "fuzzy_candidate_count", 0
+            ),
+        },
     }
 
 
@@ -252,10 +254,12 @@ def verify_migrations_alignment(migrations_dir: Path) -> dict[str, Any]:
             f"encontrado {len(sql_files)}."
         )
     return {
-        "status": "aligned",
+        "status": "aligned_locally",
+        "scope": "local_directory_only",
         "count": len(sql_files),
         "first_migration": sql_files[0].name,
         "latest_migration": sql_files[-1].name,
+        "remote_drift_and_advisors_check": "deferred_to_phase2_preflight",
     }
 
 
