@@ -37,6 +37,7 @@ KNOWN_OBVIOUS_NON_STAGING_REFS: frozenset[str] = frozenset(
 PROJECT_REF_PATTERN = re.compile(r"^[a-z0-9]{20}$")
 DIRECT_HOST_PATTERN = re.compile(r"^db\.([a-z0-9]{20})\.supabase\.co$")
 POOLER_USER_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+\.([a-z0-9]{20})$")
+POOLER_HOST_PATTERN = re.compile(r"^[a-z0-9-]+(?:\.[a-z0-9-]+)*\.pooler\.supabase\.com$")
 
 # Deterministic 64-bit advisory lock ID derived from namespace string
 PINDOBAL_STAGING_ADVISORY_LOCK_ID: int = int.from_bytes(
@@ -140,7 +141,7 @@ def extract_ref_from_database_url(url: str) -> str:
     }:
         raise TargetValidationError(f"Driver de banco não suportado: '{db_url.drivername}'.")
 
-    host = db_url.host or ""
+    host = (db_url.host or "").lower()
     username = db_url.username or ""
 
     # Direct connection: db.<ref>.supabase.co
@@ -150,7 +151,11 @@ def extract_ref_from_database_url(url: str) -> str:
 
     # Pooler connection: user.<ref>@aws-0-sa-east-1.pooler.supabase.com
     pooler_match = POOLER_USER_PATTERN.fullmatch(username)
-    if pooler_match and "pooler.supabase.com" in host:
+    if (
+        pooler_match
+        and host.endswith(".pooler.supabase.com")
+        and POOLER_HOST_PATTERN.fullmatch(host)
+    ):
         return validate_target_project_ref(pooler_match.group(1))
 
     raise TargetValidationError(

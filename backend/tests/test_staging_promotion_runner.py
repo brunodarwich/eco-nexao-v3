@@ -102,6 +102,9 @@ def test_extract_ref_from_database_url_pooler_host():
         "postgresql://postgres:pass@localhost:5432/postgres",
         "mysql://root:pass@db.kchzucvrnzwzehfdwzwi.supabase.co:3306/db",
         "invalid_dsn",
+        f"postgresql+psycopg://postgres.{CANONICAL_STAGING_PROJECT_REF}:pass@pooler.supabase.com.exemplo-invalido:6543/postgres",
+        f"postgresql+psycopg://postgres.{CANONICAL_STAGING_PROJECT_REF}:pass@evil-pooler.supabase.com.attacker.org:6543/postgres",
+        f"postgresql+psycopg://postgres.{CANONICAL_STAGING_PROJECT_REF}:pass@pooler.supabase.com:6543/postgres",
     ],
 )
 def test_extract_ref_from_database_url_failures(bad_dsn: str):
