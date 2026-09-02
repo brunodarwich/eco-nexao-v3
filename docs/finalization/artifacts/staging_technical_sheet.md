@@ -26,7 +26,7 @@
 
 > [!IMPORTANT]
 > **Isolamento de Ambientes:**
-> O ambiente de **Production** (`hjtkcmbfndbgyurfhsuo`) é estritamente separado e seu acesso é proibido durante os ciclos de staging e desenvolvimento. O ambiente local de desenvolvimento utiliza a Supabase CLI local e pytest fixtures isoladas.
+> O ambiente de **Produção** é estritamente separado e seu acesso é proibido durante os ciclos de staging e desenvolvimento. O ambiente local de desenvolvimento utiliza a Supabase CLI local e pytest fixtures isoladas.
 
 ---
 
@@ -111,9 +111,9 @@ Conforme as migrations `20260812120000_storage_buckets_and_policies.sql` e `2026
 
 ---
 
-## 4. Status das Migrations do Banco de Dados (25 Migrations Sincronizadas)
+## 4. Status das Migrations do Banco de Dados (25 Migrations Oficiais no Repositório Local)
 
-Todas as 25 migrations oficiais estão registradas, ordenadas por timestamp e aplicadas no banco de Staging:
+Todas as 25 migrations oficiais estão registradas no repositório, ordenadas por timestamp e validadas deterministicamente no âmbito local contra o manifesto de baseline (origin/staging). A verificação remota ao vivo (migration list, ausência de drift e Supabase advisors) no banco de staging permanece formalmente diferida para o preflight read-only da Fase 2:
 
 | # | Versão / Timestamp | Arquivo de Migration | Descrição / Escopo |
 | :-: | :--- | :--- | :--- |
@@ -218,4 +218,4 @@ Para a automação segura de deploy e verificação no GitHub Actions, as seguin
 2. **Homologação E2E em Staging:**
    - Script `staging_smoke.py` totalmente integrado à esteira de CI (`staging-deploy.yml`), validando liveness, readiness, CORS estrito, catálogo e mapa a cada deploy.
 3. **Produção Bloqueada:**
-   - O projeto de produção (`hjtkcmbfndbgyurfhsuo`) permanece intocado e fora de escopo (reservado exclusivamente para a ECO-2202 no Marco 22).
+   - Qualquer ambiente diferente da allowlist unária de staging (`kchzucvrnzwzehfdwzwi`) permanece intocado e fora de escopo; produção é governada exclusivamente pela ECO-2202 no Marco 22 sob o Gate 7.

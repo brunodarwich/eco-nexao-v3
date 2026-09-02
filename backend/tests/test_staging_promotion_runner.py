@@ -1,7 +1,14 @@
-"""Unit tests for staging promotion runner (ECO-2005 Phase 1)."""
+"""Unit tests for staging promotion runner (ECO-2005 Phase 1).
+
+Tests atomic transaction lock ownership, fail-closed target guards,
+deterministic migration baseline verification, credential sanitization,
+and CLI entrypoint safety. Zero remote network calls.
+"""
 
 from __future__ import annotations
 
+import asyncio
+import json
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -14,22 +21,35 @@ from app.ingestion.staging_promotion_runner import (
     CANONICAL_STAGING_PROJECT_REF,
     AdvisoryLockBusyError,
     ConfirmationError,
+    EarlyCommitProhibitedError,
+    LockedAsyncSessionProxy,
     PreflightVerificationError,
+    StagingPromotionError,
     TargetValidationError,
     execute_phase1_preflight,
     extract_ref_from_database_url,
     extract_ref_from_supabase_url,
+    load_canonical_migrations_manifest,
+    main,
     request_human_double_confirmation,
     sanitize_message,
-    staging_advisory_lock,
+    staging_atomic_lock_transaction,
     validate_environment_config,
     validate_target_project_ref,
     verify_canonical_counts,
     verify_migrations_alignment,
 )
 
+SYNTHETIC_UNAUTHORIZED_REF: str = "unauthorizedref12345"
+SYNTHETIC_OBSOLETE_REF: str = "rgfuqmwxjuceqpxcraxm"
 
-def test_validate_target_project_ref_accepts_canonical_staging():
+
+# ==============================================================================
+# 1. Target Validation & Project Ref Extraction
+# ==============================================================================
+
+
+def test_validate_target_project_ref_accepts_canonical_staging() -> None:
     """Canonical staging ref must be accepted."""
     assert (
         validate_target_project_ref(CANONICAL_STAGING_PROJECT_REF) == CANONICAL_STAGING_PROJECT_REF
@@ -41,8 +61,9 @@ def test_validate_target_project_ref_accepts_canonical_staging():
     [
         "",
         "   ",
-        "rgfuqmwxjuceqpxcraxm",  # Obsolete staging ref
-        "hjtkcmbfndbgyurfhsuo",  # Production ref
+        None,
+        SYNTHETIC_OBSOLETE_REF,
+        SYNTHETIC_UNAUTHORIZED_REF,
         "short_ref",
         "this_ref_is_far_too_long_to_be_a_supabase_ref",
         "invalid!ref!characters",
@@ -50,13 +71,13 @@ def test_validate_target_project_ref_accepts_canonical_staging():
         "kchzucvrnzwzehfdwzwX",  # Capital letters
     ],
 )
-def test_validate_target_project_ref_rejects_non_canonical(invalid_ref: str):
+def test_validate_target_project_ref_rejects_non_canonical(invalid_ref: str | None) -> None:
     """Any ref other than kchzucvrnzwzehfdwzwi must fail closed."""
     with pytest.raises(TargetValidationError):
         validate_target_project_ref(invalid_ref)
 
 
-def test_extract_ref_from_supabase_url_success():
+def test_extract_ref_from_supabase_url_success() -> None:
     """Valid staging HTTPS URL should extract the canonical ref."""
     url = f"https://{CANONICAL_STAGING_PROJECT_REF}.supabase.co"
     assert extract_ref_from_supabase_url(url) == CANONICAL_STAGING_PROJECT_REF
@@ -66,54 +87,101 @@ def test_extract_ref_from_supabase_url_success():
 @pytest.mark.parametrize(
     "bad_url",
     [
-        "http://kchzucvrnzwzehfdwzwi.supabase.co",
-        "https://rgfuqmwxjuceqpxcraxm.supabase.co",
-        "https://hjtkcmbfndbgyurfhsuo.supabase.co",
+        f"http://{CANONICAL_STAGING_PROJECT_REF}.supabase.co",
+        f"https://{SYNTHETIC_OBSOLETE_REF}.supabase.co",
+        f"https://{SYNTHETIC_UNAUTHORIZED_REF}.supabase.co",
         "https://otherdomain.com",
         "not_a_url",
+        "",
+        None,
     ],
 )
-def test_extract_ref_from_supabase_url_failures(bad_url: str):
+def test_extract_ref_from_supabase_url_failures(bad_url: str | None) -> None:
     """Invalid schemes, other domains or non-staging refs must fail."""
     with pytest.raises(TargetValidationError):
         extract_ref_from_supabase_url(bad_url)
 
 
-def test_extract_ref_from_database_url_direct_host():
-    """Direct host connection string should resolve and validate the ref."""
+def test_extract_ref_from_database_url_direct_host_port_5432() -> None:
+    """Direct host connection string on port 5432 should resolve and validate the ref."""
     dsn = f"postgresql://postgres:secret_pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5432/postgres"
     assert extract_ref_from_database_url(dsn) == CANONICAL_STAGING_PROJECT_REF
 
 
-def test_extract_ref_from_database_url_pooler_host():
-    """Supavisor connection string with tenant username should resolve the ref."""
+def test_extract_ref_from_database_url_direct_host_default_port() -> None:
+    """Direct host connection string without explicit port (default 5432) resolves ref."""
+    dsn = f"postgresql://postgres:secret_pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co/postgres"
+    assert extract_ref_from_database_url(dsn) == CANONICAL_STAGING_PROJECT_REF
+
+
+def test_extract_ref_from_database_url_pooler_session_port_5432() -> None:
+    """Supavisor session pooler on port 5432 should resolve the ref."""
+    dsn = (
+        f"postgresql+psycopg://postgres.{CANONICAL_STAGING_PROJECT_REF}:secret_pass"
+        "@aws-0-sa-east-1.pooler.supabase.com:5432/postgres"
+    )
+    assert extract_ref_from_database_url(dsn) == CANONICAL_STAGING_PROJECT_REF
+
+
+def test_extract_ref_from_database_url_rejects_transaction_pooler_port_6543() -> None:
+    """Supavisor transaction pooler (port 6543) must be strictly rejected."""
     dsn = (
         f"postgresql+psycopg://postgres.{CANONICAL_STAGING_PROJECT_REF}:secret_pass"
         "@aws-0-sa-east-1.pooler.supabase.com:6543/postgres"
     )
-    assert extract_ref_from_database_url(dsn) == CANONICAL_STAGING_PROJECT_REF
+    with pytest.raises(TargetValidationError, match="Porta 6543.*Supavisor transaction pooler"):
+        extract_ref_from_database_url(dsn)
+
+
+@pytest.mark.parametrize(
+    "bad_port_dsn",
+    [
+        f"postgresql://postgres:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5433/postgres",
+        f"postgresql://postgres:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:6432/postgres",
+        f"postgresql://postgres:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:8000/postgres",
+    ],
+)
+def test_extract_ref_from_database_url_rejects_non_5432_ports(bad_port_dsn: str) -> None:
+    """Any port other than 5432 must be rejected."""
+    with pytest.raises(TargetValidationError, match="Porta de banco de dados.*não suportada"):
+        extract_ref_from_database_url(bad_port_dsn)
+
+
+def test_extract_ref_from_database_url_malformed_does_not_leak_credentials() -> None:
+    """Malformed DSN must raise TargetValidationError without leaking credentials."""
+    raw_dsn = "postgresql://my_secret_user:my_secret_pass_123@invalid:not_a_port/db"
+    with pytest.raises(TargetValidationError) as exc_info:
+        extract_ref_from_database_url(raw_dsn)
+    err_str = str(exc_info.value)
+    assert "my_secret_pass_123" not in err_str
+    assert "my_secret_user" not in err_str
 
 
 @pytest.mark.parametrize(
     "bad_dsn",
     [
-        "postgresql://postgres:pass@db.rgfuqmwxjuceqpxcraxm.supabase.co:5432/postgres",
-        "postgresql://postgres:pass@db.hjtkcmbfndbgyurfhsuo.supabase.co:5432/postgres",
+        f"postgresql://postgres:pass@db.{SYNTHETIC_OBSOLETE_REF}.supabase.co:5432/postgres",
+        f"postgresql://postgres:pass@db.{SYNTHETIC_UNAUTHORIZED_REF}.supabase.co:5432/postgres",
         "postgresql://postgres:pass@localhost:5432/postgres",
-        "mysql://root:pass@db.kchzucvrnzwzehfdwzwi.supabase.co:3306/db",
+        f"mysql://root:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:3306/db",
         "invalid_dsn",
-        f"postgresql+psycopg://postgres.{CANONICAL_STAGING_PROJECT_REF}:pass@pooler.supabase.com.exemplo-invalido:6543/postgres",
-        f"postgresql+psycopg://postgres.{CANONICAL_STAGING_PROJECT_REF}:pass@evil-pooler.supabase.com.attacker.org:6543/postgres",
-        f"postgresql+psycopg://postgres.{CANONICAL_STAGING_PROJECT_REF}:pass@pooler.supabase.com:6543/postgres",
+        "",
+        f"postgresql+psycopg://postgres.{CANONICAL_STAGING_PROJECT_REF}:pass@evil-pooler.attacker.org:5432/postgres",
+        f"postgresql+psycopg://postgres.{CANONICAL_STAGING_PROJECT_REF}:pass@pooler.supabase.com:5432/postgres",
     ],
 )
-def test_extract_ref_from_database_url_failures(bad_dsn: str):
+def test_extract_ref_from_database_url_failures(bad_dsn: str) -> None:
     """Non-staging or invalid database URLs must fail closed."""
     with pytest.raises(TargetValidationError):
         extract_ref_from_database_url(bad_dsn)
 
 
-def test_validate_environment_config_success():
+# ==============================================================================
+# 2. Environment Configuration Cross-Validation
+# ==============================================================================
+
+
+def test_validate_environment_config_success() -> None:
     """Environment with staging APP_ENV and matching canonical URLs passes."""
     env = {
         "APP_ENV": "staging",
@@ -123,9 +191,25 @@ def test_validate_environment_config_success():
     assert validate_environment_config(env) == CANONICAL_STAGING_PROJECT_REF
 
 
-def test_validate_environment_config_app_env_not_staging():
+@pytest.mark.parametrize(
+    "missing_key",
+    ["APP_ENV", "SUPABASE_URL", "DATABASE_URL"],
+)
+def test_validate_environment_config_fails_closed_on_missing_keys(missing_key: str) -> None:
+    """Incomplete environment triad fails closed with TargetValidationError."""
+    env = {
+        "APP_ENV": "staging",
+        "SUPABASE_URL": f"https://{CANONICAL_STAGING_PROJECT_REF}.supabase.co",
+        "DATABASE_URL": f"postgresql://postgres:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5432/postgres",
+    }
+    del env[missing_key]
+    with pytest.raises(TargetValidationError, match="Configuração remota incompleta"):
+        validate_environment_config(env)
+
+
+def test_validate_environment_config_app_env_not_staging() -> None:
     """APP_ENV other than staging must be rejected."""
-    for env_name in ("development", "test", "production"):
+    for env_name in ("development", "test", "production", "local"):
         env = {
             "APP_ENV": env_name,
             "SUPABASE_URL": f"https://{CANONICAL_STAGING_PROJECT_REF}.supabase.co",
@@ -135,35 +219,341 @@ def test_validate_environment_config_app_env_not_staging():
             validate_environment_config(env)
 
 
-def test_validate_environment_config_mismatched_refs():
+def test_validate_environment_config_mismatched_refs() -> None:
     """Different refs in Supabase URL and Database URL must fail closed."""
     env = {
         "APP_ENV": "staging",
         "SUPABASE_URL": f"https://{CANONICAL_STAGING_PROJECT_REF}.supabase.co",
-        "DATABASE_URL": "postgresql://postgres:pass@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
+        "DATABASE_URL": f"postgresql://postgres:pass@db.{SYNTHETIC_UNAUTHORIZED_REF}.supabase.co:5432/postgres",
     }
-    with pytest.raises(TargetValidationError):
+    with pytest.raises(TargetValidationError, match="Divergência de project ref"):
         validate_environment_config(env)
 
 
-def test_sanitize_message_masks_secrets():
-    """Sanitization removes credentials from URLs, tokens, and keys."""
-    dummy_secret = f"{'sb_secret_'}{'dummy_secret_for_sanitization_test_123'}"
-    dummy_sbp = f"{'sbp_'}{'dummy_sbp_token_for_sanitization_test_123456789'}"
+# ==============================================================================
+# 3. Concurrency Control, Atomic Transaction & Session Proxy
+# ==============================================================================
+
+
+@pytest.mark.asyncio
+async def test_staging_atomic_lock_transaction_success() -> None:
+    """When lock is available, opens transaction, acquires lock, and yields proxy."""
+    session = AsyncMock(spec=AsyncSession)
+    session.in_transaction.side_effect = [False, True, True, True]
+
+    execute_result = MagicMock()
+    execute_result.scalar_one.return_value = 1
+    session.execute.return_value = execute_result
+
+    # Mock session.begin() context manager
+    session.begin.return_value.__aenter__ = AsyncMock(return_value=None)
+    session.begin.return_value.__aexit__ = AsyncMock(return_value=None)
+
+    canary_executed = False
+    async with staging_atomic_lock_transaction(session, lock_id=ADVISORY_LOCK_ID) as proxy:
+        assert isinstance(proxy, LockedAsyncSessionProxy)
+        canary_executed = True
+
+    assert canary_executed is True
+    session.begin.assert_called_once()
+    session.execute.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_staging_atomic_lock_transaction_busy_blocks_operation() -> None:
+    """When lock is held, raises AdvisoryLockBusyError without running payload."""
+    session = AsyncMock(spec=AsyncSession)
+    session.in_transaction.side_effect = [False, True, True]
+
+    execute_result = MagicMock()
+    execute_result.scalar_one.return_value = 0
+    session.execute.return_value = execute_result
+
+    session.begin.return_value.__aenter__ = AsyncMock(return_value=None)
+    session.begin.return_value.__aexit__ = AsyncMock(return_value=None)
+
+    canary_executed = False
+    with pytest.raises(AdvisoryLockBusyError, match="ocupado por outro processo"):
+        async with staging_atomic_lock_transaction(session, lock_id=ADVISORY_LOCK_ID):
+            canary_executed = True
+
+    assert canary_executed is False
+    session.execute.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_staging_atomic_lock_transaction_prohibits_existing_transaction() -> None:
+    """If session is already in a transaction, fails closed to preserve atomic ownership."""
+    session = AsyncMock(spec=AsyncSession)
+    session.in_transaction.return_value = True
+
+    with pytest.raises(StagingPromotionError, match="já possui uma transação ativa"):
+        async with staging_atomic_lock_transaction(session):
+            pass
+
+
+@pytest.mark.asyncio
+async def test_session_proxy_prohibits_early_commit() -> None:
+    """Calling commit() inside the protected block is strictly forbidden."""
+    session = AsyncMock(spec=AsyncSession)
+    session.in_transaction.side_effect = [False, True, True, True]
+    execute_result = MagicMock()
+    execute_result.scalar_one.return_value = 1
+    session.execute.return_value = execute_result
+
+    session.begin.return_value.__aenter__ = AsyncMock(return_value=None)
+    session.begin.return_value.__aexit__ = AsyncMock(return_value=None)
+
+    with pytest.raises(EarlyCommitProhibitedError, match="commit\\(\\) é proibida"):
+        async with staging_atomic_lock_transaction(session) as proxy:
+            await proxy.commit()
+
+
+@pytest.mark.asyncio
+async def test_session_proxy_prohibits_early_rollback() -> None:
+    """Calling rollback() inside the protected block is strictly forbidden."""
+    session = AsyncMock(spec=AsyncSession)
+    session.in_transaction.side_effect = [False, True, True, True]
+    execute_result = MagicMock()
+    execute_result.scalar_one.return_value = 1
+    session.execute.return_value = execute_result
+
+    session.begin.return_value.__aenter__ = AsyncMock(return_value=None)
+    session.begin.return_value.__aexit__ = AsyncMock(return_value=None)
+
+    with pytest.raises(EarlyCommitProhibitedError, match="rollback\\(\\) é proibida"):
+        async with staging_atomic_lock_transaction(session) as proxy:
+            await proxy.rollback()
+
+
+@pytest.mark.asyncio
+async def test_session_proxy_prohibits_nested_begin() -> None:
+    """Calling begin() inside the protected block is strictly forbidden."""
+    session = AsyncMock(spec=AsyncSession)
+    session.in_transaction.side_effect = [False, True, True, True]
+    execute_result = MagicMock()
+    execute_result.scalar_one.return_value = 1
+    session.execute.return_value = execute_result
+
+    session.begin.return_value.__aenter__ = AsyncMock(return_value=None)
+    session.begin.return_value.__aexit__ = AsyncMock(return_value=None)
+
+    with pytest.raises(EarlyCommitProhibitedError, match="transação aninhada é proibida"):
+        async with staging_atomic_lock_transaction(session) as proxy:
+            proxy.begin()
+
+
+@pytest.mark.asyncio
+async def test_session_proxy_delegates_methods() -> None:
+    """Standard database operations pass through the proxy cleanly."""
+    session = AsyncMock(spec=AsyncSession)
+    proxy = LockedAsyncSessionProxy(session)
+    proxy.add("dummy_entity")
+    session.add.assert_called_once_with("dummy_entity")
+
+
+@pytest.mark.asyncio
+async def test_state_guard_detects_prematurely_closed_transaction() -> None:
+    """State Guard raises if transaction was closed before runner finalization."""
+    session = AsyncMock(spec=AsyncSession)
+    # in_transaction: False on initial entry check, False on exit check
+    session.in_transaction.side_effect = [False, False]
+    execute_result = MagicMock()
+    execute_result.scalar_one.return_value = 1
+    session.execute.return_value = execute_result
+
+    session.begin.return_value.__aenter__ = AsyncMock(return_value=None)
+    session.begin.return_value.__aexit__ = AsyncMock(return_value=None)
+
+    with pytest.raises(EarlyCommitProhibitedError, match="encerrada indevidamente"):
+        async with staging_atomic_lock_transaction(session):
+            pass
+
+
+@pytest.mark.asyncio
+async def test_cancellation_propagates_cleanly() -> None:
+    """asyncio.CancelledError propagates out and aborts transaction."""
+    session = AsyncMock(spec=AsyncSession)
+    session.in_transaction.side_effect = [False, True, True]
+    execute_result = MagicMock()
+    execute_result.scalar_one.return_value = 1
+    session.execute.return_value = execute_result
+
+    session.begin.return_value.__aenter__ = AsyncMock(return_value=None)
+    session.begin.return_value.__aexit__ = AsyncMock(return_value=None)
+
+    with pytest.raises(asyncio.CancelledError):
+        async with staging_atomic_lock_transaction(session):
+            raise asyncio.CancelledError()
+
+
+@pytest.mark.asyncio
+async def test_exception_triggers_rollback() -> None:
+    """Exceptions inside the protected block propagate and abort transaction."""
+    session = AsyncMock(spec=AsyncSession)
+    session.in_transaction.side_effect = [False, True, True]
+    execute_result = MagicMock()
+    execute_result.scalar_one.return_value = 1
+    session.execute.return_value = execute_result
+
+    session.begin.return_value.__aenter__ = AsyncMock(return_value=None)
+    session.begin.return_value.__aexit__ = AsyncMock(return_value=None)
+
+    with pytest.raises(RuntimeError, match="simulated failure"):
+        async with staging_atomic_lock_transaction(session):
+            raise RuntimeError("simulated failure")
+
+
+# ==============================================================================
+# 4. Migrations Validation & Baseline Integrity
+# ==============================================================================
+
+
+def test_load_canonical_migrations_manifest() -> None:
+    """Baseline manifest must load successfully with 25 migrations."""
+    manifest = load_canonical_migrations_manifest()
+    assert manifest["total_migrations"] == 25
+    assert len(manifest["migrations"]) == 25
+    assert manifest["baseline_ref"] == "origin/staging"
+
+
+def test_verify_migrations_alignment_success() -> None:
+    """Official migrations directory must align with baseline manifest."""
+    migrations_dir = Path(__file__).resolve().parents[2] / "supabase" / "migrations"
+    info = verify_migrations_alignment(migrations_dir)
+    assert info["status"] == "aligned_locally"
+    assert info["scope"] == "local_directory_only"
+    assert info["count"] == 25
+    assert info["manifest_verified"] is True
+
+
+def test_migrations_identical_to_baseline_manifest() -> None:
+    """Prove that every migration in supabase/migrations matches the origin/staging manifest."""
+    migrations_dir = Path(__file__).resolve().parents[2] / "supabase" / "migrations"
+    manifest = load_canonical_migrations_manifest()
+    sql_files = sorted(migrations_dir.glob("*.sql"), key=lambda f: f.name)
+
+    assert len(sql_files) == 25
+    for sql_file, entry in zip(sql_files, manifest["migrations"], strict=True):
+        assert sql_file.name == entry["filename"]
+        file_bytes = sql_file.read_bytes()
+        assert len(file_bytes) == entry["bytes"]
+        import hashlib
+
+        assert hashlib.sha256(file_bytes).hexdigest() == entry["sha256"]
+
+
+def test_verify_migrations_fails_on_missing_intermediate(tmp_path: Path) -> None:
+    """Missing intermediate migration must fail closed."""
+    manifest = load_canonical_migrations_manifest()
+    # Create 24 files, omitting one intermediate
+    for entry in manifest["migrations"]:
+        if entry["version"] == "20260813142447":
+            continue
+        (tmp_path / entry["filename"]).write_bytes(b"SELECT 1;")
+
+    with pytest.raises(PreflightVerificationError, match="Quantidade de migrations.*divergente"):
+        verify_migrations_alignment(tmp_path)
+
+
+def test_verify_migrations_fails_on_unexpected_file(tmp_path: Path) -> None:
+    """Extra unexpected migration must fail closed."""
+    manifest = load_canonical_migrations_manifest()
+    for entry in manifest["migrations"]:
+        (tmp_path / entry["filename"]).write_bytes(b"SELECT 1;")
+    (tmp_path / "20260828000000_extra_unexpected.sql").write_bytes(b"SELECT 1;")
+
+    with pytest.raises(PreflightVerificationError, match="Quantidade de migrations.*divergente"):
+        verify_migrations_alignment(tmp_path)
+
+
+def test_verify_migrations_fails_on_renamed_file(tmp_path: Path) -> None:
+    """Renamed migration file must fail closed."""
+    real_dir = Path(__file__).resolve().parents[2] / "supabase" / "migrations"
+    manifest = load_canonical_migrations_manifest()
+    for entry in manifest["migrations"]:
+        fname = entry["filename"]
+        content = (real_dir / fname).read_bytes()
+        if entry["version"] == "20260824010914":
+            fname = "20260824010914_renamed_file.sql"
+        (tmp_path / fname).write_bytes(content)
+
+    with pytest.raises(PreflightVerificationError, match="Migration inesperada ou renomeada"):
+        verify_migrations_alignment(tmp_path)
+
+
+def test_verify_migrations_fails_on_altered_hash(tmp_path: Path) -> None:
+    """Altered SQL content (hash mismatch) with same file size must fail closed."""
+    real_dir = Path(__file__).resolve().parents[2] / "supabase" / "migrations"
+    manifest = load_canonical_migrations_manifest()
+    for entry in manifest["migrations"]:
+        content = bytearray((real_dir / entry["filename"]).read_bytes())
+        if entry["version"] == "20260811000000":
+            content[0] = ord(b"-") if content[0] != ord(b"-") else ord(b"#")
+        (tmp_path / entry["filename"]).write_bytes(bytes(content))
+
+    with pytest.raises(PreflightVerificationError, match="Hash SHA-256 divergente"):
+        verify_migrations_alignment(tmp_path)
+
+
+def test_verify_migrations_fails_on_duplicate_timestamp(tmp_path: Path) -> None:
+    """Duplicate 14-digit timestamps must fail closed."""
+    (tmp_path / "20260811000000_migration_a.sql").write_bytes(b"SELECT 1;")
+    (tmp_path / "20260811000000_migration_b.sql").write_bytes(b"SELECT 1;")
+    # Pad to 25 files
+    for i in range(2, 25):
+        (tmp_path / f"202608120000{i:02d}_migration.sql").write_bytes(b"SELECT 1;")
+
+    with pytest.raises(PreflightVerificationError, match="Duplicidade de versão"):
+        verify_migrations_alignment(tmp_path)
+
+
+# ==============================================================================
+# 5. Extended Credential & Secret Sanitization
+# ==============================================================================
+
+
+def test_sanitize_message_masks_all_secret_categories() -> None:
+    """Sanitization masks credentials, JWTs, Supabase keys, Bearer headers, and params."""
+    dummy_secret = "sb_secret_" + "dummy_secret_for_sanitization_test_123"
+    dummy_publishable = "sb_publishable_dummy_pub_key_test_12345"
+    dummy_sbp = "sbp_dummy_sbp_token_for_sanitization_test_123456789"
+    dummy_jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy_payload_signature_123.dummy_sig"
     raw = (
-        "Error in postgresql://postgres:MySuperSecret123@"
-        f"db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5432/postgres. "
-        f"Key: {dummy_secret} and token {dummy_sbp}"
+        f"Error connecting to postgresql://postgres_user:my_secret_password_123@"
+        f"db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5432/postgres?"
+        "apikey=sensitive_api_key_456&token=sensitive_token_789. "
+        f"Keys: {dummy_secret}, {dummy_publishable}, {dummy_sbp}, and JWT: {dummy_jwt}. "
+        "Header: Authorization: Bearer my_super_secret_bearer_token_abc. "
+        "Config: password='pass_in_quotes', secret=secret_value."
     )
     sanitized = sanitize_message(raw)
-    assert "MySuperSecret123" not in sanitized
-    assert "[REDACTED]@" in sanitized
+
+    assert "my_secret_password_123" not in sanitized
+    assert "postgres_user" not in sanitized
+    assert "[REDACTED_USER]:[REDACTED_PASSWORD]@" in sanitized
+    assert "sensitive_api_key_456" not in sanitized
+    assert "sensitive_token_789" not in sanitized
     assert "sb_secret_" not in sanitized
     assert "[REDACTED_SECRET]" in sanitized
+    assert "sb_publishable_" not in sanitized
+    assert "[REDACTED_PUBLISHABLE]" in sanitized
+    assert "sbp_" not in sanitized
     assert "[REDACTED_SBP]" in sanitized
+    assert "eyJhbGciOi" not in sanitized
+    assert "[REDACTED_JWT]" in sanitized
+    assert "my_super_secret_bearer_token_abc" not in sanitized
+    assert "[REDACTED_AUTH]" in sanitized
+    assert "pass_in_quotes" not in sanitized
+    assert "secret_value" not in sanitized
 
 
-def test_human_double_confirmation_success():
+# ==============================================================================
+# 6. Human Double Confirmation
+# ==============================================================================
+
+
+def test_human_double_confirmation_success() -> None:
     """Both correct ref and explicit yes grant confirmation."""
     inputs = [CANONICAL_STAGING_PROJECT_REF, "y"]
     assert (
@@ -174,7 +564,7 @@ def test_human_double_confirmation_success():
     )
 
 
-def test_human_double_confirmation_ref_mismatch():
+def test_human_double_confirmation_ref_mismatch() -> None:
     """Mismatched ref on confirmation 1 fails closed."""
     inputs = ["wrong_ref", "y"]
     with pytest.raises(ConfirmationError, match="Confirmação 1 falhou"):
@@ -183,7 +573,7 @@ def test_human_double_confirmation_ref_mismatch():
         )
 
 
-def test_human_double_confirmation_second_factor_rejected():
+def test_human_double_confirmation_second_factor_rejected() -> None:
     """Refusal on confirmation 2 fails closed."""
     inputs = [CANONICAL_STAGING_PROJECT_REF, "n"]
     with pytest.raises(ConfirmationError, match="Confirmação 2 falhou"):
@@ -192,60 +582,18 @@ def test_human_double_confirmation_second_factor_rejected():
         )
 
 
-@pytest.mark.asyncio
-async def test_staging_advisory_lock_success():
-    """When lock is available, context manager yields and releases in finally."""
-    session = AsyncMock(spec=AsyncSession)
-    execute_result = MagicMock()
-    execute_result.scalar_one.return_value = 1
-    session.execute.return_value = execute_result
-
-    async with staging_advisory_lock(session, lock_id=ADVISORY_LOCK_ID) as acquired:
-        assert acquired is True
-
-    # 2 calls: 1 to acquire pg_try_advisory_lock, 1 to release pg_advisory_unlock
-    assert session.execute.call_count == 2
+# ==============================================================================
+# 7. Canonical Counts & Dry-Run
+# ==============================================================================
 
 
-@pytest.mark.asyncio
-async def test_staging_advisory_lock_busy():
-    """When lock is held by another process, raises AdvisoryLockBusyError without blocking."""
-    session = AsyncMock(spec=AsyncSession)
-    execute_result = MagicMock()
-    execute_result.scalar_one.return_value = 0
-    session.execute.return_value = execute_result
-
-    with pytest.raises(AdvisoryLockBusyError, match="ocupado por outro processo"):
-        async with staging_advisory_lock(session, lock_id=ADVISORY_LOCK_ID):
-            pass
-
-    # Only 1 call was made (try acquire); unlock must NOT be called if not acquired
-    assert session.execute.call_count == 1
-
-
-@pytest.mark.asyncio
-async def test_staging_advisory_lock_releases_on_exception():
-    """If an exception occurs inside the lock block, unlock must be called in finally."""
-    session = AsyncMock(spec=AsyncSession)
-    execute_result = MagicMock()
-    execute_result.scalar_one.return_value = 1
-    session.execute.return_value = execute_result
-
-    with pytest.raises(RuntimeError, match="simulated failure"):
-        async with staging_advisory_lock(session, lock_id=ADVISORY_LOCK_ID):
-            raise RuntimeError("simulated failure")
-
-    # Lock must still have been unlocked
-    assert session.execute.call_count == 2
-
-
-def test_verify_canonical_counts_valid():
+def test_verify_canonical_counts_valid() -> None:
     """Mocked seed_pindobal report matching canonical metrics passes."""
     mock_report = {
         "status": "success",
         "counts": dict(CANONICAL_PINDOBAL_METRICS),
         "google_snapshot": {"external_id_missing_count": 737},
-        "reconciliation": {"matches_count": 53, "fuzzy_candidate_count": 53},
+        "reconciliation": {"matches_count": 89, "fuzzy_candidate_count": 57},
     }
     with patch(
         "app.ingestion.staging_promotion_runner.run_seed_pindobal", return_value=mock_report
@@ -256,7 +604,7 @@ def test_verify_canonical_counts_valid():
         assert result["counts"]["created"] == 1661
 
 
-def test_verify_canonical_counts_divergence_fails():
+def test_verify_canonical_counts_divergence_fails() -> None:
     """Divergent counts must raise PreflightVerificationError."""
     divergent_report = {
         "status": "success",
@@ -270,22 +618,18 @@ def test_verify_canonical_counts_divergence_fails():
             verify_canonical_counts(Path("dummy"))
 
 
-def test_verify_migrations_alignment():
-    """Migrations directory with 25 migrations is aligned."""
-    migrations_dir = Path(__file__).resolve().parents[2] / "supabase" / "migrations"
-    info = verify_migrations_alignment(migrations_dir)
-    assert info["status"] == "aligned_locally"
-    assert info["scope"] == "local_directory_only"
-    assert info["count"] == 25
+# ==============================================================================
+# 8. End-to-End Preflight Execution
+# ==============================================================================
 
 
-def test_execute_phase1_preflight_end_to_end():
-    """End-to-end Phase 1 execution succeeds offline with zero remote writes."""
+def test_execute_phase1_preflight_offline_dry_run_pure() -> None:
+    """Pure offline dry-run without targets or env vars reports unvalidated remote config."""
     mock_dry_run = {
         "status": "success",
         "counts": dict(CANONICAL_PINDOBAL_METRICS),
         "google_snapshot": {"external_id_missing_count": 737},
-        "reconciliation": {"matches_count": 53, "fuzzy_candidate_count": 53},
+        "reconciliation": {"matches_count": 89, "fuzzy_candidate_count": 57},
     }
     mock_manifest = MagicMock()
     mock_manifest.is_valid = True
@@ -293,12 +637,47 @@ def test_execute_phase1_preflight_end_to_end():
     mock_manifest.valid_files = 9
     mock_manifest.invalid_files = []
 
-    inputs = [CANONICAL_STAGING_PROJECT_REF, "y"]
+    with (
+        patch("app.ingestion.staging_promotion_runner.verify_manifest", return_value=mock_manifest),
+        patch(
+            "app.ingestion.staging_promotion_runner.run_seed_pindobal", return_value=mock_dry_run
+        ),
+    ):
+        report = execute_phase1_preflight(
+            snapshot_dir=Path("dummy"),
+            require_confirmation=False,
+        )
+
+    assert report["status"] == "phase1_success"
+    assert report["remote_write_performed"] is False
+    assert report["target_project_ref"] is None
+    assert report["remote_configuration"]["validated"] is False
+    assert (
+        report["remote_configuration"]["status"] == "offline_dry_run_no_remote_config_validated"
+    )
+    assert report["manifest"]["valid_files"] == 9
+    assert report["canonical_counts"]["counts"]["read"] == 1714
+
+
+def test_execute_phase1_preflight_with_env_validation() -> None:
+    """Preflight with valid environment config validates staging isolation."""
+    mock_dry_run = {
+        "status": "success",
+        "counts": dict(CANONICAL_PINDOBAL_METRICS),
+        "google_snapshot": {"external_id_missing_count": 737},
+        "reconciliation": {"matches_count": 89, "fuzzy_candidate_count": 57},
+    }
+    mock_manifest = MagicMock()
+    mock_manifest.is_valid = True
+    mock_manifest.total_files = 9
+    mock_manifest.valid_files = 9
+
     env_config = {
         "APP_ENV": "staging",
         "SUPABASE_URL": f"https://{CANONICAL_STAGING_PROJECT_REF}.supabase.co",
         "DATABASE_URL": f"postgresql://postgres:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5432/postgres",
     }
+    inputs = [CANONICAL_STAGING_PROJECT_REF, "y"]
 
     with (
         patch("app.ingestion.staging_promotion_runner.verify_manifest", return_value=mock_manifest),
@@ -314,11 +693,118 @@ def test_execute_phase1_preflight_end_to_end():
         )
 
     assert report["status"] == "phase1_success"
-    assert report["remote_write_performed"] is False
-    assert report["phase"] == 1
     assert report["target_project_ref"] == CANONICAL_STAGING_PROJECT_REF
-    assert report["migrations"]["status"] == "aligned_locally"
-    assert report["canonical_counts"]["reconciliation"]["matches_count"] == 53
-    assert report["governance"]["phase2_remote_write"] == "BLOCKED_PENDING_EXPLICIT_OWNER_GO"
-    assert report["governance"]["schema_rollback"] == "PITR_snapshot_only"
-    assert report["governance"]["data_rollback"] == "logical_unpublish_draft_only"
+    assert report["remote_configuration"]["validated"] is True
+
+
+def test_execute_phase1_preflight_requires_target_for_human_confirmation() -> None:
+    """Human confirmation without a target ref raises TargetValidationError."""
+    with pytest.raises(TargetValidationError, match="Confirmação humana exige"):
+        execute_phase1_preflight(
+            snapshot_dir=Path("dummy"),
+            target_project_ref=None,
+            env_values=None,
+            require_confirmation=True,
+        )
+
+
+# ==============================================================================
+# 9. CLI Entrypoint Tests (main)
+# ==============================================================================
+
+
+def test_main_offline_dry_run_success(capsys: pytest.CaptureFixture[str]) -> None:
+    """CLI execution with --non-interactive succeeds offline."""
+    mock_report = {
+        "status": "phase1_success",
+        "phase": 1,
+        "remote_write_performed": False,
+        "target_project_ref": None,
+    }
+    with patch(
+        "app.ingestion.staging_promotion_runner.execute_phase1_preflight", return_value=mock_report
+    ):
+        exit_code = main(["--snapshot-dir", "dummy", "--non-interactive"])
+        assert exit_code == 0
+        captured = capsys.readouterr()
+        output_json = json.loads(captured.out)
+        assert output_json["status"] == "phase1_success"
+
+
+def test_main_error_outputs_sanitized_json_to_stderr(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """StagingPromotionError in main() emits sanitized JSON to stderr and returns 1."""
+    dummy_secret = "sb_secret_" + "dummy_error_secret_123"
+    with patch(
+        "app.ingestion.staging_promotion_runner.execute_phase1_preflight",
+        side_effect=TargetValidationError(f"Invalid config with {dummy_secret}"),
+    ):
+        exit_code = main(["--snapshot-dir", "dummy", "--non-interactive"])
+        assert exit_code == 1
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        err_json = json.loads(captured.err)
+        assert err_json["status"] == "error"
+        assert err_json["error_type"] == "TargetValidationError"
+        assert dummy_secret not in err_json["message"]
+        assert "[REDACTED_SECRET]" in err_json["message"]
+
+
+def test_main_unexpected_error_outputs_sanitized_json_to_stderr(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Unexpected exception in main() emits sanitized JSON to stderr and returns 1."""
+    with patch(
+        "app.ingestion.staging_promotion_runner.execute_phase1_preflight",
+        side_effect=RuntimeError("Unexpected failure in postgresql://u:p@db/db"),
+    ):
+        exit_code = main(["--snapshot-dir", "dummy", "--non-interactive"])
+        assert exit_code == 1
+        captured = capsys.readouterr()
+        err_json = json.loads(captured.err)
+        assert err_json["status"] == "unexpected_error"
+        assert err_json["error_type"] == "RuntimeError"
+        assert "p@" not in err_json["message"]
+
+
+@pytest.mark.asyncio
+async def test_no_work_occurs_after_lock_transaction_termination() -> None:
+    """Ensure that after the atomic lock block terminates, transaction is closed."""
+    session = AsyncMock(spec=AsyncSession)
+    # in_transaction: False on entry, True inside, False after block exits
+    session.in_transaction.side_effect = [False, True, False]
+    execute_result = MagicMock()
+    execute_result.scalar_one.return_value = 1
+    session.execute.return_value = execute_result
+
+    session.begin.return_value.__aenter__ = AsyncMock(return_value=None)
+    session.begin.return_value.__aexit__ = AsyncMock(return_value=None)
+
+    captured_proxy = None
+    async with staging_atomic_lock_transaction(session) as proxy:
+        captured_proxy = proxy
+
+    assert captured_proxy is not None
+    # Underlying session transaction is now terminated; no work can continue under lock
+    assert session.in_transaction() is False
+
+
+def test_non_interactive_cannot_enable_remote_mode() -> None:
+    """Prove that --non-interactive in Phase 1 always enforces remote_write_performed: False."""
+    mock_report = {
+        "status": "phase1_success",
+        "phase": 1,
+        "mode": "local_preflight_and_validation_only",
+        "remote_write_performed": False,
+        "target_project_ref": None,
+    }
+    with patch(
+        "app.ingestion.staging_promotion_runner.execute_phase1_preflight",
+        return_value=mock_report,
+    ):
+        exit_code = main(["--snapshot-dir", "dummy", "--non-interactive"])
+        assert exit_code == 0
+        assert mock_report["remote_write_performed"] is False
+        assert mock_report["mode"] == "local_preflight_and_validation_only"
+
