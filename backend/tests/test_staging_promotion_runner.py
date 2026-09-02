@@ -9,7 +9,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import uuid
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -35,6 +38,7 @@ from app.ingestion.staging_promotion_runner import (
     sanitize_message,
     staging_atomic_lock_transaction,
     validate_environment_config,
+    validate_manifest_structure,
     validate_target_project_ref,
     verify_canonical_counts,
     verify_migrations_alignment,
@@ -304,7 +308,7 @@ async def test_session_proxy_prohibits_early_commit() -> None:
     session.begin.return_value.__aenter__ = AsyncMock(return_value=None)
     session.begin.return_value.__aexit__ = AsyncMock(return_value=None)
 
-    with pytest.raises(EarlyCommitProhibitedError, match="commit\\(\\) é proibida"):
+    with pytest.raises(EarlyCommitProhibitedError, match=r"commit\(\).*proibida"):
         async with staging_atomic_lock_transaction(session) as proxy:
             await proxy.commit()
 
@@ -321,7 +325,7 @@ async def test_session_proxy_prohibits_early_rollback() -> None:
     session.begin.return_value.__aenter__ = AsyncMock(return_value=None)
     session.begin.return_value.__aexit__ = AsyncMock(return_value=None)
 
-    with pytest.raises(EarlyCommitProhibitedError, match="rollback\\(\\) é proibida"):
+    with pytest.raises(EarlyCommitProhibitedError, match=r"rollback\(\).*proibida"):
         async with staging_atomic_lock_transaction(session) as proxy:
             await proxy.rollback()
 
@@ -404,6 +408,106 @@ async def test_exception_triggers_rollback() -> None:
             raise RuntimeError("simulated failure")
 
 
+@pytest.mark.asyncio
+async def test_integration_lock_transaction_with_real_repository_operation() -> None:
+    """Prove real Pindobal persistence runs under staging_atomic_lock_transaction.
+
+    Verifies no nested begin occurs and entire slice runs under the single UoW.
+    """
+    from app.ingestion.osrm_importer import OSRMRouteResult
+    from app.ingestion.pindobal_repository import PindobalPersistenceRepository
+
+    # Mock session with real transaction state tracking
+    session = AsyncMock(spec=AsyncSession)
+    in_tx_state = False
+
+    def get_in_transaction() -> bool:
+        return in_tx_state
+
+    session.in_transaction.side_effect = get_in_transaction
+
+    tx_cm = AsyncMock()
+
+    async def enter_tx() -> None:
+        nonlocal in_tx_state
+        in_tx_state = True
+        return None
+
+    async def exit_tx(exc_type: Any, exc_val: Any, tb: Any) -> None:
+        nonlocal in_tx_state
+        in_tx_state = False
+        return None
+
+    tx_cm.__aenter__.side_effect = enter_tx
+    tx_cm.__aexit__.side_effect = exit_tx
+    session.begin.return_value = tx_cm
+
+    lock_result = MagicMock()
+    lock_result.scalar_one.return_value = 1
+    dummy_scalar_result = MagicMock()
+    dummy_scalar_result.scalar_one_or_none.return_value = None
+    dummy_scalar_result.tuples.return_value = []
+    dummy_scalar_result.all.return_value = []
+
+    def execute_dispatcher(statement: Any, *args: Any, **kwargs: Any) -> Any:
+        sql_str = str(statement)
+        if "pg_try_advisory_xact_lock" in sql_str:
+            return lock_result
+        return dummy_scalar_result
+
+    session.execute.side_effect = execute_dispatcher
+    session.scalar.return_value = 0
+
+    now = datetime.now(UTC)
+    mock_report = {
+        "manifest": {
+            "valid_files": 9,
+            "files": [
+                {"name": f"rota_{code}_OSRM_01.csv", "sha256": "a" * 64}
+                for code in ("porto", "aeroporto", "rodoviaria")
+            ],
+        }
+    }
+    mock_osrm = {
+        code: OSRMRouteResult(
+            origin_code=code,
+            origin_name=code.title(),
+            points_count=2,
+            start_point=(-2.4, -54.7),
+            end_point=(-2.5, -54.9),
+            distance_m=1000,
+            wkt_linestring="LINESTRING(-54.7 -2.4, -54.9 -2.5)",
+            wkt_start_point="POINT(-54.7 -2.4)",
+            bounds={"min_lat": -2.5, "max_lat": -2.4, "min_lon": -54.9, "max_lon": -54.7},
+            points=[],
+            is_valid=True,
+        )
+        for code in ("porto", "aeroporto", "rodoviaria")
+    }
+
+    # Execute atomic lock transaction and run persist_in_transaction under the single UoW
+    async with staging_atomic_lock_transaction(session) as protected_session:
+        assert protected_session.in_transaction() is True
+        repository = PindobalPersistenceRepository(protected_session)  # type: ignore[arg-type]
+        run_id, stats = await repository.persist_in_transaction(
+            report=mock_report,
+            osrm_results=mock_osrm,
+            started_at=now,
+            finished_at=now,
+        )
+        assert isinstance(run_id, uuid.UUID)
+        assert stats["territorial"]["regions_created"] == 1
+
+    # 1. session.begin() was called exactly ONCE (owned by runner UoW, never nested)
+    session.begin.assert_called_once()
+    # 2. Transaction committed cleanly on exit
+    tx_cm.__aexit__.assert_awaited_once_with(None, None, None)
+    # 3. Transaction is closed
+    assert session.in_transaction() is False
+    # 4. Flushed changes within the transaction
+    assert session.flush.call_count > 0
+
+
 # ==============================================================================
 # 4. Migrations Validation & Baseline Integrity
 # ==============================================================================
@@ -415,6 +519,99 @@ def test_load_canonical_migrations_manifest() -> None:
     assert manifest["total_migrations"] == 25
     assert len(manifest["migrations"]) == 25
     assert manifest["baseline_ref"] == "origin/staging"
+
+
+def test_validate_manifest_structure_canonical() -> None:
+    """The versioned manifest in docs/finalization/artifacts must satisfy all structural rules."""
+    manifest = load_canonical_migrations_manifest()
+    validate_manifest_structure(manifest)
+    assert manifest["schema_version"] == 1
+    assert manifest["total_migrations"] == 25
+
+
+def test_validate_manifest_structure_unsupported_schema_version() -> None:
+    """Manifest with unsupported schema_version must fail."""
+    bad_manifest = {
+        "schema_version": 99,
+        "total_migrations": 1,
+        "migrations": [],
+    }
+    with pytest.raises(PreflightVerificationError, match="Versão de schema.*não suportada"):
+        validate_manifest_structure(bad_manifest)
+
+
+def test_validate_manifest_structure_mismatched_total_count() -> None:
+    """Manifest where total_migrations does not match list length must fail."""
+    bad_manifest = {
+        "schema_version": 1,
+        "total_migrations": 5,
+        "migrations": [
+            {
+                "version": "20260811000000",
+                "filename": "20260811000000_test.sql",
+                "path": "supabase/migrations/20260811000000_test.sql",
+                "bytes": 100,
+                "sha256": "a" * 64,
+            }
+        ],
+    }
+    with pytest.raises(PreflightVerificationError, match="Incoerência no manifesto"):
+        validate_manifest_structure(bad_manifest)
+
+
+def test_validate_manifest_structure_missing_fields() -> None:
+    """Migration entry missing required fields must fail."""
+    bad_manifest = {
+        "schema_version": 1,
+        "total_migrations": 1,
+        "migrations": [
+            {
+                "version": "20260811000000",
+                "filename": "20260811000000_test.sql",
+                # missing path, bytes, sha256
+            }
+        ],
+    }
+    with pytest.raises(PreflightVerificationError, match="sem campos"):
+        validate_manifest_structure(bad_manifest)
+
+
+def test_validate_manifest_structure_invalid_sha256_format() -> None:
+    """Invalid SHA-256 (not 64 hex characters) must fail."""
+    bad_manifest = {
+        "schema_version": 1,
+        "total_migrations": 1,
+        "migrations": [
+            {
+                "version": "20260811000000",
+                "filename": "20260811000000_test.sql",
+                "path": "supabase/migrations/20260811000000_test.sql",
+                "bytes": 100,
+                "sha256": "invalid_short_hash",
+            }
+        ],
+    }
+    with pytest.raises(PreflightVerificationError, match="Hash SHA-256 inválido"):
+        validate_manifest_structure(bad_manifest)
+
+
+def test_validate_manifest_structure_incoherent_version_and_filename() -> None:
+    """Mismatched version and filename prefix must fail."""
+    bad_manifest = {
+        "schema_version": 1,
+        "total_migrations": 1,
+        "migrations": [
+            {
+                "version": "20260811000000",
+                "filename": "20260812999999_mismatched.sql",
+                "path": "supabase/migrations/20260812999999_mismatched.sql",
+                "bytes": 100,
+                "sha256": "a" * 64,
+            }
+        ],
+    }
+    with pytest.raises(PreflightVerificationError, match="Incoerência entre version"):
+        validate_manifest_structure(bad_manifest)
 
 
 def test_verify_migrations_alignment_success() -> None:
@@ -807,4 +1004,3 @@ def test_non_interactive_cannot_enable_remote_mode() -> None:
         assert exit_code == 0
         assert mock_report["remote_write_performed"] is False
         assert mock_report["mode"] == "local_preflight_and_validation_only"
-

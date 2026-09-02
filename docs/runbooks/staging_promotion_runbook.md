@@ -61,10 +61,11 @@ O dry-run local com o dataset `teste-rota` deve reproduzir exatamente os número
 - **Place IDs inventados:** 0 (todos os 737 registros Google legados sem Place ID são preservados como raw sem inventar ID sintético)
 - **Métricas do Reconciliador (registradas separadamente):** 89 matches, sendo 57 candidatos classificados como fuzzy pelo classificador de similaridade.
 
-### 3.3. Verificação de Alinhamento das 25 Migrations SQL (Local)
+### 3.3. Verificação de Alinhamento das 25 Migrations SQL (Fonte Única Normativa)
 O schema oficial conta com exatamente 25 migrations em `supabase/migrations/`:
 - De `20260811000000_init_postgis_and_base_schemas.sql` a `20260827221358_eco_2510_remove_legacy_google_photo_persistence.sql`.
-- **Manifesto de Proveniência:** O runner valida cada arquivo contra o artefato canônico `docs/finalization/artifacts/staging_migrations_manifest.json`, extraído do baseline `origin/staging`, conferindo cardinalidade (25), padrão de 14 dígitos, monotonicidade, unicidade temporal, nomes exatos e hashes SHA-256.
+- **Fonte Única Normativa:** O runner resolve e valida o manifesto canônico exclusivamente em `docs/finalization/artifacts/staging_migrations_manifest.json`, extraído do baseline `origin/staging`. Não há duplicidade de cópias nem fallback silencioso.
+- **Validação Estrutural:** O runner valida a estrutura JSON (`schema_version=1`, `total_migrations=25`, campos obrigatórios, hashes de 64 hexadecimais, correspondência estrita de timestamps e nomes de arquivos).
 - **Escopo Fase 1:** O runner verifica estritamente de forma local a integridade das 25 migrations no repositório.
 - **Diferimento Fase 2:** A verificação remota de migration list, ausência de drift de schema e execução de Supabase advisors contra o projeto de staging (`kchzucvrnzwzehfdwzwi`) é parte integrante do preflight read-only da Fase 2, antes de qualquer escrita remota.
 
@@ -86,13 +87,21 @@ Para evitar acionamentos acidentais ou automações não autorizadas, a transiç
 
 ---
 
-## 5. Controle de Concorrência: `pg_try_advisory_xact_lock` e Transação Atômica
+## 5. Controle de Concorrência e Boundary Transacional
 
-A exclusão mútua em nível de banco de dados previne corridas concorrentes entre múltiplos operadores ou pipelines:
-- **Lock Transacional Atômico:** O runner invoca `SELECT pg_try_advisory_xact_lock(3779311896921572133)` dentro de uma transação aberta exclusivamente pelo runner (`async with session.begin():`).
-- **Comportamento Não-Bloqueante:** Se o lock estiver detido por outro processo, o runner NÃO entra em espera indefinida; ele aborta imediatamente com erro claro: `AdvisoryLockBusyError`.
-- **Propriedade da Transação & Proxy de Sessão:** A sessão é envelopada por `LockedAsyncSessionProxy`, que proíbe chamadas diretas a `commit()`, `rollback()` ou `begin()` aninhados pelo corpo de carga, garantindo que nenhum trabalho seja executado após a liberação do lock.
-- **Garantia de Liberação no PostgreSQL:** O lock de transação é liberado deterministicamente pelo PostgreSQL no encerramento da transação (`COMMIT` ou `ROLLBACK`) ou término da conexão socket (`ResourceOwner`). Em caso de queda de rede ou interrupção do cliente, o PostgreSQL backend encerra a transação e libera o lock no servidor, sem depender de pacotes de rollback entregues pelo cliente.
+A robustez da promoção decorre da arquitetura do banco e de uma demarcação transacional rigorosa:
+- **Exclusão Mútua via `pg_try_advisory_xact_lock`:** O runner adquire o lock transacional `SELECT pg_try_advisory_xact_lock(3779311896921572133)` dentro de uma transação aberta exclusivamente pelo runner (`async with session.begin():`). Se o lock estiver ocupado, aborta imediatamente com `AdvisoryLockBusyError`.
+- **Atomicidade por Unit of Work Proprietária:** A atomicidade da carga decorre de uma única camada proprietária da transação:
+  1. `session.begin()`;
+  2. Aquisição imediata do lock transacional;
+  3. Execução das operações de persistência via `persist_in_transaction`;
+  4. Validação do State Guard pós-execução;
+  5. Commit único ao final do bloco (ou rollback automático em caso de exceção).
+- **Separação de Responsabilidade no Repository:** A classe `PindobalPersistenceRepository` separa formalmente:
+  - O wrapper transacional público (`persist`), que gerencia o próprio ciclo de vida para compatibilidade com o pipeline de teste (`seed_pindobal.py`); e
+  - As operações que assumem uma transação já aberta (`persist_in_transaction`), utilizadas pelo runner sob o lock.
+- **Helper contra Uso Acidental (`LockedAsyncSessionProxy`):** O proxy de sessão atua exclusivamente como um redutor de erros acidentais (proibindo `commit()` ou `rollback()` explícitos pelo corpo da carga). A segurança e atomicidade residem na arquitetura de Unit of Work única, não em proteções de runtime do Python.
+- **Liberação Garantida no PostgreSQL:** O lock transacional é liberado deterministicamente pelo próprio servidor PostgreSQL (`ResourceOwner`) no encerramento da transação (`COMMIT` ou `ROLLBACK`) ou término da conexão socket. Não se presume que um comando explícito de rede de rollback sempre chegue ao banco durante partições de rede.
 - **Rejeição do Transaction Pooler:** O runner rejeita terminantemente conexões na porta 6543 (Supavisor Transaction Pooler), aceitando apenas a porta 5432 (conexão direta ou session pooler), onde o ciclo de vida transacional é preservado.
 
 ---
@@ -117,7 +126,7 @@ A exclusão mútua em nível de banco de dados previne corridas concorrentes ent
 Na raiz do repositório ou no worktree de staging:
 
 ```powershell
-# Executar suíte de testes unitários do runner (deve concluir com 100% de aprovação e exit code 0)
+# Executar suíte de testes unitários do runner
 python -m pytest backend/tests/test_staging_promotion_runner.py
 
 # Executar preflight offline completo com teste-rota
@@ -129,6 +138,11 @@ python backend/scripts/scan_secrets.py
 
 > [!NOTE]
 > **Modo `--non-interactive`:** Este modo é exclusivo do preflight offline da Fase 1 (onde `remote_write_performed: false`). Ele é estritamente proibido e incapaz de autorizar qualquer operação de escrita remota presente ou futura.
+
+### Codificação e Exibição no Terminal Windows (Code Page vs UTF-8)
+Em terminais Windows (PowerShell ou `cmd.exe`), a página de código padrão do console frequentemente opera em OEM 850 ou Windows-1252 em vez de UTF-8 (Code Page 65001). Caracteres acentuados emitidos como UTF-8 podem parecer corrompidos na exibição visual do terminal caso o console esteja em codificação legada.
+- O runner reconfigura explicitamente `sys.stdout` e `sys.stderr` para UTF-8 (`reconfigure(encoding="utf-8")`), garantindo que o stream de saída emita sempre JSON UTF-8 válido e parseável por qualquer ferramenta padrão (`json.loads`, `jq`, etc.).
+- Para exibir caracteres acentuados corretamente na tela do console interativo no Windows, execute previamente: `chcp 65001` ou `$OutputEncoding = [System.Text.Encoding]::UTF8`.
 
 ### Saída Esperada do Preflight (Dry-Run Offline):
 ```json
@@ -179,7 +193,7 @@ python backend/scripts/scan_secrets.py
   "governance": {
     "advisory_lock_id": 3779311896921572133,
     "lock_mechanism": "pg_try_advisory_xact_lock",
-    "transaction_ownership": "indivisible_atomic_session_proxy",
+    "transaction_ownership": "single_unit_of_work_transaction",
     "lock_release_guarantee": "postgresql_server_resource_owner_on_disconnect_or_termination",
     "schema_rollback": "PITR_snapshot_only",
     "data_rollback": "logical_unpublish_draft_only",

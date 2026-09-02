@@ -258,10 +258,12 @@ def validate_environment_config(env_values: dict[str, str]) -> str:
 
 
 class LockedAsyncSessionProxy:
-    """Restrictive proxy over AsyncSession preventing premature commit/rollback.
+    """Helper guard to reduce accidental transaction mismanagement within the locked context.
 
-    Guarantees that the protected body cannot commit early, preserving the
-    lifecycle of the transaction-level advisory lock.
+    Note: In Python, this proxy is an accidental-misuse guard, not a security boundary
+    or guarantee of isolation. Atomicity is achieved by the architectural boundary
+    of a single Unit of Work owning the transaction lifecycle (begin, advisory lock,
+    operations, commit/rollback).
     """
 
     def __init__(self, session: AsyncSession) -> None:
@@ -269,20 +271,24 @@ class LockedAsyncSessionProxy:
 
     async def commit(self) -> None:
         raise EarlyCommitProhibitedError(
-            "Chamada explícita a commit() é proibida dentro do corpo protegido sob advisory lock. "
-            "O runner controla a transação atômica indivisível."
+            "Chamada a commit() dentro do bloco sob advisory lock é proibida. "
+            "A transação é controlada pela Unit of Work proprietária."
         )
 
     async def rollback(self) -> None:
         raise EarlyCommitProhibitedError(
-            "Chamada explícita a rollback() é proibida dentro do corpo de promoção. "
-            "Lance uma exceção para abortar a transação."
+            "Chamada a rollback() dentro do bloco sob advisory lock é proibida. "
+            "Lance uma exceção para que a Unit of Work proprietária aborte a transação."
         )
 
     def begin(self, *args: Any, **kwargs: Any) -> Any:
         raise EarlyCommitProhibitedError(
-            "Abertura de nova transação aninhada é proibida dentro do corpo protegido."
+            "Abertura de transação aninhada é proibida dentro do bloco sob advisory lock. "
+            "A persistência deve operar sob a transação já ativa da Unit of Work."
         )
+
+    def in_transaction(self) -> bool:
+        return bool(self._session.in_transaction())
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self._session, name)
@@ -296,14 +302,16 @@ async def staging_atomic_lock_transaction(
     session: AsyncSession,
     lock_id: int = PINDOBAL_STAGING_ADVISORY_LOCK_ID,
 ) -> AsyncGenerator[LockedAsyncSessionProxy]:
-    """Execute within an atomic transaction protected by pg_try_advisory_xact_lock.
+    """Single Unit of Work context manager owning the transaction and advisory lock.
 
-    The runner is the sole owner of the transaction lifecycle:
-    - Opens the transaction via session.begin()
-    - Immediately acquires pg_try_advisory_xact_lock
-    - Wraps session in LockedAsyncSessionProxy to prevent early commits
-    - Releases lock automatically via PostgreSQL ResourceOwner at transaction/connection end
-    - Validates post-execution State Guard before commit
+    Architecture:
+    - Exactly one transaction owner: opens transaction via session.begin()
+    - Acquires pg_try_advisory_xact_lock as first query
+    - Yields session proxy (accidental-misuse helper)
+    - Automatically releases lock on transaction commit/rollback or disconnect via PostgreSQL
+      ResourceOwner
+    - Post-execution State Guard asserts session was not prematurely closed
+    - Single commit upon clean exit, rollback upon exception
     """
     if session.in_transaction():
         raise StagingPromotionError(
@@ -337,22 +345,117 @@ async def staging_atomic_lock_transaction(
 staging_advisory_lock = staging_atomic_lock_transaction
 
 
-def load_canonical_migrations_manifest() -> dict[str, Any]:
-    """Load the canonical migrations manifest versioned from origin/staging."""
-    possible_paths = [
-        Path(__file__).resolve().parent / "staging_migrations_manifest.json",
-        Path(__file__).resolve().parents[3]
-        / "docs"
-        / "finalization"
-        / "artifacts"
-        / "staging_migrations_manifest.json",
-    ]
-    for path in possible_paths:
-        if path.is_file():
-            return json.loads(path.read_text(encoding="utf-8"))  # type: ignore[no-any-return]
-    raise PreflightVerificationError(
-        "Manifesto canônico de migrations (staging_migrations_manifest.json) não encontrado."
-    )
+CANONICAL_MANIFEST_PATH: Path = (
+    Path(__file__).resolve().parents[3]
+    / "docs"
+    / "finalization"
+    / "artifacts"
+    / "staging_migrations_manifest.json"
+)
+
+
+def validate_manifest_structure(manifest_data: dict[str, Any]) -> None:
+    """Validate schema and structural integrity of the migrations manifest."""
+    if not isinstance(manifest_data, dict):
+        raise PreflightVerificationError("Manifesto de migrations deve ser um objeto JSON.")
+
+    schema_version = manifest_data.get("schema_version")
+    if schema_version != 1:
+        raise PreflightVerificationError(
+            f"Versão de schema de manifesto não suportada: {schema_version}. Suportada: 1."
+        )
+
+    total_migrations = manifest_data.get("total_migrations")
+    if not isinstance(total_migrations, int) or total_migrations <= 0:
+        raise PreflightVerificationError(
+            f"Campo total_migrations inválido no manifesto: {total_migrations}."
+        )
+
+    migrations = manifest_data.get("migrations")
+    if not isinstance(migrations, list):
+        raise PreflightVerificationError(
+            "Campo migrations inválido no manifesto: deve ser uma lista."
+        )
+
+    if len(migrations) != total_migrations:
+        raise PreflightVerificationError(
+            f"Incoerência no manifesto: total_migrations={total_migrations}, "
+            f"mas a lista migrations contém {len(migrations)} itens."
+        )
+
+    required_fields = {"version", "filename", "path", "bytes", "sha256"}
+    seen_versions: set[str] = set()
+
+    for idx, entry in enumerate(migrations):
+        if not isinstance(entry, dict):
+            raise PreflightVerificationError(
+                f"Item {idx + 1} de migrations no manifesto deve ser um objeto."
+            )
+
+        missing = required_fields - entry.keys()
+        if missing:
+            raise PreflightVerificationError(
+                f"Item {idx + 1} ({entry.get('filename', '?')}) no manifesto sem campos: "
+                f"{sorted(missing)}."
+            )
+
+        version = str(entry["version"])
+        if not re.fullmatch(r"^\d{14}$", version):
+            raise PreflightVerificationError(
+                f"Versão inválida no manifesto (item {idx + 1}): '{version}'. Deve ter 14 dígitos."
+            )
+        if version in seen_versions:
+            raise PreflightVerificationError(
+                f"Versão duplicada no manifesto: '{version}'."
+            )
+        seen_versions.add(version)
+
+        filename = str(entry["filename"])
+        if not filename.startswith(f"{version}_") or not filename.endswith(".sql"):
+            raise PreflightVerificationError(
+                f"Incoerência entre version '{version}' e filename '{filename}' no manifesto."
+            )
+
+        expected_path = f"supabase/migrations/{filename}"
+        if entry["path"] != expected_path:
+            raise PreflightVerificationError(
+                f"Incoerência de path no manifesto para '{filename}': "
+                f"esperava '{expected_path}', obteve '{entry['path']}'."
+            )
+
+        file_bytes = entry["bytes"]
+        if not isinstance(file_bytes, int) or file_bytes <= 0:
+            raise PreflightVerificationError(
+                f"Tamanho em bytes inválido no manifesto para '{filename}': {file_bytes}."
+            )
+
+        sha256 = str(entry["sha256"]).lower()
+        if not re.fullmatch(r"^[0-9a-f]{64}$", sha256):
+            raise PreflightVerificationError(
+                f"Hash SHA-256 inválido no manifesto para '{filename}': '{entry['sha256']}'. "
+                "Deve conter exatamente 64 caracteres hexadecimais minúsculos."
+            )
+
+
+def load_canonical_migrations_manifest(
+    manifest_path: Path | None = None,
+) -> dict[str, Any]:
+    """Load and validate the single normative migrations manifest."""
+    target_path = manifest_path or CANONICAL_MANIFEST_PATH
+    if not target_path.is_file():
+        raise PreflightVerificationError(
+            f"Manifesto canônico de migrations não encontrado na fonte normativa: {target_path}."
+        )
+
+    try:
+        data = json.loads(target_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise PreflightVerificationError(
+            f"Falha ao ler JSON do manifesto canônico de migrations: {exc}"
+        ) from exc
+
+    validate_manifest_structure(data)
+    return data  # type: ignore[no-any-return]
 
 
 def verify_migrations_alignment(migrations_dir: Path) -> dict[str, Any]:
@@ -621,7 +724,7 @@ def execute_phase1_preflight(
         "governance": {
             "advisory_lock_id": PINDOBAL_STAGING_ADVISORY_LOCK_ID,
             "lock_mechanism": "pg_try_advisory_xact_lock",
-            "transaction_ownership": "indivisible_atomic_session_proxy",
+            "transaction_ownership": "single_unit_of_work_transaction",
             "lock_release_guarantee": (
                 "postgresql_server_resource_owner_on_disconnect_or_termination"
             ),
@@ -634,6 +737,18 @@ def execute_phase1_preflight(
 
 def main(argv: Sequence[str] | None = None) -> int:
     """CLI entrypoint for the staging promotion runner."""
+    # Ensure stdout/stderr emit valid UTF-8 across Windows consoles
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
+    if hasattr(sys.stderr, "reconfigure"):
+        try:
+            sys.stderr.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
+
     parser = argparse.ArgumentParser(
         description="ECOnexão Staging Promotion Runner (ECO-2005 Phase 1)"
     )
