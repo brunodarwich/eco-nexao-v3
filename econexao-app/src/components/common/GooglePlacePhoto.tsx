@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ApiClientError, apiClient } from '../../api/client';
@@ -7,6 +7,11 @@ import { theme } from '../../theme/theme';
 import { makeAccessibleButton } from '../../utils/accessibility';
 
 type PhotoLoader = (actorId: string) => Promise<{ data: GooglePhotoMetadata }>;
+
+const defaultPhotoLoader: PhotoLoader = (actorId) =>
+  apiClient?.getActorGooglePhoto
+    ? apiClient.getActorGooglePhoto(actorId)
+    : Promise.reject({ status: 404 });
 
 export interface GooglePlacePhotoProps {
   actorId: string;
@@ -23,24 +28,25 @@ export interface GooglePlacePhotoProps {
 export function GooglePlacePhoto({
   actorId,
   alt,
-  loadPhoto = (id: string) =>
-    apiClient?.getActorGooglePhoto
-      ? apiClient.getActorGooglePhoto(id)
-      : Promise.reject({ status: 404 }),
+  loadPhoto = defaultPhotoLoader,
   compact = false,
   style,
 }: GooglePlacePhotoProps) {
   const [photo, setPhoto] = useState<GooglePhotoMetadata | null>(null);
   const [state, setState] = useState<'loading' | 'empty' | 'error' | 'ready'>('loading');
+  const requestIdRef = useRef(0);
 
   const load = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setState('loading');
     setPhoto(null);
     try {
       const response = await loadPhoto(actorId);
+      if (requestId !== requestIdRef.current) return;
       setPhoto(response.data);
       setState('ready');
     } catch (error: any) {
+      if (requestId !== requestIdRef.current) return;
       const isServerError = Boolean(
         error &&
         typeof error === 'object' &&
@@ -52,7 +58,12 @@ export function GooglePlacePhoto({
     }
   }, [actorId, loadPhoto]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+    return () => {
+      requestIdRef.current += 1;
+    };
+  }, [load]);
 
   if (state === 'loading') {
     return (
