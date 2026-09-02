@@ -909,6 +909,42 @@ descobertos com `supabase --help`; production nunca é usada sem aprovação.
   ```
 - **Entrega:** completes Gate 4.
 
+### ECO-2005 — Promoção segura da fatia Pindobal para staging
+
+- **Resultado / prioridade / tamanho / executor:** runner local seguro e governança de promoção para staging; P0; M; Antigravity.
+- **Status:** `APPROVED FOR LOCAL IMPLEMENTATION ONLY`
+- **Dependências / ADRs:** ECO-1505 (pacote imutável Pindobal v1), ECO-2002/2003 (staging baseline homologado); ADRs 0002, 0005, 0006, 0014.
+- **Contexto e leitura:** `docs/finalization/artifacts/pindobal-v1/*`, `docs/data/pindobal_data_contract.md`, `docs/finalization/artifacts/staging_technical_sheet.md`, `docs/runbooks/staging_promotion_runbook.md`.
+- **Arquivos esperados:** `backend/app/ingestion/staging_promotion_runner.py`, `backend/app/ingestion/pindobal_repository.py`, `backend/tests/test_staging_promotion_runner.py`, `docs/finalization/artifacts/staging_migrations_manifest.json`, `docs/runbooks/staging_promotion_runbook.md`.
+- **Permitido / proibido:**
+  - Permitido: preflight read-only offline, target guard fail-closed restrito ao project ref de staging `kchzucvrnzwzehfdwzwi`, verificação offline de hashes do pacote Pindobal, dry-run local com `teste-rota` e assert das contagens canônicas (1.714 lidos, 1.661 criáveis, 53 candidatos no dry-run, 0 rejeições, 0 Place IDs inventados; métricas do reconciliador registradas separadamente: 89 matches, 57 candidatos fuzzy), conferência local da integridade das 25 migrations SQL contra o manifesto canônico único extraído de `origin/staging` (verificação remota de drift e Supabase advisors diferida para o preflight da Fase 2), exclusão mútua com `pg_try_advisory_xact_lock` sob arquitetura de Unit of Work com transação única proprietária e helper contra uso acidental, separação de persistência atômica no repositório (`persist_in_transaction`), e confirmação humana dupla.
+  - Proibido: qualquer escrita remota ou apply nesta fase local; qualquer acesso, conexão, menção ou caminho para targets fora da allowlist unária de staging (`kchzucvrnzwzehfdwzwi`), sendo produção reservada estritamente à ECO-2202 no Marco 22; execução de `seed_pindobal --apply` (cuja proteção de test permanece intocada); chamadas externas a Google Places/GBP/OSRM; e inventar Place IDs.
+- **Passos:**
+  1. Implementar target guard fail-closed restrito exclusivamente a `kchzucvrnzwzehfdwzwi`.
+  2. Implementar preflight offline com verificação de manifesto (9 arquivos) e dry-run validando contagens canônicas exatas.
+  3. Implementar verificação local determinística de integridade das 25 migrations existentes contra a fonte única normativa `staging_migrations_manifest.json` com validação estrutural; prever checagem remota de drift e Supabase advisors como etapa read-only pré-escrita da Fase 2.
+  4. Implementar protocolo de dupla confirmação humana (`kchzucvrnzwzehfdwzwi` + `[y/N]`), garantindo que nenhuma conexão de escrita seja aberta antes do GO.
+  5. Implementar controle de concorrência com `pg_try_advisory_xact_lock` sob arquitetura de Unit of Work com transação única proprietária, refatorando `PindobalPersistenceRepository` para separar o boundary transacional de `persist_in_transaction`.
+  6. Estabelecer que o Gate 4 não deve ser declarado concluído apenas pela carga de dados; a promoção remota (Fase 2) exige novo GO formal e explícito do Human Owner.
+- **Aceite / testes / comandos:**
+  - `python -m pytest tests/test_staging_promotion_runner.py` (suíte de testes unitários passando).
+  - `python -m app.ingestion.staging_promotion_runner --snapshot-dir "C:\Users\Bruno\Downloads\teste-rota" --non-interactive` (status `phase1_success`, `remote_write_performed: false`).
+  - Scanner de segredos limpo (`python scripts/scan_secrets.py` -> `SECRET_SCAN=OK`).
+  - Verificação de que produção e `seed_pindobal.py` permanecem blindados.
+- **Evidência / riscos / rollback / DoD:**
+  - Relatório JSON de preflight redigido e assinado;
+  - Risco de lock bloqueante mitigado com `pg_try_advisory_xact_lock` não bloqueante;
+  - Rollback de schema aponta exclusivamente para PITR/snapshot comprovado do Supabase staging; rollback de dados é puramente lógico (`status = draft`/`unpublished`), sem deleção cega;
+  - DoD: Runner validado localmente, test suite verde, zero mutação remota, documentação sincronizada.
+- **Prompt de execução:**
+  ```text
+  Execute exclusivamente a Fase 1 da ECO-2005. Desenvolva e teste localmente o runner
+  seguro de promoção Pindobal para staging com target guard kchzucvrnzwzehfdwzwi,
+  confirmação humana dupla, pg_try_advisory_xact_lock e assert das contagens canônicas.
+  Não realize nenhuma escrita remota, não toque em production e não execute seed_pindobal --apply.
+  ```
+- **Entrega:** habilita Fase 2 (carga de staging sob GO explícito do Owner) e desbloqueia pré-condições de dados para Gate 3 e ECO-2101.
+
 ## Marco 21 — QA, segurança, conformidade e homologação
 
 ### ECO-2101 — E2E web e auditoria de acessibilidade
