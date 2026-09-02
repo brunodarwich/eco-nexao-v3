@@ -19,7 +19,7 @@ import urllib.request
 from typing import Any
 from urllib.parse import urlparse
 
-DEFAULT_STAGING_HOST = "econexao-backend-staging.onrender.com"
+DEFAULT_STAGING_HOST = "econexao-backend-staging-30dt.onrender.com"
 FORBIDDEN_HOST_PATTERNS = ("eco-nexao-v3.onrender.com", "econexao.app", "prod")
 
 DEFAULT_REQUIRED_ORIGINS = (
