@@ -37,6 +37,10 @@ jest.mock('../map/MapAdapter', () => {
   };
 });
 
+jest.mock('../common/GooglePlacePhoto', () => ({
+  GooglePlacePhoto: () => null,
+}));
+
 jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
   useLocalSearchParams: jest.fn(),
