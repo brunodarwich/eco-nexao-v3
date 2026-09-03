@@ -204,10 +204,69 @@ Em terminais Windows (PowerShell ou `cmd.exe`), a página de código padrão do 
 
 ---
 
-## 8. Parada Obrigatória: Rito para a Fase 2 (Promoção Remota)
+## 8. Protocolo e Rito para a Fase 2 (Promoção Remota sob Lock)
 
-A transição para a **Fase 2** (conexão e carga real no Supabase de Staging `kchzucvrnzwzehfdwzwi`) exige:
-1. Conclusão e revisão completa do PR da Fase 1 contra a branch `staging`.
-2. Emissão de autorização formal e explícita pelo Human Owner (Bruno Darwich):
-   > "Eu autorizo a execução da Fase 2 da ECO-2005 para carga da fatia Pindobal no banco de staging kchzucvrnzwzehfdwzwi."
-3. Disponibilização segura de credenciais de staging via cofre ou variável controlada, sem nunca expô-las em terminal ou commit.
+A execução da **Fase 2** realiza a carga real e transacional no Supabase de Staging (`kchzucvrnzwzehfdwzwi`). O runner foi implementado e validado em suíte unitária com fail-closed estrito.
+
+### 8.1 Requisitos Prévios Inegociáveis
+1. **Autorização Formal do Human Owner**: Emissão explícita no chat autorizando a conexão e escrita remota no Staging.
+2. **Variáveis de Ambiente Controladas**:
+   - `APP_ENV=staging`
+   - `SUPABASE_URL=https://kchzucvrnzwzehfdwzwi.supabase.co`
+   - `DATABASE_URL=postgresql://postgres:[PASSWORD]@db.kchzucvrnzwzehfdwzwi.supabase.co:5432/postgres` (Porta 5432 obrigatória).
+3. **Modo Interativo Obrigatório**: O uso de `--apply` combinado com `--non-interactive` é **bloqueado deterministicamente** (fail-closed). O operador deve digitar o project ref e confirmar `y`.
+
+### 8.2 Comando de Execução (Fase 2)
+```powershell
+python -m app.ingestion.staging_promotion_runner `
+  --snapshot-dir "C:\Users\Bruno\Downloads\teste-rota" `
+  --apply
+```
+
+### 8.3 Rito Interativo de Dupla Confirmação
+O runner solicitará os dois fatores de confirmação humana no terminal:
+```text
+[CONFIRMAÇÃO 1/2] Digite o Supabase Project Ref exato para autorizar execução: kchzucvrnzwzehfdwzwi
+[CONFIRMAÇÃO 2/2] Confirma a execução remota de carga para o target 'kchzucvrnzwzehfdwzwi'? [y/N]: y
+```
+
+### 8.4 Sequência de Execução sob Lock
+1. Validação estrita do target allowlist (`kchzucvrnzwzehfdwzwi` apenas).
+2. Verificação de integridade do manifesto (9 arquivos SHA-256) e alinhamento das 25 migrations.
+3. Aquisição não bloqueante do advisory lock transacional via `SELECT pg_try_advisory_xact_lock(3779311896921572133)`.
+4. Chamada de `persist_in_transaction` sob a transação única (Single Unit of Work).
+5. State Guard: verificação de 0 rejeições e 1.661 registros válidos (criados ou inalterados em re-execução idempotente).
+6. Commit atômico ou Rollback automático em caso de qualquer exceção.
+
+### 8.5 Exemplo de Saída Estruturada da Fase 2 (JSON)
+```json
+{
+  "status": "phase2_success",
+  "phase": 2,
+  "mode": "staging_promotion_applied",
+  "remote_write_performed": true,
+  "target_project_ref": "kchzucvrnzwzehfdwzwi",
+  "run_id": "018f9123-4567-789a-bcde-f0123456789a",
+  "persisted_counts": {
+    "created": 1661,
+    "updated": 0,
+    "unchanged": 0,
+    "rejected": 0,
+    "candidates": 53
+  },
+  "started_at": "2026-09-03T01:00:00.000000+00:00",
+  "finished_at": "2026-09-03T01:00:15.000000+00:00",
+  "manifest": { "status": "valid", "total_files": 9, "valid_files": 9 },
+  "canonical_counts": { "status": "verified", "counts": { "read": 1714, "created": 1661, "rejected": 0, "candidates": 53 } },
+  "migrations": { "status": "aligned_locally", "count": 25 },
+  "human_confirmation": { "required": true, "confirmed": true },
+  "governance": {
+    "advisory_lock_id": 3779311896921572133,
+    "lock_mechanism": "pg_try_advisory_xact_lock",
+    "transaction_ownership": "single_unit_of_work_transaction",
+    "lock_release_guarantee": "postgresql_server_resource_owner_on_disconnect_or_termination",
+    "schema_rollback": "PITR_snapshot_only",
+    "data_rollback": "logical_unpublish_draft_only"
+  }
+}
+```

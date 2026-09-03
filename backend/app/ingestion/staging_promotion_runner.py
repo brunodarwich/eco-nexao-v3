@@ -18,15 +18,21 @@ from collections.abc import AsyncGenerator, Callable, Sequence
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from urllib.parse import urlparse
 
 from sqlalchemy import func, select
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ingestion.google_snapshot_importer import process_google_snapshot
 from app.ingestion.manifest import verify_manifest
+from app.ingestion.osrm_importer import process_osrm_origin
+from app.ingestion.pindobal_cutout_importer import process_pindobal_cutout
+from app.ingestion.pindobal_repository import PindobalPersistenceRepository
+from app.ingestion.reconciler import reconcile_semtur_and_google
 from app.ingestion.seed_pindobal import DEFAULT_SNAPSHOT_DIR, run_seed_pindobal
+from app.ingestion.semtur_importer import process_semtur_inventory
 
 CANONICAL_STAGING_PROJECT_REF: str = "kchzucvrnzwzehfdwzwi"
 PROJECT_REF_PATTERN = re.compile(r"^[a-z0-9]{20}$")
@@ -76,6 +82,10 @@ class AdvisoryLockBusyError(StagingPromotionError):
 
 class EarlyCommitProhibitedError(StagingPromotionError):
     """Prohibited early commit or transaction tampering within protected lock context."""
+
+
+class PromotionExecutionError(StagingPromotionError):
+    """Raised when an error occurs during Phase 2 promotion execution under lock."""
 
 
 def sanitize_message(text_content: str) -> str:
@@ -735,6 +745,147 @@ def execute_phase1_preflight(
     }
 
 
+async def execute_phase2_staging_promotion(
+    session: AsyncSession,
+    *,
+    snapshot_dir: Path = DEFAULT_SNAPSHOT_DIR,
+    migrations_dir: Path | None = None,
+    target_project_ref: str | None = None,
+    env_values: dict[str, str] | None = None,
+    confirm_func: Callable[[str], str] | None = None,
+    require_confirmation: bool = True,
+    fail_after: str | None = None,
+) -> dict[str, Any]:
+    """Execute Phase 2 remote promotion under advisory lock and single Unit of Work.
+
+    Guarantees:
+    - Strictly fail-closed to canonical staging target (kchzucvrnzwzehfdwzwi).
+    - Verifies snapshot manifest, canonical counts, and migrations alignment.
+    - Requires double human confirmation unless explicitly overridden in controlled test harness.
+    - Operates under single Unit of Work using pg_try_advisory_xact_lock.
+    - Persists Pindobal territorial slice via PindobalPersistenceRepository.persist_in_transaction.
+    - Enforces State Guard verifying 0 rejections and canonical persistence counts.
+    """
+    start_time = datetime.now(UTC).isoformat()
+
+    # Step 1: Validate environment and target project ref (fail-closed)
+    if env_values is not None:
+        ref_from_env = validate_environment_config(env_values)
+        if target_project_ref is not None:
+            explicit_ref = validate_target_project_ref(target_project_ref)
+            if explicit_ref != ref_from_env:
+                raise TargetValidationError(
+                    f"Divergência entre --target-project-ref ('{explicit_ref}') "
+                    f"e configuração de ambiente ('{ref_from_env}')."
+                )
+        validated_target = ref_from_env
+    elif target_project_ref is not None:
+        validated_target = validate_target_project_ref(target_project_ref)
+    else:
+        validated_target = CANONICAL_STAGING_PROJECT_REF
+
+    # Step 2: Verify manifest hashes (9 files)
+    manifest_info = verify_pindobal_offline_manifest(snapshot_dir)
+
+    # Step 3: Verify canonical counts from local dry-run
+    counts_info = verify_canonical_counts(snapshot_dir)
+
+    # Step 4: Verify migrations alignment
+    if migrations_dir is None:
+        migrations_dir = Path(__file__).resolve().parents[3] / "supabase" / "migrations"
+    migrations_info = verify_migrations_alignment(migrations_dir)
+
+    # Step 5: Double human confirmation
+    confirmed = False
+    if require_confirmation:
+        confirm_fn = confirm_func or input
+        confirmed = request_human_double_confirmation(validated_target, prompt_input=confirm_fn)
+
+    # Step 6: Parse snapshot records prior to entering locked transaction
+    dry_run_report = run_seed_pindobal(snapshot_dir=snapshot_dir, dry_run=True)
+    if dry_run_report.get("status") != "success":
+        raise PreflightVerificationError("Falha na geração do relatório de dry-run do snapshot.")
+
+    osrm_results = {
+        code: process_osrm_origin(code, snapshot_dir)
+        for code in ("porto", "aeroporto", "rodoviaria")
+    }
+    if not all(res.is_valid for res in osrm_results.values()):
+        raise PreflightVerificationError("Geometria OSRM inválida no snapshot.")
+
+    started_at = datetime.fromisoformat(cast(str, dry_run_report["run_started_at"]))
+    finished_at = datetime.fromisoformat(cast(str, dry_run_report["run_finished_at"]))
+
+    semtur_records, _ = process_semtur_inventory(snapshot_dir)
+    google_records, _ = process_google_snapshot(snapshot_dir)
+    cutout_records, _ = process_pindobal_cutout(snapshot_dir)
+    matches = reconcile_semtur_and_google(semtur_records, google_records)
+
+    # Step 7: Atomic execution under non-blocking advisory lock
+    async with staging_atomic_lock_transaction(session) as locked_session:
+        repository = PindobalPersistenceRepository(locked_session)
+        run_id, persistence_counts = await repository.persist_in_transaction(
+            report=dry_run_report,
+            osrm_results=osrm_results,
+            started_at=started_at,
+            finished_at=finished_at,
+            semtur_records=semtur_records,
+            google_records=google_records,
+            cutout_records=cutout_records,
+            matches=matches,
+            fail_after=fail_after,
+        )
+
+        # State Guard: enforce strict integrity assertions
+        if persistence_counts.rejected != 0:
+            raise PromotionExecutionError(
+                f"Contagem de rejeições inesperada: {persistence_counts.rejected} (esperado: 0)."
+            )
+        total_valid = persistence_counts.created + persistence_counts.unchanged
+        if total_valid != CANONICAL_PINDOBAL_METRICS["created"]:
+            raise PromotionExecutionError(
+                f"Contagem de registros válidos inesperada: {total_valid} "
+                f"(esperado: {CANONICAL_PINDOBAL_METRICS['created']})."
+            )
+
+    end_time = datetime.now(UTC).isoformat()
+
+    return {
+        "status": "phase2_success",
+        "phase": 2,
+        "mode": "staging_promotion_applied",
+        "remote_write_performed": True,
+        "target_project_ref": validated_target,
+        "run_id": str(run_id),
+        "persisted_counts": {
+            "created": persistence_counts.created,
+            "updated": persistence_counts.updated,
+            "unchanged": persistence_counts.unchanged,
+            "rejected": persistence_counts.rejected,
+            "candidates": persistence_counts.candidates,
+        },
+        "started_at": start_time,
+        "finished_at": end_time,
+        "manifest": manifest_info,
+        "canonical_counts": counts_info,
+        "migrations": migrations_info,
+        "human_confirmation": {
+            "required": require_confirmation,
+            "confirmed": confirmed,
+        },
+        "governance": {
+            "advisory_lock_id": PINDOBAL_STAGING_ADVISORY_LOCK_ID,
+            "lock_mechanism": "pg_try_advisory_xact_lock",
+            "transaction_ownership": "single_unit_of_work_transaction",
+            "lock_release_guarantee": (
+                "postgresql_server_resource_owner_on_disconnect_or_termination"
+            ),
+            "schema_rollback": "PITR_snapshot_only",
+            "data_rollback": "logical_unpublish_draft_only",
+        },
+    }
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """CLI entrypoint for the staging promotion runner."""
     # Ensure stdout/stderr emit valid UTF-8 across Windows consoles
@@ -750,7 +901,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             pass
 
     parser = argparse.ArgumentParser(
-        description="ECOnexão Staging Promotion Runner (ECO-2005 Phase 1)"
+        description="ECOnexão Staging Promotion Runner (ECO-2005 Phase 1 & 2)"
     )
     parser.add_argument(
         "--snapshot-dir",
@@ -775,6 +926,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="store_true",
         help="Phase 1 offline preflight only: skip prompts (prohibited for write)",
     )
+    parser.add_argument(
+        "--apply",
+        action="store_true",
+        help=(
+            "Execute Phase 2 remote promotion under advisory lock "
+            "(requires interactive confirmation)"
+        ),
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -786,6 +945,54 @@ def main(argv: Sequence[str] | None = None) -> int:
         if any(k in os.environ for k in env_keys):
             env_values = {k: os.environ.get(k, "") for k in env_keys}
 
+        if args.apply:
+            if args.non_interactive:
+                raise StagingPromotionError(
+                    "--apply exige confirmação interativa do operador e proíbe --non-interactive."
+                )
+            if not env_values or not all(env_values.get(k, "").strip() for k in env_keys):
+                raise TargetValidationError(
+                    "Execução com --apply exige variáveis de ambiente APP_ENV, "
+                    "SUPABASE_URL e DATABASE_URL."
+                )
+            validated_ref = validate_environment_config(env_values)
+            if args.target_project_ref is not None:
+                explicit_ref = validate_target_project_ref(args.target_project_ref)
+                if explicit_ref != validated_ref:
+                    raise TargetValidationError(
+                        f"Divergência entre --target-project-ref ('{explicit_ref}') "
+                        f"e configuração de ambiente ('{validated_ref}')."
+                    )
+
+            import asyncio
+
+            from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+            database_url = env_values["DATABASE_URL"]
+            engine = create_async_engine(database_url)
+            session_factory = async_sessionmaker(
+                engine, class_=AsyncSession, expire_on_commit=False
+            )
+
+            async def _run_apply() -> dict[str, Any]:
+                try:
+                    async with session_factory() as session:
+                        return await execute_phase2_staging_promotion(
+                            session=session,
+                            snapshot_dir=args.snapshot_dir,
+                            migrations_dir=args.migrations_dir,
+                            target_project_ref=args.target_project_ref,
+                            env_values=env_values,
+                            require_confirmation=True,
+                        )
+                finally:
+                    await engine.dispose()
+
+            report = asyncio.run(_run_apply())
+            print(json.dumps(report, indent=2, ensure_ascii=False))
+            return 0
+
+        # Default: Phase 1 preflight execution
         report = execute_phase1_preflight(
             snapshot_dir=args.snapshot_dir,
             migrations_dir=args.migrations_dir,
