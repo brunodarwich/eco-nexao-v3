@@ -168,7 +168,24 @@ def _hash(payload: dict[str, Any]) -> str:
 
 
 class PindobalPersistenceRepository:
-    """Persist the snapshot atomically and leave unchanged content untouched."""
+    """Persist the snapshot atomically and leave unchanged content untouched.
+
+    Contrato de Idempotência e Auditoria:
+    1. Entidades de Domínio e Catálogo Territorial (Idempotência Estrita):
+       - 'actors', 'actor_categories', 'actor_external_refs', 'routes', 'regions',
+         'route_origins', 'route_geometries', 'route_actors', 'field_provenances',
+         'external_sources'.
+       - A idempotência abrange integralmente o modelo de domínio: registros existentes
+         são resolvidos por chave natural/slug e preservados sem duplicatas
+         (created=0, unchanged=1661 em reexecução).
+    2. Histórico de Execuções e Proveniência Bruta (Ledger Append-Only Cumulativo):
+       - 'ingestion_runs' e 'raw_source_records'.
+       - Cada tentativa ou execução do pipeline instancia um novo IngestionRun com seu
+         próprio run_id e registra os respectivos RawSourceRecord daquela execução.
+       - Justificativa arquitetural: Trilha de auditoria forense imutável por execução.
+         Permite reproduzir, auditar e verificar o histórico cronológico de cada tentativa
+         sem sobrescrever os dados de execuções pregressas.
+    """
 
     def __init__(self, session: AsyncSession | LockedAsyncSessionProxy) -> None:
         self.session = session

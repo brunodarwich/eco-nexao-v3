@@ -261,15 +261,22 @@ O runner solicitará dois fatores de confirmação humana no terminal:
 2. **Verificação Offline de Integridade:** Validação de hashes do manifesto (9 arquivos) e das 25 migrations locais.
 3. **Aquisição Não-Bloqueante do Advisory Lock:** `SELECT pg_try_advisory_xact_lock(3779311896921572133)` como primeira query dentro da Unit of Work. Se ocupado, aborta imediatamente (`AdvisoryLockBusyError`).
 4. **Carga sob Unit of Work Única:** Chamada de `persist_in_transaction` via `LockedAsyncSessionProxy`, que proíbe commit/rollback internos.
-5. **State Guard:** Verificação estrita baseada nas métricas reais do repositório:
-   - Rejeições estritamente zero (`rejected == 0`).
-   - Candidatos fuzzy exatamente 53 (`candidates == 53`).
-   - Total lido exatamente 1.714 (`read == 1714`).
-   - Invariante de reconciliação válida (`reconciled is True`).
-   - Total de registros válidos não-candidatos exatamente 1.661 (`created + updated + unchanged == 1661`):
-     - Na 1ª execução (carga inicial): `created == 924` (SEMTUR), `unchanged == 737` (Google raw + recorte raw), `regions_created == 1`, `routes_created == 1`.
-     - Na 2ª execução (idempotente): `created == 0`, `unchanged == 1661` (todos já persistidos), `regions_unchanged == 1`, `routes_unchanged == 1`.
-6. **Commit Atômico ou Rollback Automático:** Gerenciado exclusivamente pela Unit of Work externa; se houver exceção, o PostgreSQL reverte atomicamente toda a transação e libera o lock.
+5. **Idempotência de Domínio vs. Ledger Append-Only de Auditoria:**
+   - **Entidades de Domínio e Catálogo Territorial:** São estritamente idempotentes (`actors`, `actor_categories`, `routes`, `regions`, `route_origins`, `route_geometries`, etc.). Reexecuções subsequentes nunca duplicam entidades e deixam os dados intactos.
+   - **Histórico de Ingestão e Dados Brutos (`ingestion_runs`, `raw_source_records`):** É deliberadamente um ledger append-only cumulativo por tentativa de execução. Cada invocação registra um novo `IngestionRun` (com run_id único e telemetria) e seus respectivos `RawSourceRecord` para garantia de rastreabilidade forense integral e proveniência sem sobrescrever histórico pregresso.
+6. **State Guard (Enforcement dos Dois Perfis Canônicos Exclusivos):**
+   O State Guard valida a execução contra exatamente um de dois perfis canônicos imutáveis e proíbe qualquer mutação intermediária:
+   - **Proibição Estrita de Updates:** `updated == 0` obrigatório em qualquer perfil (`updated != 0` causa rejeição imediata).
+   - **Proibição Estrita de Rejeições:** `rejected == 0` obrigatório (`rejected != 0` causa rejeição imediata).
+   - **Invariantes Globais:** `read == 1714`, `candidates == 53` e `reconciled is True`.
+   - **Perfil 1 — Carga Inicial Canônica:**
+     - Reconciliação: `created == 924` (SEMTUR), `updated == 0`, `unchanged == 737` (Google raw + recorte raw).
+     - Territorial: `regions_created == 1`, `routes_created == 1`, `regions_unchanged == 0`, `routes_unchanged == 0`.
+   - **Perfil 2 — Reexecução Idempotente Canônica:**
+     - Reconciliação: `created == 0`, `updated == 0`, `unchanged == 1661` (todos os registros válidos preservados).
+     - Territorial: `regions_created == 0`, `routes_created == 0`, `regions_unchanged == 1`, `routes_unchanged == 1`.
+   - **Rejeição de Estados Híbridos ou Parciais:** Qualquer combinação mista (ex.: `created=924` com entidades territoriais preexistentes, `created=0` com entidades territoriais recém-criadas, `updated > 0` ou proporções parciais de `created/unchanged`) levanta `PromotionExecutionError` e aborta a transação com rollback automático.
+7. **Commit Atômico ou Rollback Automático:** Gerenciado exclusivamente pela Unit of Work externa; se houver exceção, o PostgreSQL reverte atomicamente toda a transação e libera o lock.
 
 #### 8.2.5 Exemplo de Saída Estruturada da Etapa 2.2 (JSON)
 ```json

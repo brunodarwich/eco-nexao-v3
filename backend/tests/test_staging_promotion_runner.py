@@ -19,6 +19,8 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ingestion.pindobal_repository import (
+    EarlyCommitProhibitedError,
+    LockedAsyncSessionProxy,
     PindobalPersistenceStats,
 )
 from app.ingestion.staging_promotion_runner import (
@@ -27,8 +29,6 @@ from app.ingestion.staging_promotion_runner import (
     CANONICAL_STAGING_PROJECT_REF,
     AdvisoryLockBusyError,
     ConfirmationError,
-    EarlyCommitProhibitedError,
-    LockedAsyncSessionProxy,
     PreflightVerificationError,
     PromotionExecutionError,
     StagingPromotionError,
@@ -501,7 +501,7 @@ async def test_integration_lock_transaction_with_real_repository_operation() -> 
     # Execute atomic lock transaction and run persist_in_transaction under the single UoW
     async with staging_atomic_lock_transaction(session) as protected_session:
         assert protected_session.in_transaction() is True
-        repository = PindobalPersistenceRepository(protected_session)  # type: ignore[arg-type]
+        repository = PindobalPersistenceRepository(protected_session)
         run_id, stats = await repository.persist_in_transaction(
             report=mock_report,
             osrm_results=mock_osrm,
@@ -1415,7 +1415,7 @@ async def test_execute_phase2_staging_promotion_state_guard_fails_on_rejections(
             return_value=(fake_run_id, mock_stats),
         ),
     ):
-        with pytest.raises(PromotionExecutionError, match="Contagem de rejeições inesperada"):
+        with pytest.raises(PromotionExecutionError, match="State Guard violação: rejected != 0"):
             await execute_phase2_staging_promotion(
                 session=session,
                 snapshot_dir=Path("dummy"),
@@ -1476,7 +1476,7 @@ async def test_execute_phase2_staging_promotion_state_guard_fails_on_divergent_t
         ),
     ):
         with pytest.raises(
-            PromotionExecutionError, match="Total de registros válidos inesperado"
+            PromotionExecutionError, match="State Guard violação: estado parcial ou híbrido"
         ):
             await execute_phase2_staging_promotion(
                 session=session,
@@ -1685,6 +1685,314 @@ async def test_execute_phase2_regression_real_repository_dict_handled_cleanly() 
     assert report["status"] == "phase2_success"
     assert report["persisted_counts"]["created"] == 924
     assert report["persisted_counts"]["unchanged"] == 737
+
+
+@pytest.mark.asyncio
+async def test_state_guard_rejects_hybrid_created_with_existing_territorial() -> None:
+    """Regression: created=924 with region/route already existing is rejected and rolled back."""
+    prereqs = _build_mock_phase2_prerequisites()
+
+    session = AsyncMock(spec=AsyncSession)
+    session.in_transaction.side_effect = [False, True, False]
+    execute_result = MagicMock()
+    execute_result.scalar_one.return_value = 1
+    session.execute.return_value = execute_result
+
+    tx_cm = AsyncMock()
+    tx_cm.__aenter__ = AsyncMock(return_value=None)
+    tx_cm.__aexit__ = AsyncMock(return_value=None)
+    session.begin.return_value = tx_cm
+
+    fake_run_id = uuid.uuid4()
+    # Hybrid state: 924 created, but territorial indicates entities already existed
+    hybrid_stats = _build_mock_phase2_stats(
+        created=924,
+        unchanged=737,
+        regions_created=0,
+        routes_created=0,
+    )
+
+    with (
+        patch(
+            "app.ingestion.staging_promotion_runner.verify_manifest",
+            return_value=prereqs["manifest"],
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.run_seed_pindobal",
+            return_value=prereqs["dry_run"],
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.process_osrm_origin",
+            return_value=prereqs["osrm_result"],
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.process_semtur_inventory",
+            return_value=([], {}),
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.process_google_snapshot",
+            return_value=([], {}),
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.process_pindobal_cutout",
+            return_value=([], {}),
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.reconcile_semtur_and_google",
+            return_value=[],
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.PindobalPersistenceRepository.persist_in_transaction",
+            new_callable=AsyncMock,
+            return_value=(fake_run_id, hybrid_stats),
+        ),
+    ):
+        with pytest.raises(
+            PromotionExecutionError,
+            match="State Guard violação: estado parcial ou híbrido",
+        ):
+            await execute_phase2_staging_promotion(
+                session=session,
+                snapshot_dir=Path("dummy"),
+                env_values=MOCK_STAGING_ENV_CONFIG,
+                require_confirmation=False,
+            )
+
+    # Confirm transaction rolled back, never committed
+    tx_cm.__aexit__.assert_awaited_once()
+    exit_exc = tx_cm.__aexit__.call_args.args[0]
+    assert issubclass(exit_exc, PromotionExecutionError)
+    session.commit.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_state_guard_rejects_hybrid_zero_created_with_new_territorial() -> None:
+    """Regression: created=0 with region/route created is rejected and rolled back."""
+    prereqs = _build_mock_phase2_prerequisites()
+
+    session = AsyncMock(spec=AsyncSession)
+    session.in_transaction.side_effect = [False, True, False]
+    execute_result = MagicMock()
+    execute_result.scalar_one.return_value = 1
+    session.execute.return_value = execute_result
+
+    tx_cm = AsyncMock()
+    tx_cm.__aenter__ = AsyncMock(return_value=None)
+    tx_cm.__aexit__ = AsyncMock(return_value=None)
+    session.begin.return_value = tx_cm
+
+    fake_run_id = uuid.uuid4()
+    # Hybrid state: 0 created, but territorial indicates entities were created
+    hybrid_stats = _build_mock_phase2_stats(
+        created=0,
+        unchanged=1661,
+        regions_created=1,
+        routes_created=1,
+    )
+
+    with (
+        patch(
+            "app.ingestion.staging_promotion_runner.verify_manifest",
+            return_value=prereqs["manifest"],
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.run_seed_pindobal",
+            return_value=prereqs["dry_run"],
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.process_osrm_origin",
+            return_value=prereqs["osrm_result"],
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.process_semtur_inventory",
+            return_value=([], {}),
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.process_google_snapshot",
+            return_value=([], {}),
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.process_pindobal_cutout",
+            return_value=([], {}),
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.reconcile_semtur_and_google",
+            return_value=[],
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.PindobalPersistenceRepository.persist_in_transaction",
+            new_callable=AsyncMock,
+            return_value=(fake_run_id, hybrid_stats),
+        ),
+    ):
+        with pytest.raises(
+            PromotionExecutionError,
+            match="State Guard violação: estado parcial ou híbrido",
+        ):
+            await execute_phase2_staging_promotion(
+                session=session,
+                snapshot_dir=Path("dummy"),
+                env_values=MOCK_STAGING_ENV_CONFIG,
+                require_confirmation=False,
+            )
+
+    # Confirm transaction rolled back, never committed
+    tx_cm.__aexit__.assert_awaited_once()
+    exit_exc = tx_cm.__aexit__.call_args.args[0]
+    assert issubclass(exit_exc, PromotionExecutionError)
+    session.commit.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_state_guard_rejects_any_updated_count() -> None:
+    """Regression: any updated > 0 is rejected and rolled back."""
+    prereqs = _build_mock_phase2_prerequisites()
+
+    session = AsyncMock(spec=AsyncSession)
+    session.in_transaction.side_effect = [False, True, False]
+    execute_result = MagicMock()
+    execute_result.scalar_one.return_value = 1
+    session.execute.return_value = execute_result
+
+    tx_cm = AsyncMock()
+    tx_cm.__aenter__ = AsyncMock(return_value=None)
+    tx_cm.__aexit__ = AsyncMock(return_value=None)
+    session.begin.return_value = tx_cm
+
+    fake_run_id = uuid.uuid4()
+    # Updated > 0 is strictly prohibited
+    bad_stats = _build_mock_phase2_stats(
+        created=923,
+        updated=1,
+        unchanged=737,
+    )
+
+    with (
+        patch(
+            "app.ingestion.staging_promotion_runner.verify_manifest",
+            return_value=prereqs["manifest"],
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.run_seed_pindobal",
+            return_value=prereqs["dry_run"],
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.process_osrm_origin",
+            return_value=prereqs["osrm_result"],
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.process_semtur_inventory",
+            return_value=([], {}),
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.process_google_snapshot",
+            return_value=([], {}),
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.process_pindobal_cutout",
+            return_value=([], {}),
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.reconcile_semtur_and_google",
+            return_value=[],
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.PindobalPersistenceRepository.persist_in_transaction",
+            new_callable=AsyncMock,
+            return_value=(fake_run_id, bad_stats),
+        ),
+    ):
+        with pytest.raises(
+            PromotionExecutionError, match="State Guard violação: updated != 0"
+        ):
+            await execute_phase2_staging_promotion(
+                session=session,
+                snapshot_dir=Path("dummy"),
+                env_values=MOCK_STAGING_ENV_CONFIG,
+                require_confirmation=False,
+            )
+
+    # Confirm transaction rolled back, never committed
+    tx_cm.__aexit__.assert_awaited_once()
+    exit_exc = tx_cm.__aexit__.call_args.args[0]
+    assert issubclass(exit_exc, PromotionExecutionError)
+    session.commit.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_state_guard_rejects_hybrid_combination_of_created_and_unchanged() -> None:
+    """Regression: total=1661 with hybrid created/unchanged is rejected and rolled back."""
+    prereqs = _build_mock_phase2_prerequisites()
+
+    session = AsyncMock(spec=AsyncSession)
+    session.in_transaction.side_effect = [False, True, False]
+    execute_result = MagicMock()
+    execute_result.scalar_one.return_value = 1
+    session.execute.return_value = execute_result
+
+    tx_cm = AsyncMock()
+    tx_cm.__aenter__ = AsyncMock(return_value=None)
+    tx_cm.__aexit__ = AsyncMock(return_value=None)
+    session.begin.return_value = tx_cm
+
+    fake_run_id = uuid.uuid4()
+    # Hybrid combination: created=500, unchanged=1161 (sum=1661, but not 924 nor 0)
+    hybrid_stats = _build_mock_phase2_stats(
+        created=500,
+        unchanged=1161,
+    )
+
+    with (
+        patch(
+            "app.ingestion.staging_promotion_runner.verify_manifest",
+            return_value=prereqs["manifest"],
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.run_seed_pindobal",
+            return_value=prereqs["dry_run"],
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.process_osrm_origin",
+            return_value=prereqs["osrm_result"],
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.process_semtur_inventory",
+            return_value=([], {}),
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.process_google_snapshot",
+            return_value=([], {}),
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.process_pindobal_cutout",
+            return_value=([], {}),
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.reconcile_semtur_and_google",
+            return_value=[],
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.PindobalPersistenceRepository.persist_in_transaction",
+            new_callable=AsyncMock,
+            return_value=(fake_run_id, hybrid_stats),
+        ),
+    ):
+        with pytest.raises(
+            PromotionExecutionError,
+            match="State Guard violação: estado parcial ou híbrido",
+        ):
+            await execute_phase2_staging_promotion(
+                session=session,
+                snapshot_dir=Path("dummy"),
+                env_values=MOCK_STAGING_ENV_CONFIG,
+                require_confirmation=False,
+            )
+
+    # Confirm transaction rolled back, never committed
+    tx_cm.__aexit__.assert_awaited_once()
+    exit_exc = tx_cm.__aexit__.call_args.args[0]
+    assert issubclass(exit_exc, PromotionExecutionError)
+    session.commit.assert_not_called()
 
 
 # ==============================================================================

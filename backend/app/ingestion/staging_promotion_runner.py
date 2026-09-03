@@ -18,7 +18,7 @@ from collections.abc import AsyncGenerator, Callable, Sequence
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, NamedTuple, cast
 from urllib.parse import urlparse
 
 from sqlalchemy import func, select
@@ -62,6 +62,59 @@ CANONICAL_PINDOBAL_METRICS: dict[str, int] = {
     "updated": 0,
 }
 CANONICAL_MIGRATIONS_COUNT: int = 25
+
+
+class CanonicalPromotionProfile(NamedTuple):
+    """Canonical expected state for Phase 2 promotion executions in Staging."""
+
+    mode_name: str
+    read: int
+    created: int
+    updated: int
+    unchanged: int
+    rejected: int
+    candidates: int
+    reconciled: bool
+    regions_created: int
+    regions_unchanged: int
+    routes_created: int
+    routes_unchanged: int
+
+
+CANONICAL_INITIAL_LOAD_PROFILE = CanonicalPromotionProfile(
+    mode_name="initial_load",
+    read=1714,
+    created=924,
+    updated=0,
+    unchanged=737,
+    rejected=0,
+    candidates=53,
+    reconciled=True,
+    regions_created=1,
+    regions_unchanged=0,
+    routes_created=1,
+    routes_unchanged=0,
+)
+
+CANONICAL_IDEMPOTENT_RERUN_PROFILE = CanonicalPromotionProfile(
+    mode_name="idempotent_rerun",
+    read=1714,
+    created=0,
+    updated=0,
+    unchanged=1661,
+    rejected=0,
+    candidates=53,
+    reconciled=True,
+    regions_created=0,
+    regions_unchanged=1,
+    routes_created=0,
+    routes_unchanged=1,
+)
+
+ACCEPTED_PROMOTION_PROFILES: tuple[CanonicalPromotionProfile, ...] = (
+    CANONICAL_INITIAL_LOAD_PROFILE,
+    CANONICAL_IDEMPOTENT_RERUN_PROFILE,
+)
 
 
 class StagingPromotionError(Exception):
@@ -809,47 +862,93 @@ async def execute_phase2_staging_promotion(
         reconciliation = stats["reconciliation"]
         territorial = stats["territorial"]
 
-        # State Guard: enforce strict integrity assertions based on real repository metrics
-        if reconciliation["rejected"] != 0:
+        # State Guard: enforce strict two-profile canonical invariant.
+        # Accepts ONLY two complete canonical profiles:
+        # a) Initial load: created=924, updated=0, unchanged=737, candidates=53, rejected=0;
+        #    region and route created exactly once (regions_created=1, routes_created=1).
+        # b) Idempotent rerun: created=0, updated=0, unchanged=1661, candidates=53, rejected=0;
+        #    region and route untouched (regions_unchanged=1, routes_unchanged=1).
+        # Any partial, hybrid, updated != 0, or unexpected state immediately raises
+        # PromotionExecutionError, triggering automatic transaction rollback via context manager.
+
+        # 1. Strictly forbid updated != 0 in any profile
+        if reconciliation.get("updated", 0) != 0:
             raise PromotionExecutionError(
-                f"Contagem de rejeições inesperada: {reconciliation['rejected']} (esperado: 0)."
+                f"State Guard violação: updated != 0 ({reconciliation.get('updated')}). "
+                "O pipeline de staging proíbe estritamente updates de registros existentes."
             )
 
-        if reconciliation["candidates"] != CANONICAL_PINDOBAL_METRICS["candidates"]:
+        # 2. Strictly forbid rejected != 0 in any profile
+        if reconciliation.get("rejected", 0) != 0:
             raise PromotionExecutionError(
-                f"Contagem de candidatos inesperada: {reconciliation['candidates']} "
-                f"(esperado: {CANONICAL_PINDOBAL_METRICS['candidates']})."
+                f"State Guard violação: rejected != 0 ({reconciliation.get('rejected')}). "
+                "Registros rejeitados são estritamente proibidos na promoção."
             )
 
-        if reconciliation["read"] != CANONICAL_PINDOBAL_METRICS["read"]:
+        # 3. Invariant check: reconciled must be True
+        if not reconciliation.get("reconciled", False):
             raise PromotionExecutionError(
-                f"Contagem total de leitura inesperada: {reconciliation['read']} "
-                f"(esperado: {CANONICAL_PINDOBAL_METRICS['read']})."
+                "State Guard violação: invariante de reconciliação violada "
+                "(reconciled is not True)."
             )
 
-        if not reconciliation["reconciled"]:
+        # 4. Invariant check: candidate count must match canonical snapshot
+        if reconciliation.get("candidates") != CANONICAL_INITIAL_LOAD_PROFILE.candidates:
             raise PromotionExecutionError(
-                "Invariante de reconciliação violada: read != sum(created, updated, unchanged, "
-                "rejected, candidates)."
+                f"State Guard violação: candidates inesperado ({reconciliation.get('candidates')}; "
+                f"esperado: {CANONICAL_INITIAL_LOAD_PROFILE.candidates})."
             )
 
-        total_valid = (
-            reconciliation["created"]
-            + reconciliation["updated"]
-            + reconciliation["unchanged"]
+        # 5. Profile matching: must match exactly one of the two canonical profiles
+        matches_initial = (
+            reconciliation.get("read") == CANONICAL_INITIAL_LOAD_PROFILE.read
+            and reconciliation.get("created") == CANONICAL_INITIAL_LOAD_PROFILE.created
+            and reconciliation.get("updated") == CANONICAL_INITIAL_LOAD_PROFILE.updated
+            and reconciliation.get("unchanged") == CANONICAL_INITIAL_LOAD_PROFILE.unchanged
+            and reconciliation.get("rejected") == CANONICAL_INITIAL_LOAD_PROFILE.rejected
+            and reconciliation.get("candidates") == CANONICAL_INITIAL_LOAD_PROFILE.candidates
+            and territorial.get("regions_created")
+            == CANONICAL_INITIAL_LOAD_PROFILE.regions_created
+            and territorial.get("regions_unchanged")
+            == CANONICAL_INITIAL_LOAD_PROFILE.regions_unchanged
+            and territorial.get("routes_created") == CANONICAL_INITIAL_LOAD_PROFILE.routes_created
+            and territorial.get("routes_unchanged")
+            == CANONICAL_INITIAL_LOAD_PROFILE.routes_unchanged
         )
-        if total_valid != 1661:
-            raise PromotionExecutionError(
-                f"Total de registros válidos inesperado: {total_valid} "
-                f"(created={reconciliation['created']}, updated={reconciliation['updated']}, "
-                f"unchanged={reconciliation['unchanged']}; esperado soma: 1661)."
-            )
 
-        if reconciliation["created"] not in (924, 0):
+        matches_idempotent = (
+            reconciliation.get("read") == CANONICAL_IDEMPOTENT_RERUN_PROFILE.read
+            and reconciliation.get("created") == CANONICAL_IDEMPOTENT_RERUN_PROFILE.created
+            and reconciliation.get("updated") == CANONICAL_IDEMPOTENT_RERUN_PROFILE.updated
+            and reconciliation.get("unchanged") == CANONICAL_IDEMPOTENT_RERUN_PROFILE.unchanged
+            and reconciliation.get("rejected") == CANONICAL_IDEMPOTENT_RERUN_PROFILE.rejected
+            and reconciliation.get("candidates") == CANONICAL_IDEMPOTENT_RERUN_PROFILE.candidates
+            and territorial.get("regions_created")
+            == CANONICAL_IDEMPOTENT_RERUN_PROFILE.regions_created
+            and territorial.get("regions_unchanged")
+            == CANONICAL_IDEMPOTENT_RERUN_PROFILE.regions_unchanged
+            and territorial.get("routes_created")
+            == CANONICAL_IDEMPOTENT_RERUN_PROFILE.routes_created
+            and territorial.get("routes_unchanged")
+            == CANONICAL_IDEMPOTENT_RERUN_PROFILE.routes_unchanged
+        )
+
+        if not (matches_initial or matches_idempotent):
+            actual_summary = (
+                f"created={reconciliation.get('created')}, "
+                f"updated={reconciliation.get('updated')}, "
+                f"unchanged={reconciliation.get('unchanged')}, "
+                f"candidates={reconciliation.get('candidates')}, "
+                f"rejected={reconciliation.get('rejected')}, "
+                f"regions_created={territorial.get('regions_created')}, "
+                f"regions_unchanged={territorial.get('regions_unchanged')}, "
+                f"routes_created={territorial.get('routes_created')}, "
+                f"routes_unchanged={territorial.get('routes_unchanged')}"
+            )
             raise PromotionExecutionError(
-                f"Contagem de criados fora dos padrões canônicos de produção: "
-                f"{reconciliation['created']} (esperado: 924 na carga inicial "
-                "ou 0 em re-execução idempotente)."
+                f"State Guard violação: estado parcial ou híbrido detectado ({actual_summary}). "
+                "A promoção em staging exige um dos dois perfis canônicos completos "
+                "(carga inicial ou reexecução idempotente)."
             )
 
     end_time = datetime.now(UTC).isoformat()
