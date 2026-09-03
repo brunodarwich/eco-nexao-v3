@@ -10,6 +10,7 @@ Remote write execution is strictly prohibited during Phase 1.
 from __future__ import annotations
 
 import argparse
+import asyncio
 import hashlib
 import json
 import re
@@ -23,7 +24,7 @@ from urllib.parse import urlparse
 
 from sqlalchemy import func, select
 from sqlalchemy.engine import make_url
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.ingestion.google_snapshot_importer import process_google_snapshot
 from app.ingestion.manifest import verify_manifest
@@ -84,9 +85,9 @@ class CanonicalPromotionProfile(NamedTuple):
 CANONICAL_INITIAL_LOAD_PROFILE = CanonicalPromotionProfile(
     mode_name="initial_load",
     read=1714,
-    created=924,
+    created=674,
     updated=0,
-    unchanged=737,
+    unchanged=987,
     rejected=0,
     candidates=53,
     reconciled=True,
@@ -95,6 +96,7 @@ CANONICAL_INITIAL_LOAD_PROFILE = CanonicalPromotionProfile(
     routes_created=1,
     routes_unchanged=0,
 )
+
 
 CANONICAL_IDEMPOTENT_RERUN_PROFILE = CanonicalPromotionProfile(
     mode_name="idempotent_rerun",
@@ -289,6 +291,21 @@ def extract_ref_from_database_url(url: str | None) -> str:
     """Extract and validate project ref from DB host or Supavisor pooler string."""
     raw_ref = _extract_raw_ref_from_database_url(url)
     return validate_target_project_ref(raw_ref)
+
+
+def normalize_database_url(url: str) -> str:
+    """Normalize postgresql:// and postgres:// DSNs to explicit postgresql+psycopg://."""
+    cleaned = (url or "").strip()
+    if not cleaned:
+        return cleaned
+    try:
+        parsed = make_url(cleaned)
+    except Exception:
+        return cleaned
+
+    if parsed.drivername in {"postgres", "postgresql"}:
+        return parsed.set(drivername="postgresql+psycopg").render_as_string(hide_password=False)
+    return cleaned
 
 
 def validate_environment_config(env_values: dict[str, str]) -> str:
@@ -864,7 +881,7 @@ async def execute_phase2_staging_promotion(
 
         # State Guard: enforce strict two-profile canonical invariant.
         # Accepts ONLY two complete canonical profiles:
-        # a) Initial load: created=924, updated=0, unchanged=737, candidates=53, rejected=0;
+        # a) Initial load: created=674, updated=0, unchanged=987, candidates=53, rejected=0;
         #    region and route created exactly once (regions_created=1, routes_created=1).
         # b) Idempotent rerun: created=0, updated=0, unchanged=1661, candidates=53, rejected=0;
         #    region and route untouched (regions_unchanged=1, routes_unchanged=1).
@@ -1076,11 +1093,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                         f"e configuração de ambiente ('{validated_ref}')."
                     )
 
-            import asyncio
-
-            from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-
-            database_url = env_values["DATABASE_URL"]
+            database_url = normalize_database_url(env_values["DATABASE_URL"])
             engine = create_async_engine(database_url)
             session_factory = async_sessionmaker(
                 engine, class_=AsyncSession, expire_on_commit=False
@@ -1099,6 +1112,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                         )
                 finally:
                     await engine.dispose()
+
+            if sys.platform == "win32":
+                asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
             report = asyncio.run(_run_apply())
             print(json.dumps(report, indent=2, ensure_ascii=False))
