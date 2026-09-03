@@ -18,7 +18,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.ingestion.pindobal_repository import PersistenceCounts
+from app.ingestion.pindobal_repository import (
+    PindobalPersistenceStats,
+)
 from app.ingestion.staging_promotion_runner import (
     ADVISORY_LOCK_ID,
     CANONICAL_PINDOBAL_METRICS,
@@ -49,6 +51,14 @@ from app.ingestion.staging_promotion_runner import (
 
 SYNTHETIC_UNAUTHORIZED_REF: str = "unauthorizedref12345"
 SYNTHETIC_OBSOLETE_REF: str = "rgfuqmwxjuceqpxcraxm"
+
+MOCK_STAGING_ENV_CONFIG: dict[str, str] = {
+    "APP_ENV": "staging",
+    "SUPABASE_URL": f"https://{CANONICAL_STAGING_PROJECT_REF}.supabase.co",
+    "DATABASE_URL": (
+        f"postgresql://postgres:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5432/postgres"
+    ),
+}
 
 
 # ==============================================================================
@@ -1039,9 +1049,53 @@ def _build_mock_phase2_prerequisites() -> dict[str, Any]:
     }
 
 
+def _build_mock_phase2_stats(
+    *,
+    read: int = 1714,
+    created: int = 924,
+    updated: int = 0,
+    unchanged: int = 737,
+    rejected: int = 0,
+    candidates: int = 53,
+    reconciled: bool = True,
+    regions_created: int = 1,
+    routes_created: int = 1,
+) -> PindobalPersistenceStats:
+    return {
+        "reconciliation": {
+            "read": read,
+            "created": created,
+            "updated": updated,
+            "unchanged": unchanged,
+            "rejected": rejected,
+            "candidates": candidates,
+            "reconciled": reconciled,
+            "fuzzy_match_count": 57,
+            "candidate_google_record_count": candidates,
+            "candidate_persistence": "blocked_without_trusted_google_actor_identity",
+        },
+        "territorial": {
+            "sources_created": 1 if regions_created else 0,
+            "regions_created": regions_created,
+            "regions_unchanged": 1 - regions_created,
+            "routes_created": routes_created,
+            "routes_unchanged": 1 - routes_created,
+            "origins_created": 3 if routes_created else 0,
+            "origins_unchanged": 0 if routes_created else 3,
+            "geometries_created": 3 if routes_created else 0,
+            "geometries_unchanged": 0 if routes_created else 3,
+            "route_actors_created": 12 if routes_created else 0,
+            "route_actors_updated": 0,
+            "route_actors_total": 12,
+        },
+        "raw_records": read,
+        "external_id_missing": 737,
+    }
+
+
 @pytest.mark.asyncio
 async def test_execute_phase2_staging_promotion_success() -> None:
-    """Phase 2 execution under lock succeeds and returns canonical metrics."""
+    """Phase 2 execution under lock succeeds and returns canonical production metrics."""
     prereqs = _build_mock_phase2_prerequisites()
 
     session = AsyncMock(spec=AsyncSession)
@@ -1053,14 +1107,7 @@ async def test_execute_phase2_staging_promotion_success() -> None:
     session.begin.return_value.__aexit__ = AsyncMock(return_value=None)
 
     fake_run_id = uuid.uuid4()
-    mock_counts = PersistenceCounts(
-        read=1714,
-        created=1661,
-        updated=0,
-        unchanged=0,
-        rejected=0,
-        candidates=53,
-    )
+    mock_stats = _build_mock_phase2_stats(created=924, unchanged=737)
 
     with (
         patch(
@@ -1094,12 +1141,13 @@ async def test_execute_phase2_staging_promotion_success() -> None:
         patch(
             "app.ingestion.staging_promotion_runner.PindobalPersistenceRepository.persist_in_transaction",
             new_callable=AsyncMock,
-            return_value=(fake_run_id, mock_counts),
+            return_value=(fake_run_id, mock_stats),
         ) as mock_persist,
     ):
         report = await execute_phase2_staging_promotion(
             session=session,
             snapshot_dir=Path("dummy"),
+            env_values=MOCK_STAGING_ENV_CONFIG,
             require_confirmation=False,
         )
 
@@ -1109,10 +1157,12 @@ async def test_execute_phase2_staging_promotion_success() -> None:
     assert report["remote_write_performed"] is True
     assert report["target_project_ref"] == CANONICAL_STAGING_PROJECT_REF
     assert report["run_id"] == str(fake_run_id)
-    assert report["persisted_counts"]["created"] == 1661
-    assert report["persisted_counts"]["unchanged"] == 0
+    assert report["persisted_counts"]["read"] == 1714
+    assert report["persisted_counts"]["created"] == 924
+    assert report["persisted_counts"]["unchanged"] == 737
     assert report["persisted_counts"]["candidates"] == 53
     assert report["persisted_counts"]["rejected"] == 0
+    assert report["territorial_counts"]["regions_created"] == 1
     mock_persist.assert_awaited_once()
 
 
@@ -1130,13 +1180,11 @@ async def test_execute_phase2_staging_promotion_idempotency_second_run() -> None
     session.begin.return_value.__aexit__ = AsyncMock(return_value=None)
 
     fake_run_id = uuid.uuid4()
-    mock_counts = PersistenceCounts(
-        read=1714,
+    mock_stats = _build_mock_phase2_stats(
         created=0,
-        updated=0,
         unchanged=1661,
-        rejected=0,
-        candidates=53,
+        regions_created=0,
+        routes_created=0,
     )
 
     with (
@@ -1171,12 +1219,13 @@ async def test_execute_phase2_staging_promotion_idempotency_second_run() -> None
         patch(
             "app.ingestion.staging_promotion_runner.PindobalPersistenceRepository.persist_in_transaction",
             new_callable=AsyncMock,
-            return_value=(fake_run_id, mock_counts),
+            return_value=(fake_run_id, mock_stats),
         ),
     ):
         report = await execute_phase2_staging_promotion(
             session=session,
             snapshot_dir=Path("dummy"),
+            env_values=MOCK_STAGING_ENV_CONFIG,
             require_confirmation=False,
         )
 
@@ -1184,6 +1233,8 @@ async def test_execute_phase2_staging_promotion_idempotency_second_run() -> None
     assert report["persisted_counts"]["created"] == 0
     assert report["persisted_counts"]["unchanged"] == 1661
     assert report["persisted_counts"]["rejected"] == 0
+    assert report["persisted_counts"]["candidates"] == 53
+    assert report["territorial_counts"]["regions_created"] == 0
 
 
 @pytest.mark.asyncio
@@ -1233,6 +1284,7 @@ async def test_execute_phase2_staging_promotion_lock_busy_aborts() -> None:
             await execute_phase2_staging_promotion(
                 session=session,
                 snapshot_dir=Path("dummy"),
+                env_values=MOCK_STAGING_ENV_CONFIG,
                 require_confirmation=False,
             )
 
@@ -1288,6 +1340,7 @@ async def test_execute_phase2_staging_promotion_rollback_on_repository_error() -
             await execute_phase2_staging_promotion(
                 session=session,
                 snapshot_dir=Path("dummy"),
+                env_values=MOCK_STAGING_ENV_CONFIG,
                 require_confirmation=False,
             )
 
@@ -1296,10 +1349,16 @@ async def test_execute_phase2_staging_promotion_rollback_on_repository_error() -
 async def test_execute_phase2_staging_promotion_target_validation_fail_closed() -> None:
     """Attempting to target any non-authorized project ref raises TargetValidationError."""
     session = AsyncMock(spec=AsyncSession)
+    bad_env = {
+        "APP_ENV": "staging",
+        "SUPABASE_URL": f"https://{SYNTHETIC_UNAUTHORIZED_REF}.supabase.co",
+        "DATABASE_URL": f"postgresql://postgres:pass@db.{SYNTHETIC_UNAUTHORIZED_REF}.supabase.co:5432/postgres",
+    }
     with pytest.raises(TargetValidationError, match="não autorizado"):
         await execute_phase2_staging_promotion(
             session=session,
             snapshot_dir=Path("dummy"),
+            env_values=bad_env,
             target_project_ref=SYNTHETIC_UNAUTHORIZED_REF,
             require_confirmation=False,
         )
@@ -1319,14 +1378,7 @@ async def test_execute_phase2_staging_promotion_state_guard_fails_on_rejections(
     session.begin.return_value.__aexit__ = AsyncMock(return_value=None)
 
     fake_run_id = uuid.uuid4()
-    mock_counts = PersistenceCounts(
-        read=1714,
-        created=1651,
-        updated=0,
-        unchanged=0,
-        rejected=10,  # Unexpected rejection!
-        candidates=53,
-    )
+    mock_stats = _build_mock_phase2_stats(rejected=10, created=914)
 
     with (
         patch(
@@ -1360,13 +1412,14 @@ async def test_execute_phase2_staging_promotion_state_guard_fails_on_rejections(
         patch(
             "app.ingestion.staging_promotion_runner.PindobalPersistenceRepository.persist_in_transaction",
             new_callable=AsyncMock,
-            return_value=(fake_run_id, mock_counts),
+            return_value=(fake_run_id, mock_stats),
         ),
     ):
         with pytest.raises(PromotionExecutionError, match="Contagem de rejeições inesperada"):
             await execute_phase2_staging_promotion(
                 session=session,
                 snapshot_dir=Path("dummy"),
+                env_values=MOCK_STAGING_ENV_CONFIG,
                 require_confirmation=False,
             )
 
@@ -1385,14 +1438,7 @@ async def test_execute_phase2_staging_promotion_state_guard_fails_on_divergent_t
     session.begin.return_value.__aexit__ = AsyncMock(return_value=None)
 
     fake_run_id = uuid.uuid4()
-    mock_counts = PersistenceCounts(
-        read=1714,
-        created=1500,  # Divergent count! (1500 != 1661)
-        updated=0,
-        unchanged=0,
-        rejected=0,
-        candidates=53,
-    )
+    mock_stats = _build_mock_phase2_stats(created=800, unchanged=700)  # sum = 1500 != 1661
 
     with (
         patch(
@@ -1426,15 +1472,16 @@ async def test_execute_phase2_staging_promotion_state_guard_fails_on_divergent_t
         patch(
             "app.ingestion.staging_promotion_runner.PindobalPersistenceRepository.persist_in_transaction",
             new_callable=AsyncMock,
-            return_value=(fake_run_id, mock_counts),
+            return_value=(fake_run_id, mock_stats),
         ),
     ):
         with pytest.raises(
-            PromotionExecutionError, match="Contagem de registros válidos inesperada"
+            PromotionExecutionError, match="Total de registros válidos inesperado"
         ):
             await execute_phase2_staging_promotion(
                 session=session,
                 snapshot_dir=Path("dummy"),
+                env_values=MOCK_STAGING_ENV_CONFIG,
                 require_confirmation=False,
             )
 
@@ -1453,14 +1500,7 @@ async def test_execute_phase2_staging_promotion_with_human_confirmation() -> Non
     session.begin.return_value.__aexit__ = AsyncMock(return_value=None)
 
     fake_run_id = uuid.uuid4()
-    mock_counts = PersistenceCounts(
-        read=1714,
-        created=1661,
-        updated=0,
-        unchanged=0,
-        rejected=0,
-        candidates=53,
-    )
+    mock_stats = _build_mock_phase2_stats(created=924, unchanged=737)
     inputs = [CANONICAL_STAGING_PROJECT_REF, "y"]
 
     with (
@@ -1495,18 +1535,161 @@ async def test_execute_phase2_staging_promotion_with_human_confirmation() -> Non
         patch(
             "app.ingestion.staging_promotion_runner.PindobalPersistenceRepository.persist_in_transaction",
             new_callable=AsyncMock,
-            return_value=(fake_run_id, mock_counts),
+            return_value=(fake_run_id, mock_stats),
         ),
     ):
         report = await execute_phase2_staging_promotion(
             session=session,
             snapshot_dir=Path("dummy"),
+            env_values=MOCK_STAGING_ENV_CONFIG,
             confirm_func=lambda _: inputs.pop(0),
             require_confirmation=True,
         )
 
     assert report["status"] == "phase2_success"
     assert report["human_confirmation"]["confirmed"] is True
+
+
+# ==============================================================================
+# 11. Programmatic API Fail-Closed & Regression Tests
+# ==============================================================================
+
+
+@pytest.mark.asyncio
+async def test_execute_phase2_missing_env_values_aborts_without_touching_db() -> None:
+    """Missing env_values aborts before any session transaction or query execution."""
+    session = AsyncMock(spec=AsyncSession)
+    with pytest.raises(TargetValidationError, match="exige configuração explícita de ambiente"):
+        await execute_phase2_staging_promotion(
+            session=session,
+            snapshot_dir=Path("dummy"),
+            env_values=None,
+            require_confirmation=False,
+        )
+    assert session.begin.call_count == 0
+    assert session.execute.call_count == 0
+
+
+@pytest.mark.asyncio
+async def test_execute_phase2_partial_env_values_aborts_without_touching_db() -> None:
+    """Partial env_values aborts before any session transaction or query execution."""
+    session = AsyncMock(spec=AsyncSession)
+    partial_env = {
+        "APP_ENV": "staging",
+        "SUPABASE_URL": f"https://{CANONICAL_STAGING_PROJECT_REF}.supabase.co",
+    }
+    with pytest.raises(TargetValidationError, match="incompleta"):
+        await execute_phase2_staging_promotion(
+            session=session,
+            snapshot_dir=Path("dummy"),
+            env_values=partial_env,
+            require_confirmation=False,
+        )
+    assert session.begin.call_count == 0
+    assert session.execute.call_count == 0
+
+
+@pytest.mark.asyncio
+async def test_execute_phase2_invalid_app_env_aborts_without_touching_db() -> None:
+    """Non-staging APP_ENV aborts before any session transaction or query execution."""
+    session = AsyncMock(spec=AsyncSession)
+    bad_env = {**MOCK_STAGING_ENV_CONFIG, "APP_ENV": "production"}
+    with pytest.raises(TargetValidationError, match="APP_ENV inválido"):
+        await execute_phase2_staging_promotion(
+            session=session,
+            snapshot_dir=Path("dummy"),
+            env_values=bad_env,
+            require_confirmation=False,
+        )
+    assert session.begin.call_count == 0
+    assert session.execute.call_count == 0
+
+
+@pytest.mark.asyncio
+async def test_execute_phase2_target_mismatch_aborts_without_touching_db() -> None:
+    """Target mismatch aborts before any session transaction or query execution."""
+    session = AsyncMock(spec=AsyncSession)
+    with pytest.raises(TargetValidationError, match="não autorizado|Divergência"):
+        await execute_phase2_staging_promotion(
+            session=session,
+            snapshot_dir=Path("dummy"),
+            env_values=MOCK_STAGING_ENV_CONFIG,
+            target_project_ref=SYNTHETIC_UNAUTHORIZED_REF,
+            require_confirmation=False,
+        )
+    assert session.begin.call_count == 0
+    assert session.execute.call_count == 0
+
+
+@pytest.mark.asyncio
+async def test_execute_phase2_regression_real_repository_dict_handled_cleanly() -> None:
+    """Regression test: repository returning real dict structure never raises AttributeError."""
+    prereqs = _build_mock_phase2_prerequisites()
+
+    session = AsyncMock(spec=AsyncSession)
+    session.in_transaction.side_effect = [False, True, False]
+    execute_result = MagicMock()
+    execute_result.scalar_one.return_value = 1
+    session.execute.return_value = execute_result
+    session.begin.return_value.__aenter__ = AsyncMock(return_value=None)
+    session.begin.return_value.__aexit__ = AsyncMock(return_value=None)
+
+    fake_run_id = uuid.uuid4()
+    # Real repository output is a dict, NOT an object with .created / .rejected attributes
+    real_repository_output = _build_mock_phase2_stats(created=924, unchanged=737)
+    assert isinstance(real_repository_output, dict)
+
+    with (
+        patch(
+            "app.ingestion.staging_promotion_runner.verify_manifest",
+            return_value=prereqs["manifest"],
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.run_seed_pindobal",
+            return_value=prereqs["dry_run"],
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.process_osrm_origin",
+            return_value=prereqs["osrm_result"],
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.process_semtur_inventory",
+            return_value=([], {}),
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.process_google_snapshot",
+            return_value=([], {}),
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.process_pindobal_cutout",
+            return_value=([], {}),
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.reconcile_semtur_and_google",
+            return_value=[],
+        ),
+        patch(
+            "app.ingestion.staging_promotion_runner.PindobalPersistenceRepository.persist_in_transaction",
+            new_callable=AsyncMock,
+            return_value=(fake_run_id, real_repository_output),
+        ),
+    ):
+        report = await execute_phase2_staging_promotion(
+            session=session,
+            snapshot_dir=Path("dummy"),
+            env_values=MOCK_STAGING_ENV_CONFIG,
+            require_confirmation=False,
+        )
+
+    # Must execute cleanly without AttributeError: 'dict' object has no attribute 'rejected'
+    assert report["status"] == "phase2_success"
+    assert report["persisted_counts"]["created"] == 924
+    assert report["persisted_counts"]["unchanged"] == 737
+
+
+# ==============================================================================
+# 12. CLI --apply Tests
+# ==============================================================================
 
 
 def test_main_apply_non_interactive_prohibited(capsys: pytest.CaptureFixture[str]) -> None:

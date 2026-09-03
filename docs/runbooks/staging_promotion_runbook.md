@@ -204,41 +204,74 @@ Em terminais Windows (PowerShell ou `cmd.exe`), a página de código padrão do 
 
 ---
 
-## 8. Protocolo e Rito para a Fase 2 (Promoção Remota sob Lock)
+## 8. Protocolo e Rito para a Fase 2 (Preflight Remoto Read-Only vs. Promoção sob Lock)
 
-A execução da **Fase 2** realiza a carga real e transacional no Supabase de Staging (`kchzucvrnzwzehfdwzwi`). O runner foi implementado e validado em suíte unitária com fail-closed estrito.
+A Fase 2 é estruturada em duas etapas formalmente desacopladas, garantindo que nenhuma escrita remota ocorra sem um rito prévio de validação read-only devidamente auditado e autorizado pelo Human Owner.
 
-### 8.1 Requisitos Prévios Inegociáveis
-1. **Autorização Formal do Human Owner**: Emissão explícita no chat autorizando a conexão e escrita remota no Staging.
-2. **Variáveis de Ambiente Controladas**:
+### 8.1 Etapa 2.1: Preflight Remoto Read-Only (Futuro — Zero Escrita)
+
+Esta etapa consiste em inspeções exclusivamente de leitura contra o ambiente de Staging (`kchzucvrnzwzehfdwzwi`), destinadas a atestar o alinhamento da infraestrutura remota antes de qualquer operação de ingestão de dados.
+
+> [!IMPORTANT]
+> **Status nesta Correção:** Zero conexões remotas são executadas neste momento. A Etapa 2.1 é um rito futuro que exigirá autorização formal e explícita do Human Owner.
+
+**Procedimentos da Etapa 2.1 (Read-Only):**
+1. **Verificação de Migrations Remotas (`supabase migration list`):**
+   - Comparação da lista de migrations aplicadas no projeto remoto de staging contra o manifesto local canônico (25 migrations).
+   - Constatação de que não há migrations pendentes ou drift estrutural entre o repositório e o banco de dados.
+2. **Inspeção de Database Advisors:**
+   - Consulta aos advisors de segurança (Security Advisors) e desempenho (Performance Advisors) do Supabase.
+   - Verificação de que tabelas expostas possuem RLS habilitado e que não há alertas críticos não justificados.
+3. **Registro Formal de Evidências:**
+   - As saídas das consultas read-only devem ser registradas em relatório de preflight pré-carga.
+   - **Nota de Governança:** O runbook **não** afirma nem presume que `audit_logs` foi validado em banco remoto nesta etapa, uma vez que não há contrato de consulta de auditoria implementado no runner até o momento. Toda validação de auditoria futura exigirá especificação e contrato tipado próprios.
+
+---
+
+### 8.2 Etapa 2.2: Promoção e Carga Remota sob Lock (`--apply`)
+
+A Etapa 2.2 realiza a transação atômica de carga no Supabase de Staging (`kchzucvrnzwzehfdwzwi`). O runner opera com isolamento transacional estrito e governança determinística.
+
+#### 8.2.1 Requisitos Prévios Inegociáveis
+1. **Conclusão e Aprovação da Etapa 2.1:** Preflight remoto read-only aprovado com evidências registradas.
+2. **Autorização Formal do Human Owner:** Emissão explícita no chat autorizando a conexão e escrita remota no Staging.
+3. **Variáveis de Ambiente Controladas e Validadas:**
    - `APP_ENV=staging`
    - `SUPABASE_URL=https://kchzucvrnzwzehfdwzwi.supabase.co`
    - `DATABASE_URL=postgresql://postgres:[PASSWORD]@db.kchzucvrnzwzehfdwzwi.supabase.co:5432/postgres` (Porta 5432 obrigatória).
-3. **Modo Interativo Obrigatório**: O uso de `--apply` combinado com `--non-interactive` é **bloqueado deterministicamente** (fail-closed). O operador deve digitar o project ref e confirmar `y`.
+   - Ausência parcial ou total dessas variáveis aborta a execução **antes** de abrir qualquer transação ou conexão (`TargetValidationError`).
+4. **Modo Interativo Obrigatório:** O uso de `--apply` combinado com `--non-interactive` é **bloqueado deterministicamente** (fail-closed).
 
-### 8.2 Comando de Execução (Fase 2)
+#### 8.2.2 Comando de Execução (Etapa 2.2)
 ```powershell
 python -m app.ingestion.staging_promotion_runner `
   --snapshot-dir "C:\Users\Bruno\Downloads\teste-rota" `
   --apply
 ```
 
-### 8.3 Rito Interativo de Dupla Confirmação
-O runner solicitará os dois fatores de confirmação humana no terminal:
+#### 8.2.3 Rito Interativo de Dupla Confirmação
+O runner solicitará dois fatores de confirmação humana no terminal:
 ```text
 [CONFIRMAÇÃO 1/2] Digite o Supabase Project Ref exato para autorizar execução: kchzucvrnzwzehfdwzwi
 [CONFIRMAÇÃO 2/2] Confirma a execução remota de carga para o target 'kchzucvrnzwzehfdwzwi'? [y/N]: y
 ```
 
-### 8.4 Sequência de Execução sob Lock
-1. Validação estrita do target allowlist (`kchzucvrnzwzehfdwzwi` apenas).
-2. Verificação de integridade do manifesto (9 arquivos SHA-256) e alinhamento das 25 migrations.
-3. Aquisição não bloqueante do advisory lock transacional via `SELECT pg_try_advisory_xact_lock(3779311896921572133)`.
-4. Chamada de `persist_in_transaction` sob a transação única (Single Unit of Work).
-5. State Guard: verificação de 0 rejeições e 1.661 registros válidos (criados ou inalterados em re-execução idempotente).
-6. Commit atômico ou Rollback automático em caso de qualquer exceção.
+#### 8.2.4 Sequência de Execução sob Lock
+1. **Validação de Ambiente e Target:** Verificação fail-closed de `APP_ENV`, URLs e project ref `kchzucvrnzwzehfdwzwi`.
+2. **Verificação Offline de Integridade:** Validação de hashes do manifesto (9 arquivos) e das 25 migrations locais.
+3. **Aquisição Não-Bloqueante do Advisory Lock:** `SELECT pg_try_advisory_xact_lock(3779311896921572133)` como primeira query dentro da Unit of Work. Se ocupado, aborta imediatamente (`AdvisoryLockBusyError`).
+4. **Carga sob Unit of Work Única:** Chamada de `persist_in_transaction` via `LockedAsyncSessionProxy`, que proíbe commit/rollback internos.
+5. **State Guard:** Verificação estrita baseada nas métricas reais do repositório:
+   - Rejeições estritamente zero (`rejected == 0`).
+   - Candidatos fuzzy exatamente 53 (`candidates == 53`).
+   - Total lido exatamente 1.714 (`read == 1714`).
+   - Invariante de reconciliação válida (`reconciled is True`).
+   - Total de registros válidos não-candidatos exatamente 1.661 (`created + updated + unchanged == 1661`):
+     - Na 1ª execução (carga inicial): `created == 924` (SEMTUR), `unchanged == 737` (Google raw + recorte raw), `regions_created == 1`, `routes_created == 1`.
+     - Na 2ª execução (idempotente): `created == 0`, `unchanged == 1661` (todos já persistidos), `regions_unchanged == 1`, `routes_unchanged == 1`.
+6. **Commit Atômico ou Rollback Automático:** Gerenciado exclusivamente pela Unit of Work externa; se houver exceção, o PostgreSQL reverte atomicamente toda a transação e libera o lock.
 
-### 8.5 Exemplo de Saída Estruturada da Fase 2 (JSON)
+#### 8.2.5 Exemplo de Saída Estruturada da Etapa 2.2 (JSON)
 ```json
 {
   "status": "phase2_success",
@@ -248,11 +281,20 @@ O runner solicitará os dois fatores de confirmação humana no terminal:
   "target_project_ref": "kchzucvrnzwzehfdwzwi",
   "run_id": "018f9123-4567-789a-bcde-f0123456789a",
   "persisted_counts": {
-    "created": 1661,
+    "read": 1714,
+    "created": 924,
     "updated": 0,
-    "unchanged": 0,
+    "unchanged": 737,
     "rejected": 0,
-    "candidates": 53
+    "candidates": 53,
+    "reconciled": true
+  },
+  "territorial_counts": {
+    "regions_created": 1,
+    "routes_created": 1,
+    "origins_created": 3,
+    "geometries_created": 3,
+    "route_actors_created": 12
   },
   "started_at": "2026-09-03T01:00:00.000000+00:00",
   "finished_at": "2026-09-03T01:00:15.000000+00:00",

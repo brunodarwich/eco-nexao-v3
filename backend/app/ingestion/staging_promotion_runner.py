@@ -29,7 +29,11 @@ from app.ingestion.google_snapshot_importer import process_google_snapshot
 from app.ingestion.manifest import verify_manifest
 from app.ingestion.osrm_importer import process_osrm_origin
 from app.ingestion.pindobal_cutout_importer import process_pindobal_cutout
-from app.ingestion.pindobal_repository import PindobalPersistenceRepository
+from app.ingestion.pindobal_repository import (
+    EarlyCommitProhibitedError,
+    LockedAsyncSessionProxy,
+    PindobalPersistenceRepository,
+)
 from app.ingestion.reconciler import reconcile_semtur_and_google
 from app.ingestion.seed_pindobal import DEFAULT_SNAPSHOT_DIR, run_seed_pindobal
 from app.ingestion.semtur_importer import process_semtur_inventory
@@ -78,10 +82,6 @@ class ConfirmationError(StagingPromotionError):
 
 class AdvisoryLockBusyError(StagingPromotionError):
     """Advisory lock could not be acquired due to concurrent execution."""
-
-
-class EarlyCommitProhibitedError(StagingPromotionError):
-    """Prohibited early commit or transaction tampering within protected lock context."""
 
 
 class PromotionExecutionError(StagingPromotionError):
@@ -265,46 +265,6 @@ def validate_environment_config(env_values: dict[str, str]) -> str:
         )
 
     return validate_target_project_ref(raw_supabase_ref)
-
-
-class LockedAsyncSessionProxy:
-    """Helper guard to reduce accidental transaction mismanagement within the locked context.
-
-    Note: In Python, this proxy is an accidental-misuse guard, not a security boundary
-    or guarantee of isolation. Atomicity is achieved by the architectural boundary
-    of a single Unit of Work owning the transaction lifecycle (begin, advisory lock,
-    operations, commit/rollback).
-    """
-
-    def __init__(self, session: AsyncSession) -> None:
-        object.__setattr__(self, "_session", session)
-
-    async def commit(self) -> None:
-        raise EarlyCommitProhibitedError(
-            "Chamada a commit() dentro do bloco sob advisory lock é proibida. "
-            "A transação é controlada pela Unit of Work proprietária."
-        )
-
-    async def rollback(self) -> None:
-        raise EarlyCommitProhibitedError(
-            "Chamada a rollback() dentro do bloco sob advisory lock é proibida. "
-            "Lance uma exceção para que a Unit of Work proprietária aborte a transação."
-        )
-
-    def begin(self, *args: Any, **kwargs: Any) -> Any:
-        raise EarlyCommitProhibitedError(
-            "Abertura de transação aninhada é proibida dentro do bloco sob advisory lock. "
-            "A persistência deve operar sob a transação já ativa da Unit of Work."
-        )
-
-    def in_transaction(self) -> bool:
-        return bool(self._session.in_transaction())
-
-    def __getattr__(self, name: str) -> Any:
-        return getattr(self._session, name)
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        setattr(self._session, name, value)
 
 
 @asynccontextmanager
@@ -768,21 +728,31 @@ async def execute_phase2_staging_promotion(
     """
     start_time = datetime.now(UTC).isoformat()
 
-    # Step 1: Validate environment and target project ref (fail-closed)
-    if env_values is not None:
-        ref_from_env = validate_environment_config(env_values)
-        if target_project_ref is not None:
-            explicit_ref = validate_target_project_ref(target_project_ref)
-            if explicit_ref != ref_from_env:
-                raise TargetValidationError(
-                    f"Divergência entre --target-project-ref ('{explicit_ref}') "
-                    f"e configuração de ambiente ('{ref_from_env}')."
-                )
-        validated_target = ref_from_env
-    elif target_project_ref is not None:
-        validated_target = validate_target_project_ref(target_project_ref)
-    else:
-        validated_target = CANONICAL_STAGING_PROJECT_REF
+    # Step 1: Validate environment configuration (strictly fail-closed)
+    if env_values is None:
+        raise TargetValidationError(
+            "execute_phase2_staging_promotion exige configuração explícita de ambiente "
+            "(APP_ENV, SUPABASE_URL e DATABASE_URL). "
+            "Nenhuma execução remota é permitida sem validação."
+        )
+
+    required_keys = ("APP_ENV", "SUPABASE_URL", "DATABASE_URL")
+    missing_or_blank = [k for k in required_keys if not env_values.get(k, "").strip()]
+    if missing_or_blank:
+        raise TargetValidationError(
+            f"Configuração de ambiente incompleta para promoção: variáveis ausentes ou vazias: "
+            f"{', '.join(missing_or_blank)}. Obrigatórias: {', '.join(required_keys)}."
+        )
+
+    validated_target = validate_environment_config(env_values)
+
+    if target_project_ref is not None:
+        explicit_ref = validate_target_project_ref(target_project_ref)
+        if explicit_ref != validated_target:
+            raise TargetValidationError(
+                f"Divergência entre --target-project-ref ('{explicit_ref}') "
+                f"e configuração de ambiente ('{validated_target}')."
+            )
 
     # Step 2: Verify manifest hashes (9 files)
     manifest_info = verify_pindobal_offline_manifest(snapshot_dir)
@@ -824,7 +794,7 @@ async def execute_phase2_staging_promotion(
     # Step 7: Atomic execution under non-blocking advisory lock
     async with staging_atomic_lock_transaction(session) as locked_session:
         repository = PindobalPersistenceRepository(locked_session)
-        run_id, persistence_counts = await repository.persist_in_transaction(
+        run_id, stats = await repository.persist_in_transaction(
             report=dry_run_report,
             osrm_results=osrm_results,
             started_at=started_at,
@@ -836,16 +806,50 @@ async def execute_phase2_staging_promotion(
             fail_after=fail_after,
         )
 
-        # State Guard: enforce strict integrity assertions
-        if persistence_counts.rejected != 0:
+        reconciliation = stats["reconciliation"]
+        territorial = stats["territorial"]
+
+        # State Guard: enforce strict integrity assertions based on real repository metrics
+        if reconciliation["rejected"] != 0:
             raise PromotionExecutionError(
-                f"Contagem de rejeições inesperada: {persistence_counts.rejected} (esperado: 0)."
+                f"Contagem de rejeições inesperada: {reconciliation['rejected']} (esperado: 0)."
             )
-        total_valid = persistence_counts.created + persistence_counts.unchanged
-        if total_valid != CANONICAL_PINDOBAL_METRICS["created"]:
+
+        if reconciliation["candidates"] != CANONICAL_PINDOBAL_METRICS["candidates"]:
             raise PromotionExecutionError(
-                f"Contagem de registros válidos inesperada: {total_valid} "
-                f"(esperado: {CANONICAL_PINDOBAL_METRICS['created']})."
+                f"Contagem de candidatos inesperada: {reconciliation['candidates']} "
+                f"(esperado: {CANONICAL_PINDOBAL_METRICS['candidates']})."
+            )
+
+        if reconciliation["read"] != CANONICAL_PINDOBAL_METRICS["read"]:
+            raise PromotionExecutionError(
+                f"Contagem total de leitura inesperada: {reconciliation['read']} "
+                f"(esperado: {CANONICAL_PINDOBAL_METRICS['read']})."
+            )
+
+        if not reconciliation["reconciled"]:
+            raise PromotionExecutionError(
+                "Invariante de reconciliação violada: read != sum(created, updated, unchanged, "
+                "rejected, candidates)."
+            )
+
+        total_valid = (
+            reconciliation["created"]
+            + reconciliation["updated"]
+            + reconciliation["unchanged"]
+        )
+        if total_valid != 1661:
+            raise PromotionExecutionError(
+                f"Total de registros válidos inesperado: {total_valid} "
+                f"(created={reconciliation['created']}, updated={reconciliation['updated']}, "
+                f"unchanged={reconciliation['unchanged']}; esperado soma: 1661)."
+            )
+
+        if reconciliation["created"] not in (924, 0):
+            raise PromotionExecutionError(
+                f"Contagem de criados fora dos padrões canônicos de produção: "
+                f"{reconciliation['created']} (esperado: 924 na carga inicial "
+                "ou 0 em re-execução idempotente)."
             )
 
     end_time = datetime.now(UTC).isoformat()
@@ -858,11 +862,20 @@ async def execute_phase2_staging_promotion(
         "target_project_ref": validated_target,
         "run_id": str(run_id),
         "persisted_counts": {
-            "created": persistence_counts.created,
-            "updated": persistence_counts.updated,
-            "unchanged": persistence_counts.unchanged,
-            "rejected": persistence_counts.rejected,
-            "candidates": persistence_counts.candidates,
+            "read": reconciliation["read"],
+            "created": reconciliation["created"],
+            "updated": reconciliation["updated"],
+            "unchanged": reconciliation["unchanged"],
+            "rejected": reconciliation["rejected"],
+            "candidates": reconciliation["candidates"],
+            "reconciled": reconciliation["reconciled"],
+        },
+        "territorial_counts": {
+            "regions_created": territorial["regions_created"],
+            "routes_created": territorial["routes_created"],
+            "origins_created": territorial["origins_created"],
+            "geometries_created": territorial["geometries_created"],
+            "route_actors_created": territorial["route_actors_created"],
         },
         "started_at": start_time,
         "finished_at": end_time,
