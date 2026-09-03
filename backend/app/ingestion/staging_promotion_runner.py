@@ -18,15 +18,25 @@ from collections.abc import AsyncGenerator, Callable, Sequence
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple, cast
 from urllib.parse import urlparse
 
 from sqlalchemy import func, select
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ingestion.google_snapshot_importer import process_google_snapshot
 from app.ingestion.manifest import verify_manifest
+from app.ingestion.osrm_importer import process_osrm_origin
+from app.ingestion.pindobal_cutout_importer import process_pindobal_cutout
+from app.ingestion.pindobal_repository import (
+    EarlyCommitProhibitedError,
+    LockedAsyncSessionProxy,
+    PindobalPersistenceRepository,
+)
+from app.ingestion.reconciler import reconcile_semtur_and_google
 from app.ingestion.seed_pindobal import DEFAULT_SNAPSHOT_DIR, run_seed_pindobal
+from app.ingestion.semtur_importer import process_semtur_inventory
 
 CANONICAL_STAGING_PROJECT_REF: str = "kchzucvrnzwzehfdwzwi"
 PROJECT_REF_PATTERN = re.compile(r"^[a-z0-9]{20}$")
@@ -54,6 +64,59 @@ CANONICAL_PINDOBAL_METRICS: dict[str, int] = {
 CANONICAL_MIGRATIONS_COUNT: int = 25
 
 
+class CanonicalPromotionProfile(NamedTuple):
+    """Canonical expected state for Phase 2 promotion executions in Staging."""
+
+    mode_name: str
+    read: int
+    created: int
+    updated: int
+    unchanged: int
+    rejected: int
+    candidates: int
+    reconciled: bool
+    regions_created: int
+    regions_unchanged: int
+    routes_created: int
+    routes_unchanged: int
+
+
+CANONICAL_INITIAL_LOAD_PROFILE = CanonicalPromotionProfile(
+    mode_name="initial_load",
+    read=1714,
+    created=924,
+    updated=0,
+    unchanged=737,
+    rejected=0,
+    candidates=53,
+    reconciled=True,
+    regions_created=1,
+    regions_unchanged=0,
+    routes_created=1,
+    routes_unchanged=0,
+)
+
+CANONICAL_IDEMPOTENT_RERUN_PROFILE = CanonicalPromotionProfile(
+    mode_name="idempotent_rerun",
+    read=1714,
+    created=0,
+    updated=0,
+    unchanged=1661,
+    rejected=0,
+    candidates=53,
+    reconciled=True,
+    regions_created=0,
+    regions_unchanged=1,
+    routes_created=0,
+    routes_unchanged=1,
+)
+
+ACCEPTED_PROMOTION_PROFILES: tuple[CanonicalPromotionProfile, ...] = (
+    CANONICAL_INITIAL_LOAD_PROFILE,
+    CANONICAL_IDEMPOTENT_RERUN_PROFILE,
+)
+
+
 class StagingPromotionError(Exception):
     """Base exception for staging promotion runner."""
 
@@ -74,8 +137,8 @@ class AdvisoryLockBusyError(StagingPromotionError):
     """Advisory lock could not be acquired due to concurrent execution."""
 
 
-class EarlyCommitProhibitedError(StagingPromotionError):
-    """Prohibited early commit or transaction tampering within protected lock context."""
+class PromotionExecutionError(StagingPromotionError):
+    """Raised when an error occurs during Phase 2 promotion execution under lock."""
 
 
 def sanitize_message(text_content: str) -> str:
@@ -255,46 +318,6 @@ def validate_environment_config(env_values: dict[str, str]) -> str:
         )
 
     return validate_target_project_ref(raw_supabase_ref)
-
-
-class LockedAsyncSessionProxy:
-    """Helper guard to reduce accidental transaction mismanagement within the locked context.
-
-    Note: In Python, this proxy is an accidental-misuse guard, not a security boundary
-    or guarantee of isolation. Atomicity is achieved by the architectural boundary
-    of a single Unit of Work owning the transaction lifecycle (begin, advisory lock,
-    operations, commit/rollback).
-    """
-
-    def __init__(self, session: AsyncSession) -> None:
-        object.__setattr__(self, "_session", session)
-
-    async def commit(self) -> None:
-        raise EarlyCommitProhibitedError(
-            "Chamada a commit() dentro do bloco sob advisory lock é proibida. "
-            "A transação é controlada pela Unit of Work proprietária."
-        )
-
-    async def rollback(self) -> None:
-        raise EarlyCommitProhibitedError(
-            "Chamada a rollback() dentro do bloco sob advisory lock é proibida. "
-            "Lance uma exceção para que a Unit of Work proprietária aborte a transação."
-        )
-
-    def begin(self, *args: Any, **kwargs: Any) -> Any:
-        raise EarlyCommitProhibitedError(
-            "Abertura de transação aninhada é proibida dentro do bloco sob advisory lock. "
-            "A persistência deve operar sob a transação já ativa da Unit of Work."
-        )
-
-    def in_transaction(self) -> bool:
-        return bool(self._session.in_transaction())
-
-    def __getattr__(self, name: str) -> Any:
-        return getattr(self._session, name)
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        setattr(self._session, name, value)
 
 
 @asynccontextmanager
@@ -735,6 +758,246 @@ def execute_phase1_preflight(
     }
 
 
+async def execute_phase2_staging_promotion(
+    session: AsyncSession,
+    *,
+    snapshot_dir: Path = DEFAULT_SNAPSHOT_DIR,
+    migrations_dir: Path | None = None,
+    target_project_ref: str | None = None,
+    env_values: dict[str, str] | None = None,
+    confirm_func: Callable[[str], str] | None = None,
+    require_confirmation: bool = True,
+    fail_after: str | None = None,
+) -> dict[str, Any]:
+    """Execute Phase 2 remote promotion under advisory lock and single Unit of Work.
+
+    Guarantees:
+    - Strictly fail-closed to canonical staging target (kchzucvrnzwzehfdwzwi).
+    - Verifies snapshot manifest, canonical counts, and migrations alignment.
+    - Requires double human confirmation unless explicitly overridden in controlled test harness.
+    - Operates under single Unit of Work using pg_try_advisory_xact_lock.
+    - Persists Pindobal territorial slice via PindobalPersistenceRepository.persist_in_transaction.
+    - Enforces State Guard verifying 0 rejections and canonical persistence counts.
+    """
+    start_time = datetime.now(UTC).isoformat()
+
+    # Step 1: Validate environment configuration (strictly fail-closed)
+    if env_values is None:
+        raise TargetValidationError(
+            "execute_phase2_staging_promotion exige configuração explícita de ambiente "
+            "(APP_ENV, SUPABASE_URL e DATABASE_URL). "
+            "Nenhuma execução remota é permitida sem validação."
+        )
+
+    required_keys = ("APP_ENV", "SUPABASE_URL", "DATABASE_URL")
+    missing_or_blank = [k for k in required_keys if not env_values.get(k, "").strip()]
+    if missing_or_blank:
+        raise TargetValidationError(
+            f"Configuração de ambiente incompleta para promoção: variáveis ausentes ou vazias: "
+            f"{', '.join(missing_or_blank)}. Obrigatórias: {', '.join(required_keys)}."
+        )
+
+    validated_target = validate_environment_config(env_values)
+
+    if target_project_ref is not None:
+        explicit_ref = validate_target_project_ref(target_project_ref)
+        if explicit_ref != validated_target:
+            raise TargetValidationError(
+                f"Divergência entre --target-project-ref ('{explicit_ref}') "
+                f"e configuração de ambiente ('{validated_target}')."
+            )
+
+    # Step 2: Verify manifest hashes (9 files)
+    manifest_info = verify_pindobal_offline_manifest(snapshot_dir)
+
+    # Step 3: Verify canonical counts from local dry-run
+    counts_info = verify_canonical_counts(snapshot_dir)
+
+    # Step 4: Verify migrations alignment
+    if migrations_dir is None:
+        migrations_dir = Path(__file__).resolve().parents[3] / "supabase" / "migrations"
+    migrations_info = verify_migrations_alignment(migrations_dir)
+
+    # Step 5: Double human confirmation
+    confirmed = False
+    if require_confirmation:
+        confirm_fn = confirm_func or input
+        confirmed = request_human_double_confirmation(validated_target, prompt_input=confirm_fn)
+
+    # Step 6: Parse snapshot records prior to entering locked transaction
+    dry_run_report = run_seed_pindobal(snapshot_dir=snapshot_dir, dry_run=True)
+    if dry_run_report.get("status") != "success":
+        raise PreflightVerificationError("Falha na geração do relatório de dry-run do snapshot.")
+
+    osrm_results = {
+        code: process_osrm_origin(code, snapshot_dir)
+        for code in ("porto", "aeroporto", "rodoviaria")
+    }
+    if not all(res.is_valid for res in osrm_results.values()):
+        raise PreflightVerificationError("Geometria OSRM inválida no snapshot.")
+
+    started_at = datetime.fromisoformat(cast(str, dry_run_report["run_started_at"]))
+    finished_at = datetime.fromisoformat(cast(str, dry_run_report["run_finished_at"]))
+
+    semtur_records, _ = process_semtur_inventory(snapshot_dir)
+    google_records, _ = process_google_snapshot(snapshot_dir)
+    cutout_records, _ = process_pindobal_cutout(snapshot_dir)
+    matches = reconcile_semtur_and_google(semtur_records, google_records)
+
+    # Step 7: Atomic execution under non-blocking advisory lock
+    async with staging_atomic_lock_transaction(session) as locked_session:
+        repository = PindobalPersistenceRepository(locked_session)
+        run_id, stats = await repository.persist_in_transaction(
+            report=dry_run_report,
+            osrm_results=osrm_results,
+            started_at=started_at,
+            finished_at=finished_at,
+            semtur_records=semtur_records,
+            google_records=google_records,
+            cutout_records=cutout_records,
+            matches=matches,
+            fail_after=fail_after,
+        )
+
+        reconciliation = stats["reconciliation"]
+        territorial = stats["territorial"]
+
+        # State Guard: enforce strict two-profile canonical invariant.
+        # Accepts ONLY two complete canonical profiles:
+        # a) Initial load: created=924, updated=0, unchanged=737, candidates=53, rejected=0;
+        #    region and route created exactly once (regions_created=1, routes_created=1).
+        # b) Idempotent rerun: created=0, updated=0, unchanged=1661, candidates=53, rejected=0;
+        #    region and route untouched (regions_unchanged=1, routes_unchanged=1).
+        # Any partial, hybrid, updated != 0, or unexpected state immediately raises
+        # PromotionExecutionError, triggering automatic transaction rollback via context manager.
+
+        # 1. Strictly forbid updated != 0 in any profile
+        if reconciliation.get("updated", 0) != 0:
+            raise PromotionExecutionError(
+                f"State Guard violação: updated != 0 ({reconciliation.get('updated')}). "
+                "O pipeline de staging proíbe estritamente updates de registros existentes."
+            )
+
+        # 2. Strictly forbid rejected != 0 in any profile
+        if reconciliation.get("rejected", 0) != 0:
+            raise PromotionExecutionError(
+                f"State Guard violação: rejected != 0 ({reconciliation.get('rejected')}). "
+                "Registros rejeitados são estritamente proibidos na promoção."
+            )
+
+        # 3. Invariant check: reconciled must be True
+        if not reconciliation.get("reconciled", False):
+            raise PromotionExecutionError(
+                "State Guard violação: invariante de reconciliação violada "
+                "(reconciled is not True)."
+            )
+
+        # 4. Invariant check: candidate count must match canonical snapshot
+        if reconciliation.get("candidates") != CANONICAL_INITIAL_LOAD_PROFILE.candidates:
+            raise PromotionExecutionError(
+                f"State Guard violação: candidates inesperado ({reconciliation.get('candidates')}; "
+                f"esperado: {CANONICAL_INITIAL_LOAD_PROFILE.candidates})."
+            )
+
+        # 5. Profile matching: must match exactly one of the two canonical profiles
+        matches_initial = (
+            reconciliation.get("read") == CANONICAL_INITIAL_LOAD_PROFILE.read
+            and reconciliation.get("created") == CANONICAL_INITIAL_LOAD_PROFILE.created
+            and reconciliation.get("updated") == CANONICAL_INITIAL_LOAD_PROFILE.updated
+            and reconciliation.get("unchanged") == CANONICAL_INITIAL_LOAD_PROFILE.unchanged
+            and reconciliation.get("rejected") == CANONICAL_INITIAL_LOAD_PROFILE.rejected
+            and reconciliation.get("candidates") == CANONICAL_INITIAL_LOAD_PROFILE.candidates
+            and territorial.get("regions_created")
+            == CANONICAL_INITIAL_LOAD_PROFILE.regions_created
+            and territorial.get("regions_unchanged")
+            == CANONICAL_INITIAL_LOAD_PROFILE.regions_unchanged
+            and territorial.get("routes_created") == CANONICAL_INITIAL_LOAD_PROFILE.routes_created
+            and territorial.get("routes_unchanged")
+            == CANONICAL_INITIAL_LOAD_PROFILE.routes_unchanged
+        )
+
+        matches_idempotent = (
+            reconciliation.get("read") == CANONICAL_IDEMPOTENT_RERUN_PROFILE.read
+            and reconciliation.get("created") == CANONICAL_IDEMPOTENT_RERUN_PROFILE.created
+            and reconciliation.get("updated") == CANONICAL_IDEMPOTENT_RERUN_PROFILE.updated
+            and reconciliation.get("unchanged") == CANONICAL_IDEMPOTENT_RERUN_PROFILE.unchanged
+            and reconciliation.get("rejected") == CANONICAL_IDEMPOTENT_RERUN_PROFILE.rejected
+            and reconciliation.get("candidates") == CANONICAL_IDEMPOTENT_RERUN_PROFILE.candidates
+            and territorial.get("regions_created")
+            == CANONICAL_IDEMPOTENT_RERUN_PROFILE.regions_created
+            and territorial.get("regions_unchanged")
+            == CANONICAL_IDEMPOTENT_RERUN_PROFILE.regions_unchanged
+            and territorial.get("routes_created")
+            == CANONICAL_IDEMPOTENT_RERUN_PROFILE.routes_created
+            and territorial.get("routes_unchanged")
+            == CANONICAL_IDEMPOTENT_RERUN_PROFILE.routes_unchanged
+        )
+
+        if not (matches_initial or matches_idempotent):
+            actual_summary = (
+                f"created={reconciliation.get('created')}, "
+                f"updated={reconciliation.get('updated')}, "
+                f"unchanged={reconciliation.get('unchanged')}, "
+                f"candidates={reconciliation.get('candidates')}, "
+                f"rejected={reconciliation.get('rejected')}, "
+                f"regions_created={territorial.get('regions_created')}, "
+                f"regions_unchanged={territorial.get('regions_unchanged')}, "
+                f"routes_created={territorial.get('routes_created')}, "
+                f"routes_unchanged={territorial.get('routes_unchanged')}"
+            )
+            raise PromotionExecutionError(
+                f"State Guard violação: estado parcial ou híbrido detectado ({actual_summary}). "
+                "A promoção em staging exige um dos dois perfis canônicos completos "
+                "(carga inicial ou reexecução idempotente)."
+            )
+
+    end_time = datetime.now(UTC).isoformat()
+
+    return {
+        "status": "phase2_success",
+        "phase": 2,
+        "mode": "staging_promotion_applied",
+        "remote_write_performed": True,
+        "target_project_ref": validated_target,
+        "run_id": str(run_id),
+        "persisted_counts": {
+            "read": reconciliation["read"],
+            "created": reconciliation["created"],
+            "updated": reconciliation["updated"],
+            "unchanged": reconciliation["unchanged"],
+            "rejected": reconciliation["rejected"],
+            "candidates": reconciliation["candidates"],
+            "reconciled": reconciliation["reconciled"],
+        },
+        "territorial_counts": {
+            "regions_created": territorial["regions_created"],
+            "routes_created": territorial["routes_created"],
+            "origins_created": territorial["origins_created"],
+            "geometries_created": territorial["geometries_created"],
+            "route_actors_created": territorial["route_actors_created"],
+        },
+        "started_at": start_time,
+        "finished_at": end_time,
+        "manifest": manifest_info,
+        "canonical_counts": counts_info,
+        "migrations": migrations_info,
+        "human_confirmation": {
+            "required": require_confirmation,
+            "confirmed": confirmed,
+        },
+        "governance": {
+            "advisory_lock_id": PINDOBAL_STAGING_ADVISORY_LOCK_ID,
+            "lock_mechanism": "pg_try_advisory_xact_lock",
+            "transaction_ownership": "single_unit_of_work_transaction",
+            "lock_release_guarantee": (
+                "postgresql_server_resource_owner_on_disconnect_or_termination"
+            ),
+            "schema_rollback": "PITR_snapshot_only",
+            "data_rollback": "logical_unpublish_draft_only",
+        },
+    }
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """CLI entrypoint for the staging promotion runner."""
     # Ensure stdout/stderr emit valid UTF-8 across Windows consoles
@@ -750,7 +1013,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             pass
 
     parser = argparse.ArgumentParser(
-        description="ECOnexão Staging Promotion Runner (ECO-2005 Phase 1)"
+        description="ECOnexão Staging Promotion Runner (ECO-2005 Phase 1 & 2)"
     )
     parser.add_argument(
         "--snapshot-dir",
@@ -775,6 +1038,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="store_true",
         help="Phase 1 offline preflight only: skip prompts (prohibited for write)",
     )
+    parser.add_argument(
+        "--apply",
+        action="store_true",
+        help=(
+            "Execute Phase 2 remote promotion under advisory lock "
+            "(requires interactive confirmation)"
+        ),
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -786,6 +1057,54 @@ def main(argv: Sequence[str] | None = None) -> int:
         if any(k in os.environ for k in env_keys):
             env_values = {k: os.environ.get(k, "") for k in env_keys}
 
+        if args.apply:
+            if args.non_interactive:
+                raise StagingPromotionError(
+                    "--apply exige confirmação interativa do operador e proíbe --non-interactive."
+                )
+            if not env_values or not all(env_values.get(k, "").strip() for k in env_keys):
+                raise TargetValidationError(
+                    "Execução com --apply exige variáveis de ambiente APP_ENV, "
+                    "SUPABASE_URL e DATABASE_URL."
+                )
+            validated_ref = validate_environment_config(env_values)
+            if args.target_project_ref is not None:
+                explicit_ref = validate_target_project_ref(args.target_project_ref)
+                if explicit_ref != validated_ref:
+                    raise TargetValidationError(
+                        f"Divergência entre --target-project-ref ('{explicit_ref}') "
+                        f"e configuração de ambiente ('{validated_ref}')."
+                    )
+
+            import asyncio
+
+            from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+            database_url = env_values["DATABASE_URL"]
+            engine = create_async_engine(database_url)
+            session_factory = async_sessionmaker(
+                engine, class_=AsyncSession, expire_on_commit=False
+            )
+
+            async def _run_apply() -> dict[str, Any]:
+                try:
+                    async with session_factory() as session:
+                        return await execute_phase2_staging_promotion(
+                            session=session,
+                            snapshot_dir=args.snapshot_dir,
+                            migrations_dir=args.migrations_dir,
+                            target_project_ref=args.target_project_ref,
+                            env_values=env_values,
+                            require_confirmation=True,
+                        )
+                finally:
+                    await engine.dispose()
+
+            report = asyncio.run(_run_apply())
+            print(json.dumps(report, indent=2, ensure_ascii=False))
+            return 0
+
+        # Default: Phase 1 preflight execution
         report = execute_phase1_preflight(
             snapshot_dir=args.snapshot_dir,
             migrations_dir=args.migrations_dir,

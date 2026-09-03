@@ -204,10 +204,118 @@ Em terminais Windows (PowerShell ou `cmd.exe`), a página de código padrão do 
 
 ---
 
-## 8. Parada Obrigatória: Rito para a Fase 2 (Promoção Remota)
+## 8. Protocolo e Rito para a Fase 2 (Preflight Remoto Read-Only vs. Promoção sob Lock)
 
-A transição para a **Fase 2** (conexão e carga real no Supabase de Staging `kchzucvrnzwzehfdwzwi`) exige:
-1. Conclusão e revisão completa do PR da Fase 1 contra a branch `staging`.
-2. Emissão de autorização formal e explícita pelo Human Owner (Bruno Darwich):
-   > "Eu autorizo a execução da Fase 2 da ECO-2005 para carga da fatia Pindobal no banco de staging kchzucvrnzwzehfdwzwi."
-3. Disponibilização segura de credenciais de staging via cofre ou variável controlada, sem nunca expô-las em terminal ou commit.
+A Fase 2 é estruturada em duas etapas formalmente desacopladas, garantindo que nenhuma escrita remota ocorra sem um rito prévio de validação read-only devidamente auditado e autorizado pelo Human Owner.
+
+### 8.1 Etapa 2.1: Preflight Remoto Read-Only (Futuro — Zero Escrita)
+
+Esta etapa consiste em inspeções exclusivamente de leitura contra o ambiente de Staging (`kchzucvrnzwzehfdwzwi`), destinadas a atestar o alinhamento da infraestrutura remota antes de qualquer operação de ingestão de dados.
+
+> [!IMPORTANT]
+> **Status nesta Correção:** Zero conexões remotas são executadas neste momento. A Etapa 2.1 é um rito futuro que exigirá autorização formal e explícita do Human Owner.
+
+**Procedimentos da Etapa 2.1 (Read-Only):**
+1. **Verificação de Migrations Remotas (`supabase migration list`):**
+   - Comparação da lista de migrations aplicadas no projeto remoto de staging contra o manifesto local canônico (25 migrations).
+   - Constatação de que não há migrations pendentes ou drift estrutural entre o repositório e o banco de dados.
+2. **Inspeção de Database Advisors:**
+   - Consulta aos advisors de segurança (Security Advisors) e desempenho (Performance Advisors) do Supabase.
+   - Verificação de que tabelas expostas possuem RLS habilitado e que não há alertas críticos não justificados.
+3. **Registro Formal de Evidências:**
+   - As saídas das consultas read-only devem ser registradas em relatório de preflight pré-carga.
+   - **Nota de Governança:** O runbook **não** afirma nem presume que `audit_logs` foi validado em banco remoto nesta etapa, uma vez que não há contrato de consulta de auditoria implementado no runner até o momento. Toda validação de auditoria futura exigirá especificação e contrato tipado próprios.
+
+---
+
+### 8.2 Etapa 2.2: Promoção e Carga Remota sob Lock (`--apply`)
+
+A Etapa 2.2 realiza a transação atômica de carga no Supabase de Staging (`kchzucvrnzwzehfdwzwi`). O runner opera com isolamento transacional estrito e governança determinística.
+
+#### 8.2.1 Requisitos Prévios Inegociáveis
+1. **Conclusão e Aprovação da Etapa 2.1:** Preflight remoto read-only aprovado com evidências registradas.
+2. **Autorização Formal do Human Owner:** Emissão explícita no chat autorizando a conexão e escrita remota no Staging.
+3. **Variáveis de Ambiente Controladas e Validadas:**
+   - `APP_ENV=staging`
+   - `SUPABASE_URL=https://kchzucvrnzwzehfdwzwi.supabase.co`
+   - `DATABASE_URL=postgresql://postgres:[PASSWORD]@db.kchzucvrnzwzehfdwzwi.supabase.co:5432/postgres` (Porta 5432 obrigatória).
+   - Ausência parcial ou total dessas variáveis aborta a execução **antes** de abrir qualquer transação ou conexão (`TargetValidationError`).
+4. **Modo Interativo Obrigatório:** O uso de `--apply` combinado com `--non-interactive` é **bloqueado deterministicamente** (fail-closed).
+
+#### 8.2.2 Comando de Execução (Etapa 2.2)
+```powershell
+python -m app.ingestion.staging_promotion_runner `
+  --snapshot-dir "C:\Users\Bruno\Downloads\teste-rota" `
+  --apply
+```
+
+#### 8.2.3 Rito Interativo de Dupla Confirmação
+O runner solicitará dois fatores de confirmação humana no terminal:
+```text
+[CONFIRMAÇÃO 1/2] Digite o Supabase Project Ref exato para autorizar execução: kchzucvrnzwzehfdwzwi
+[CONFIRMAÇÃO 2/2] Confirma a execução remota de carga para o target 'kchzucvrnzwzehfdwzwi'? [y/N]: y
+```
+
+#### 8.2.4 Sequência de Execução sob Lock
+1. **Validação de Ambiente e Target:** Verificação fail-closed de `APP_ENV`, URLs e project ref `kchzucvrnzwzehfdwzwi`.
+2. **Verificação Offline de Integridade:** Validação de hashes do manifesto (9 arquivos) e das 25 migrations locais.
+3. **Aquisição Não-Bloqueante do Advisory Lock:** `SELECT pg_try_advisory_xact_lock(3779311896921572133)` como primeira query dentro da Unit of Work. Se ocupado, aborta imediatamente (`AdvisoryLockBusyError`).
+4. **Carga sob Unit of Work Única:** Chamada de `persist_in_transaction` via `LockedAsyncSessionProxy`, que proíbe commit/rollback internos.
+5. **Idempotência de Domínio vs. Ledger Append-Only de Auditoria:**
+   - **Entidades de Domínio e Catálogo Territorial:** São estritamente idempotentes (`actors`, `actor_categories`, `routes`, `regions`, `route_origins`, `route_geometries`, etc.). Reexecuções subsequentes nunca duplicam entidades e deixam os dados intactos.
+   - **Histórico de Ingestão e Dados Brutos (`ingestion_runs`, `raw_source_records`):** É deliberadamente um ledger append-only cumulativo por tentativa de execução. Cada invocação registra um novo `IngestionRun` (com run_id único e telemetria) e seus respectivos `RawSourceRecord` para garantia de rastreabilidade forense integral e proveniência sem sobrescrever histórico pregresso.
+6. **State Guard (Enforcement dos Dois Perfis Canônicos Exclusivos):**
+   O State Guard valida a execução contra exatamente um de dois perfis canônicos imutáveis e proíbe qualquer mutação intermediária:
+   - **Proibição Estrita de Updates:** `updated == 0` obrigatório em qualquer perfil (`updated != 0` causa rejeição imediata).
+   - **Proibição Estrita de Rejeições:** `rejected == 0` obrigatório (`rejected != 0` causa rejeição imediata).
+   - **Invariantes Globais:** `read == 1714`, `candidates == 53` e `reconciled is True`.
+   - **Perfil 1 — Carga Inicial Canônica:**
+     - Reconciliação: `created == 924` (SEMTUR), `updated == 0`, `unchanged == 737` (Google raw + recorte raw).
+     - Territorial: `regions_created == 1`, `routes_created == 1`, `regions_unchanged == 0`, `routes_unchanged == 0`.
+   - **Perfil 2 — Reexecução Idempotente Canônica:**
+     - Reconciliação: `created == 0`, `updated == 0`, `unchanged == 1661` (todos os registros válidos preservados).
+     - Territorial: `regions_created == 0`, `routes_created == 0`, `regions_unchanged == 1`, `routes_unchanged == 1`.
+   - **Rejeição de Estados Híbridos ou Parciais:** Qualquer combinação mista (ex.: `created=924` com entidades territoriais preexistentes, `created=0` com entidades territoriais recém-criadas, `updated > 0` ou proporções parciais de `created/unchanged`) levanta `PromotionExecutionError` e aborta a transação com rollback automático.
+7. **Commit Atômico ou Rollback Automático:** Gerenciado exclusivamente pela Unit of Work externa; se houver exceção, o PostgreSQL reverte atomicamente toda a transação e libera o lock.
+
+#### 8.2.5 Exemplo de Saída Estruturada da Etapa 2.2 (JSON)
+```json
+{
+  "status": "phase2_success",
+  "phase": 2,
+  "mode": "staging_promotion_applied",
+  "remote_write_performed": true,
+  "target_project_ref": "kchzucvrnzwzehfdwzwi",
+  "run_id": "018f9123-4567-789a-bcde-f0123456789a",
+  "persisted_counts": {
+    "read": 1714,
+    "created": 924,
+    "updated": 0,
+    "unchanged": 737,
+    "rejected": 0,
+    "candidates": 53,
+    "reconciled": true
+  },
+  "territorial_counts": {
+    "regions_created": 1,
+    "routes_created": 1,
+    "origins_created": 3,
+    "geometries_created": 3,
+    "route_actors_created": 12
+  },
+  "started_at": "2026-09-03T01:00:00.000000+00:00",
+  "finished_at": "2026-09-03T01:00:15.000000+00:00",
+  "manifest": { "status": "valid", "total_files": 9, "valid_files": 9 },
+  "canonical_counts": { "status": "verified", "counts": { "read": 1714, "created": 1661, "rejected": 0, "candidates": 53 } },
+  "migrations": { "status": "aligned_locally", "count": 25 },
+  "human_confirmation": { "required": true, "confirmed": true },
+  "governance": {
+    "advisory_lock_id": 3779311896921572133,
+    "lock_mechanism": "pg_try_advisory_xact_lock",
+    "transaction_ownership": "single_unit_of_work_transaction",
+    "lock_release_guarantee": "postgresql_server_resource_owner_on_disconnect_or_termination",
+    "schema_rollback": "PITR_snapshot_only",
+    "data_rollback": "logical_unpublish_draft_only"
+  }
+}
+```

@@ -5,9 +5,10 @@ import json
 import re
 import unicodedata
 import uuid
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Any, cast
+from typing import Any, TypedDict, cast
 
 from geoalchemy2.elements import WKTElement
 from sqlalchemy import func, select, text
@@ -55,6 +56,102 @@ class PersistenceCounts:
         )
 
 
+class ReconciliationStats(TypedDict):
+    read: int
+    created: int
+    updated: int
+    unchanged: int
+    rejected: int
+    candidates: int
+    reconciled: bool
+    fuzzy_match_count: int
+    candidate_google_record_count: int
+    candidate_persistence: str
+
+
+class TerritorialStats(TypedDict):
+    sources_created: int
+    regions_created: int
+    regions_unchanged: int
+    routes_created: int
+    routes_unchanged: int
+    origins_created: int
+    origins_unchanged: int
+    geometries_created: int
+    geometries_unchanged: int
+    route_actors_created: int
+    route_actors_updated: int
+    route_actors_total: int
+
+
+class PindobalPersistenceStats(TypedDict):
+    reconciliation: ReconciliationStats
+    territorial: TerritorialStats
+    raw_records: int
+    external_id_missing: int
+
+
+class EarlyCommitProhibitedError(Exception):
+    """Prohibited early commit, rollback, or transaction nesting within protected lock context."""
+
+
+class LockedAsyncSessionProxy:
+    """Accidental-misuse guard preventing internal transaction boundary manipulation.
+
+    Wraps an AsyncSession within the protected advisory lock Unit of Work.
+    Explicitly provides execute, add, flush, get, scalar, and in_transaction
+    while strictly prohibiting commit, rollback, and begin.
+    """
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def commit(self) -> None:
+        raise EarlyCommitProhibitedError(
+            "Chamada a commit() dentro do bloco sob advisory lock é proibida. "
+            "A transação é controlada pela Unit of Work proprietária."
+        )
+
+    async def rollback(self) -> None:
+        raise EarlyCommitProhibitedError(
+            "Chamada a rollback() dentro do bloco sob advisory lock é proibida. "
+            "Lance uma exceção para que a Unit of Work proprietária aborte a transação."
+        )
+
+    def begin(self, *args: Any, **kwargs: Any) -> Any:
+        raise EarlyCommitProhibitedError(
+            "Abertura de transação aninhada é proibida dentro do bloco sob advisory lock. "
+            "A persistência deve operar sob a transação já ativa da Unit of Work."
+        )
+
+    def in_transaction(self) -> bool:
+        return bool(self._session.in_transaction())
+
+    async def execute(self, statement: Any, *args: Any, **kwargs: Any) -> Any:
+        return await self._session.execute(statement, *args, **kwargs)
+
+    def add(self, instance: object, **kwargs: Any) -> None:
+        self._session.add(instance, **kwargs)
+
+    async def flush(self, objects: Sequence[Any] | None = None) -> None:
+        await self._session.flush(objects=objects)
+
+    async def get(self, entity: Any, ident: Any, *args: Any, **kwargs: Any) -> Any | None:
+        return await self._session.get(entity, ident, *args, **kwargs)
+
+    async def scalar(self, statement: Any, *args: Any, **kwargs: Any) -> Any:
+        return await self._session.scalar(statement, *args, **kwargs)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._session, name)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if name == "_session":
+            super().__setattr__(name, value)
+        else:
+            setattr(self._session, name, value)
+
+
 def _slug(value: str) -> str:
     plain = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode()
     return re.sub(r"[^a-z0-9]+", "-", plain.lower()).strip("-")[:120] or "ator"
@@ -71,9 +168,26 @@ def _hash(payload: dict[str, Any]) -> str:
 
 
 class PindobalPersistenceRepository:
-    """Persist the snapshot atomically and leave unchanged content untouched."""
+    """Persist the snapshot atomically and leave unchanged content untouched.
 
-    def __init__(self, session: AsyncSession) -> None:
+    Contrato de Idempotência e Auditoria:
+    1. Entidades de Domínio e Catálogo Territorial (Idempotência Estrita):
+       - 'actors', 'actor_categories', 'actor_external_refs', 'routes', 'regions',
+         'route_origins', 'route_geometries', 'route_actors', 'field_provenances',
+         'external_sources'.
+       - A idempotência abrange integralmente o modelo de domínio: registros existentes
+         são resolvidos por chave natural/slug e preservados sem duplicatas
+         (created=0, unchanged=1661 em reexecução).
+    2. Histórico de Execuções e Proveniência Bruta (Ledger Append-Only Cumulativo):
+       - 'ingestion_runs' e 'raw_source_records'.
+       - Cada tentativa ou execução do pipeline instancia um novo IngestionRun com seu
+         próprio run_id e registra os respectivos RawSourceRecord daquela execução.
+       - Justificativa arquitetural: Trilha de auditoria forense imutável por execução.
+         Permite reproduzir, auditar e verificar o histórico cronológico de cada tentativa
+         sem sobrescrever os dados de execuções pregressas.
+    """
+
+    def __init__(self, session: AsyncSession | LockedAsyncSessionProxy) -> None:
         self.session = session
 
     async def _one(self, model: Any, **filters: Any) -> Any | None:
@@ -141,7 +255,7 @@ class PindobalPersistenceRepository:
         cutout_records: list[PindobalCutoutRecord] | None = None,
         matches: list[MatchResult] | None = None,
         fail_after: str | None = None,
-    ) -> tuple[uuid.UUID, dict[str, Any]]:
+    ) -> tuple[uuid.UUID, PindobalPersistenceStats]:
         """Persist the snapshot assuming an active transaction managed by the caller.
 
         Does not manage its own transaction boundary (no session.begin()).
@@ -470,9 +584,14 @@ class PindobalPersistenceRepository:
                 counts.rejected += 1
 
         fuzzy_match_count = sum(1 for match in matches if match.match_type == "fuzzy_candidate")
-        stats = {
+        stats: PindobalPersistenceStats = {
             "reconciliation": {
-                **asdict(counts),
+                "read": counts.read,
+                "created": counts.created,
+                "updated": counts.updated,
+                "unchanged": counts.unchanged,
+                "rejected": counts.rejected,
+                "candidates": counts.candidates,
                 "reconciled": counts.reconciles(),
                 "fuzzy_match_count": fuzzy_match_count,
                 "candidate_google_record_count": len(candidate_google_ids),
@@ -504,7 +623,7 @@ class PindobalPersistenceRepository:
             "external_id_missing": sum(r.external_id_missing for r in google_records),
         }
         ingestion_run.status = "completed"
-        ingestion_run.stats = stats
+        ingestion_run.stats = cast(dict[str, Any], stats)
         ingestion_run.finished_at = finished_at
         await self.session.flush()
         return run_id, stats
@@ -521,7 +640,7 @@ class PindobalPersistenceRepository:
         cutout_records: list[PindobalCutoutRecord] | None = None,
         matches: list[MatchResult] | None = None,
         fail_after: str | None = None,
-    ) -> tuple[uuid.UUID, dict[str, Any]]:
+    ) -> tuple[uuid.UUID, PindobalPersistenceStats]:
         """Transactional boundary wrapper: manages begin, execution, and commit."""
         async with self.session.begin():
             return await self.persist_in_transaction(
