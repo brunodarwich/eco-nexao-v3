@@ -13,6 +13,7 @@ import argparse
 import asyncio
 import hashlib
 import json
+import os
 import re
 import sys
 from collections.abc import AsyncGenerator, Callable, Sequence
@@ -141,6 +142,42 @@ class AdvisoryLockBusyError(StagingPromotionError):
 
 class PromotionExecutionError(StagingPromotionError):
     """Raised when an error occurs during Phase 2 promotion execution under lock."""
+
+
+class NonInteractiveTerminalError(StagingPromotionError):
+    """Raised when an operation requiring human confirmation lacks a real TTY."""
+
+
+def check_is_interactive_terminal(stream: Any = None) -> bool:
+    """Check if the given stream (default sys.stdin) is connected to a real interactive terminal.
+
+    Compatible with Windows and Linux. Returns False if piped, redirected from file,
+    or attached to a non-TTY device.
+    """
+    target_stream = stream if stream is not None else sys.stdin
+    try:
+        isatty_fn = getattr(target_stream, "isatty", None)
+        if callable(isatty_fn):
+            return bool(isatty_fn())
+        fileno_fn = getattr(target_stream, "fileno", None)
+        if callable(fileno_fn):
+            return bool(os.isatty(fileno_fn()))
+    except (AttributeError, ValueError, OSError):
+        return False
+    return False
+
+
+def assert_interactive_terminal(stream: Any = None) -> None:
+    """Ensure that stdin is a real interactive TTY, failing closed otherwise.
+
+    Prevents piping, file redirection, or automation from supplying confirmation responses.
+    """
+    if not check_is_interactive_terminal(stream):
+        raise NonInteractiveTerminalError(
+            "Operação com --apply exige um terminal interativo real (TTY). "
+            "Confirmações fornecidas por pipe, redirecionamento de arquivo, "
+            "automação ou subprocesso com stdin emulado são terminantemente proibidas."
+        )
 
 
 def sanitize_message(text_content: str) -> str:
@@ -638,6 +675,9 @@ def request_human_double_confirmation(
     prompt_input: Callable[[str], str] = input,
 ) -> bool:
     """Require two explicit human confirmation gates before granting execution authorization."""
+    if prompt_input is input:
+        assert_interactive_terminal()
+
     prompt_msg = (
         f"[CONFIRMAÇÃO 1/2] Digite o Project Ref de Staging ({target_ref}) para confirmar: "
     )
@@ -1092,6 +1132,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                         f"Divergência entre --target-project-ref ('{explicit_ref}') "
                         f"e configuração de ambiente ('{validated_ref}')."
                     )
+
+            assert_interactive_terminal()
 
             database_url = normalize_database_url(env_values["DATABASE_URL"])
             engine = create_async_engine(database_url)
