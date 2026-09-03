@@ -2100,12 +2100,20 @@ def test_main_apply_sets_windows_selector_event_loop_policy(
 
     policy_set = []
 
+    class FakeWindowsSelectorEventLoopPolicy:
+        """Portable stand-in because the Windows policy is absent on Linux."""
+
     def mock_set_policy(pol: Any) -> None:
         policy_set.append(pol)
 
     monkeypatch.setattr(
         "app.ingestion.staging_promotion_runner.sys.platform",
         "win32",
+    )
+    monkeypatch.setattr(
+        "app.ingestion.staging_promotion_runner.asyncio.WindowsSelectorEventLoopPolicy",
+        FakeWindowsSelectorEventLoopPolicy,
+        raising=False,
     )
     monkeypatch.setattr(
         "app.ingestion.staging_promotion_runner.asyncio.set_event_loop_policy",
@@ -2119,6 +2127,7 @@ def test_main_apply_sets_windows_selector_event_loop_policy(
         "app.ingestion.staging_promotion_runner.async_sessionmaker",
         MagicMock(),
     )
+
     def mock_asyncio_run(coro: Any) -> dict[str, str]:
         coro.close()
         return {"status": "mock_report"}
@@ -2128,11 +2137,10 @@ def test_main_apply_sets_windows_selector_event_loop_policy(
         mock_asyncio_run,
     )
 
-
     exit_code = main(["--snapshot-dir", "dummy", "--apply"])
     assert exit_code == 0
     assert len(policy_set) == 1
-    assert isinstance(policy_set[0], asyncio.WindowsSelectorEventLoopPolicy)
+    assert isinstance(policy_set[0], FakeWindowsSelectorEventLoopPolicy)
 
 
 def test_cli_subprocess_entrypoint_isolated_minimal_env() -> None:
