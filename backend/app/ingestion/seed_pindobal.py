@@ -11,7 +11,6 @@ from typing import Any, cast
 from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.core.config import Settings
 from app.ingestion.google_snapshot_importer import process_google_snapshot
 from app.ingestion.manifest import MANIFEST_ENTRIES, verify_manifest
 from app.ingestion.osrm_importer import process_osrm_origin
@@ -201,6 +200,8 @@ async def apply_from_test_environment(snapshot_dir: Path, env_file: Path) -> dic
         raise RuntimeError("Arquivo de ambiente de test não encontrado.")
     require_test_isolation(test_path=env_file)
     load_dotenv(env_file, override=True)
+    from app.core.config import Settings
+
     settings = Settings()
     if settings.APP_ENV != "test":
         raise RuntimeError("--apply é permitido somente com APP_ENV=test.")

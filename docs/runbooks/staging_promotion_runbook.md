@@ -270,15 +270,21 @@ O runner solicitará dois fatores de confirmação humana no terminal:
    - **Proibição Estrita de Rejeições:** `rejected == 0` obrigatório (`rejected != 0` causa rejeição imediata).
    - **Invariantes Globais:** `read == 1714`, `candidates == 53` e `reconciled is True`.
    - **Perfil 1 — Carga Inicial Canônica:**
-     - Reconciliação: `created == 924` (SEMTUR), `updated == 0`, `unchanged == 737` (Google raw + recorte raw).
+     - Reconciliação: `created == 674` (registros SEMTUR), `updated == 0`, `unchanged == 987` (737 Google + 250 registros válidos do recorte).
      - Territorial: `regions_created == 1`, `routes_created == 1`, `regions_unchanged == 0`, `routes_unchanged == 0`.
    - **Perfil 2 — Reexecução Idempotente Canônica:**
      - Reconciliação: `created == 0`, `updated == 0`, `unchanged == 1661` (todos os registros válidos preservados).
      - Territorial: `regions_created == 0`, `routes_created == 0`, `regions_unchanged == 1`, `routes_unchanged == 1`.
-   - **Rejeição de Estados Híbridos ou Parciais:** Qualquer combinação mista (ex.: `created=924` com entidades territoriais preexistentes, `created=0` com entidades territoriais recém-criadas, `updated > 0` ou proporções parciais de `created/unchanged`) levanta `PromotionExecutionError` e aborta a transação com rollback automático.
+   - **Rejeição de Estados Híbridos ou Parciais:** Qualquer combinação mista (ex.: `created=674` com entidades territoriais preexistentes, `created=0` com entidades territoriais recém-criadas, `updated > 0` ou proporções parciais de `created/unchanged`) levanta `PromotionExecutionError` e aborta a transação com rollback automático.
 7. **Commit Atômico ou Rollback Automático:** Gerenciado exclusivamente pela Unit of Work externa; se houver exceção, o PostgreSQL reverte atomicamente toda a transação e libera o lock.
 
-#### 8.2.5 Exemplo de Saída Estruturada da Etapa 2.2 (JSON)
+#### 8.2.5 Registro de Correções do Runner CLI (ECO-2005)
+A primeira tentativa real de promoção revelou três defeitos no CLI que foram corrigidos mantendo a integridade fail-closed:
+1. **Desacoplamento de Configurações da API:** O entrypoint exigia indevidamente variáveis exclusivas do backend HTTP da API (`SUPABASE_PUBLISHABLE_KEY` e `ROUTING_PROVIDER=google_routes`). O CLI foi desacoplado e exige estritamente apenas a tríade de infraestrutura de ingestão: `APP_ENV=staging`, `SUPABASE_URL` e `DATABASE_URL`.
+2. **Normalização do Driver DSN para Psycopg:** URLs no formato `postgresql://` ou `postgres://` falhavam no SQLAlchemy async por tentar utilizar o driver síncrono padrão (`psycopg2`). O runner normaliza transparentemente DSNs para `postgresql+psycopg://` antes de chamar `create_async_engine`.
+3. **Seleção de Event Loop no Windows:** No ambiente Windows, o event loop padrão (`ProactorEventLoop`) pode apresentar instabilidades com subprocessos e conexões assíncronas do driver de banco. O runner configura deterministicamente `WindowsSelectorEventLoopPolicy` antes da inicialização do loop via `asyncio.run()`.
+
+#### 8.2.6 Exemplo de Saída Estruturada da Etapa 2.2 (JSON)
 ```json
 {
   "status": "phase2_success",
@@ -289,9 +295,9 @@ O runner solicitará dois fatores de confirmação humana no terminal:
   "run_id": "018f9123-4567-789a-bcde-f0123456789a",
   "persisted_counts": {
     "read": 1714,
-    "created": 924,
+    "created": 674,
     "updated": 0,
-    "unchanged": 737,
+    "unchanged": 987,
     "rejected": 0,
     "candidates": 53,
     "reconciled": true

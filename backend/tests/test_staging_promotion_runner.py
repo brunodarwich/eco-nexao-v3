@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
@@ -39,6 +40,7 @@ from app.ingestion.staging_promotion_runner import (
     extract_ref_from_supabase_url,
     load_canonical_migrations_manifest,
     main,
+    normalize_database_url,
     request_human_double_confirmation,
     sanitize_message,
     staging_atomic_lock_transaction,
@@ -1052,9 +1054,9 @@ def _build_mock_phase2_prerequisites() -> dict[str, Any]:
 def _build_mock_phase2_stats(
     *,
     read: int = 1714,
-    created: int = 924,
+    created: int = 674,
     updated: int = 0,
-    unchanged: int = 737,
+    unchanged: int = 987,
     rejected: int = 0,
     candidates: int = 53,
     reconciled: bool = True,
@@ -1107,7 +1109,7 @@ async def test_execute_phase2_staging_promotion_success() -> None:
     session.begin.return_value.__aexit__ = AsyncMock(return_value=None)
 
     fake_run_id = uuid.uuid4()
-    mock_stats = _build_mock_phase2_stats(created=924, unchanged=737)
+    mock_stats = _build_mock_phase2_stats(created=674, unchanged=987)
 
     with (
         patch(
@@ -1158,12 +1160,13 @@ async def test_execute_phase2_staging_promotion_success() -> None:
     assert report["target_project_ref"] == CANONICAL_STAGING_PROJECT_REF
     assert report["run_id"] == str(fake_run_id)
     assert report["persisted_counts"]["read"] == 1714
-    assert report["persisted_counts"]["created"] == 924
-    assert report["persisted_counts"]["unchanged"] == 737
+    assert report["persisted_counts"]["created"] == 674
+    assert report["persisted_counts"]["unchanged"] == 987
     assert report["persisted_counts"]["candidates"] == 53
     assert report["persisted_counts"]["rejected"] == 0
     assert report["territorial_counts"]["regions_created"] == 1
     mock_persist.assert_awaited_once()
+
 
 
 @pytest.mark.asyncio
@@ -1500,7 +1503,7 @@ async def test_execute_phase2_staging_promotion_with_human_confirmation() -> Non
     session.begin.return_value.__aexit__ = AsyncMock(return_value=None)
 
     fake_run_id = uuid.uuid4()
-    mock_stats = _build_mock_phase2_stats(created=924, unchanged=737)
+    mock_stats = _build_mock_phase2_stats(created=674, unchanged=987)
     inputs = [CANONICAL_STAGING_PROJECT_REF, "y"]
 
     with (
@@ -1636,7 +1639,7 @@ async def test_execute_phase2_regression_real_repository_dict_handled_cleanly() 
 
     fake_run_id = uuid.uuid4()
     # Real repository output is a dict, NOT an object with .created / .rejected attributes
-    real_repository_output = _build_mock_phase2_stats(created=924, unchanged=737)
+    real_repository_output = _build_mock_phase2_stats(created=674, unchanged=987)
     assert isinstance(real_repository_output, dict)
 
     with (
@@ -1683,13 +1686,13 @@ async def test_execute_phase2_regression_real_repository_dict_handled_cleanly() 
 
     # Must execute cleanly without AttributeError: 'dict' object has no attribute 'rejected'
     assert report["status"] == "phase2_success"
-    assert report["persisted_counts"]["created"] == 924
-    assert report["persisted_counts"]["unchanged"] == 737
+    assert report["persisted_counts"]["created"] == 674
+    assert report["persisted_counts"]["unchanged"] == 987
 
 
 @pytest.mark.asyncio
 async def test_state_guard_rejects_hybrid_created_with_existing_territorial() -> None:
-    """Regression: created=924 with region/route already existing is rejected and rolled back."""
+    """Regression: created=674 with region/route already existing is rejected and rolled back."""
     prereqs = _build_mock_phase2_prerequisites()
 
     session = AsyncMock(spec=AsyncSession)
@@ -1704,10 +1707,10 @@ async def test_state_guard_rejects_hybrid_created_with_existing_territorial() ->
     session.begin.return_value = tx_cm
 
     fake_run_id = uuid.uuid4()
-    # Hybrid state: 924 created, but territorial indicates entities already existed
+    # Hybrid state: 674 created, but territorial indicates entities already existed
     hybrid_stats = _build_mock_phase2_stats(
-        created=924,
-        unchanged=737,
+        created=674,
+        unchanged=987,
         regions_created=0,
         routes_created=0,
     )
@@ -1936,7 +1939,7 @@ async def test_state_guard_rejects_hybrid_combination_of_created_and_unchanged()
     session.begin.return_value = tx_cm
 
     fake_run_id = uuid.uuid4()
-    # Hybrid combination: created=500, unchanged=1161 (sum=1661, but not 924 nor 0)
+    # Hybrid combination: created=500, unchanged=1161 (sum=1661, but not 674 nor 0)
     hybrid_stats = _build_mock_phase2_stats(
         created=500,
         unchanged=1161,
@@ -2051,3 +2054,131 @@ def test_main_apply_target_mismatch_fails_closed(
     captured = capsys.readouterr()
     err_json = json.loads(captured.err)
     assert err_json["status"] == "error"
+
+
+# ==============================================================================
+# 13. ECO-2005 Corrections: DSN Normalization, Windows Event Loop, Subprocess CLI
+# ==============================================================================
+
+
+@pytest.mark.parametrize(
+    ("input_dsn", "expected_dsn"),
+    [
+        (
+            f"postgresql://postgres:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5432/postgres",
+            f"postgresql+psycopg://postgres:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5432/postgres",
+        ),
+        (
+            f"postgres://postgres:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5432/postgres",
+            f"postgresql+psycopg://postgres:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5432/postgres",
+        ),
+        (
+            f"postgresql+psycopg://postgres:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5432/postgres",
+            f"postgresql+psycopg://postgres:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5432/postgres",
+        ),
+        (
+            f"postgresql+asyncpg://postgres:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5432/postgres",
+            f"postgresql+asyncpg://postgres:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5432/postgres",
+        ),
+    ],
+)
+def test_normalize_database_url(input_dsn: str, expected_dsn: str) -> None:
+    """DSNs with postgresql:// and postgres:// must be normalized to postgresql+psycopg://."""
+    assert normalize_database_url(input_dsn) == expected_dsn
+
+
+def test_main_apply_sets_windows_selector_event_loop_policy(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """On win32, main --apply must configure WindowsSelectorEventLoopPolicy before asyncio.run."""
+    monkeypatch.setenv("APP_ENV", "staging")
+    monkeypatch.setenv("SUPABASE_URL", f"https://{CANONICAL_STAGING_PROJECT_REF}.supabase.co")
+    monkeypatch.setenv(
+        "DATABASE_URL",
+        f"postgresql://postgres:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5432/postgres",
+    )
+
+    policy_set = []
+
+    def mock_set_policy(pol: Any) -> None:
+        policy_set.append(pol)
+
+    monkeypatch.setattr(
+        "app.ingestion.staging_promotion_runner.sys.platform",
+        "win32",
+    )
+    monkeypatch.setattr(
+        "app.ingestion.staging_promotion_runner.asyncio.set_event_loop_policy",
+        mock_set_policy,
+    )
+    monkeypatch.setattr(
+        "app.ingestion.staging_promotion_runner.create_async_engine",
+        MagicMock(),
+    )
+    monkeypatch.setattr(
+        "app.ingestion.staging_promotion_runner.async_sessionmaker",
+        MagicMock(),
+    )
+    def mock_asyncio_run(coro: Any) -> dict[str, str]:
+        coro.close()
+        return {"status": "mock_report"}
+
+    monkeypatch.setattr(
+        "app.ingestion.staging_promotion_runner.asyncio.run",
+        mock_asyncio_run,
+    )
+
+
+    exit_code = main(["--snapshot-dir", "dummy", "--apply"])
+    assert exit_code == 0
+    assert len(policy_set) == 1
+    assert isinstance(policy_set[0], asyncio.WindowsSelectorEventLoopPolicy)
+
+
+def test_cli_subprocess_entrypoint_isolated_minimal_env() -> None:
+    """Subprocess test: entrypoint works with ONLY synthetic APP_ENV, SUPABASE_URL, DATABASE_URL.
+
+    Proves that SUPABASE_PUBLISHABLE_KEY and ROUTING_PROVIDER are not required by the CLI.
+    """
+    import subprocess
+    import sys
+
+    backend_dir = Path(__file__).resolve().parents[1]
+
+    clean_env = {
+        "SYSTEMROOT": os.environ.get("SYSTEMROOT", r"C:\Windows"),
+        "PATH": os.environ.get("PATH", ""),
+        "PATHEXT": os.environ.get("PATHEXT", ".COM;.EXE;.BAT;.CMD"),
+        "PYTHONPATH": str(backend_dir),
+        "APP_ENV": "staging",
+        "SUPABASE_URL": f"https://{CANONICAL_STAGING_PROJECT_REF}.supabase.co",
+        "DATABASE_URL": (
+            f"postgresql://postgres:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5432/postgres"
+        ),
+    }
+
+    # Running with --apply and --non-interactive must fail closed at the CLI validation level
+    # without raising Pydantic ValidationError for SUPABASE_PUBLISHABLE_KEY or ROUTING_PROVIDER.
+    cmd = [
+        sys.executable,
+        "-m",
+        "app.ingestion.staging_promotion_runner",
+        "--apply",
+        "--non-interactive",
+    ]
+    proc = subprocess.run(
+        cmd,
+        cwd=backend_dir,
+        env=clean_env,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+    assert proc.returncode == 1
+    err_output = proc.stderr
+    assert "SUPABASE_PUBLISHABLE_KEY" not in err_output
+    assert "ROUTING_PROVIDER" not in err_output
+    err_json = json.loads(err_output)
+    assert err_json["status"] == "error"
+    assert "proíbe --non-interactive" in err_json["message"]
