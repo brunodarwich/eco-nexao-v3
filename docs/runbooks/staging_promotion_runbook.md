@@ -270,7 +270,7 @@ O runner solicitará dois fatores de confirmação humana no terminal:
    - **Proibição Estrita de Rejeições:** `rejected == 0` obrigatório (`rejected != 0` causa rejeição imediata).
    - **Invariantes Globais:** `read == 1714`, `candidates == 53` e `reconciled is True`.
    - **Perfil 1 — Carga Inicial Canônica:**
-     - Reconciliação: `created == 674` (SEMTUR e recorte), `updated == 0`, `unchanged == 987` (Google raw + sobreposições).
+     - Reconciliação: `created == 674` (registros SEMTUR), `updated == 0`, `unchanged == 987` (737 Google + 250 registros válidos do recorte).
      - Territorial: `regions_created == 1`, `routes_created == 1`, `regions_unchanged == 0`, `routes_unchanged == 0`.
    - **Perfil 2 — Reexecução Idempotente Canônica:**
      - Reconciliação: `created == 0`, `updated == 0`, `unchanged == 1661` (todos os registros válidos preservados).

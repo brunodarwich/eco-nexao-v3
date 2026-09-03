@@ -2182,4 +2182,3 @@ def test_cli_subprocess_entrypoint_isolated_minimal_env() -> None:
     err_json = json.loads(err_output)
     assert err_json["status"] == "error"
     assert "proíbe --non-interactive" in err_json["message"]
-
