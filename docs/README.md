@@ -7,6 +7,8 @@ Este diretório é a entrada canônica para produto, arquitetura, dados, execuç
 | Documento | Finalidade |
 |---|---|
 | `../AGENTS.md` | Regras obrigatórias para agentes |
+| `ai/README.md` | Fluxo diário: próxima task, prompt do Antigravity e revisão do Codex |
+| `ai/DEVELOPMENT_RULES.md` | Constituição operacional completa do desenvolvimento com IA |
 | `backend_integration_spec.md` | Arquitetura e comportamento final |
 | `finalization/README.md` | Entrada do programa ativo de finalização |
 | `finalization/audit_report.md` | Estado real auditado e evidências |

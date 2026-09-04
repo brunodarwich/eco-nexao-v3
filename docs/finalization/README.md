@@ -30,6 +30,8 @@ ADR precede a implementação.
 | `dependency_graph.md` | Dependências, paralelismo, arquivos em conflito e revisão cruzada |
 | `release_checklist.md` | Gates 1–8 e evidência de go/no-go |
 | `ai_coordination.md` | Protocolo operacional entre agentes sem memória compartilhada |
+| `ANTIGRAVITY_SUPERVISION.md` | Protocolo geral para supervisionar entregas do Antigravity |
+| `ANTIGRAVITY_ECO2005_SUPERVISION.md` | Estudo de caso e checklist específico de ECO-2005 |
 | `decisions_needed.md` | Decisões humanas e ADRs que bloqueiam implementação |
 
 ## Vocabulário de estado
