@@ -30,10 +30,13 @@ from app.ingestion.staging_promotion_runner import (
     CANONICAL_STAGING_PROJECT_REF,
     AdvisoryLockBusyError,
     ConfirmationError,
+    NonInteractiveTerminalError,
     PreflightVerificationError,
     PromotionExecutionError,
     StagingPromotionError,
     TargetValidationError,
+    assert_interactive_terminal,
+    check_is_interactive_terminal,
     execute_phase1_preflight,
     execute_phase2_staging_promotion,
     extract_ref_from_database_url,
@@ -2107,6 +2110,10 @@ def test_main_apply_sets_windows_selector_event_loop_policy(
         policy_set.append(pol)
 
     monkeypatch.setattr(
+        "app.ingestion.staging_promotion_runner.check_is_interactive_terminal",
+        lambda *args, **kwargs: True,
+    )
+    monkeypatch.setattr(
         "app.ingestion.staging_promotion_runner.sys.platform",
         "win32",
     )
@@ -2190,3 +2197,306 @@ def test_cli_subprocess_entrypoint_isolated_minimal_env() -> None:
     err_json = json.loads(err_output)
     assert err_json["status"] == "error"
     assert "proíbe --non-interactive" in err_json["message"]
+
+
+# ==============================================================================
+# 14. ECO-2005 Interactive Terminal (TTY) Guard Tests
+# ==============================================================================
+
+
+def test_apply_non_tty_stdin_rejected(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """CLI with --apply when stdin is not a TTY is rejected with NonInteractiveTerminalError."""
+    monkeypatch.setenv("APP_ENV", "staging")
+    monkeypatch.setenv("SUPABASE_URL", f"https://{CANONICAL_STAGING_PROJECT_REF}.supabase.co")
+    monkeypatch.setenv(
+        "DATABASE_URL",
+        f"postgresql://postgres:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5432/postgres",
+    )
+    monkeypatch.setattr(
+        "app.ingestion.staging_promotion_runner.check_is_interactive_terminal",
+        lambda *args, **kwargs: False,
+    )
+
+    exit_code = main(["--snapshot-dir", "dummy", "--apply"])
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    err_json = json.loads(captured.err)
+    assert err_json["status"] == "error"
+    assert err_json["error_type"] == "NonInteractiveTerminalError"
+    assert "exige um terminal interativo real (TTY)" in err_json["message"]
+
+
+def test_apply_pipe_input_rejected_via_subprocess(tmp_path: Path) -> None:
+    """Subprocess with piped stdin (e.g. echo 'ref\\ny' | runner) must be rejected."""
+    import subprocess
+    import sys
+
+    backend_dir = Path(__file__).resolve().parents[1]
+    clean_env = {
+        "SYSTEMROOT": os.environ.get("SYSTEMROOT", r"C:\Windows"),
+        "PATH": os.environ.get("PATH", ""),
+        "PATHEXT": os.environ.get("PATHEXT", ".COM;.EXE;.BAT;.CMD"),
+        "PYTHONPATH": str(backend_dir),
+        "APP_ENV": "staging",
+        "SUPABASE_URL": f"https://{CANONICAL_STAGING_PROJECT_REF}.supabase.co",
+        "DATABASE_URL": (
+            f"postgresql://postgres:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5432/postgres"
+        ),
+    }
+
+    piped_input = f"{CANONICAL_STAGING_PROJECT_REF}\ny\n"
+    cmd = [
+        sys.executable,
+        "-m",
+        "app.ingestion.staging_promotion_runner",
+        "--apply",
+        "--snapshot-dir",
+        str(tmp_path),
+    ]
+    proc = subprocess.run(
+        cmd,
+        cwd=backend_dir,
+        env=clean_env,
+        input=piped_input,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+    assert proc.returncode == 1
+    err_json = json.loads(proc.stderr)
+    assert err_json["status"] == "error"
+    assert err_json["error_type"] == "NonInteractiveTerminalError"
+    assert "exige um terminal interativo real (TTY)" in err_json["message"]
+    assert "Confirmações fornecidas por pipe" in err_json["message"]
+
+
+def test_apply_file_redirection_rejected_via_subprocess(tmp_path: Path) -> None:
+    """Subprocess with stdin redirected from file (e.g. runner < input.txt) must be rejected."""
+    import subprocess
+    import sys
+
+    backend_dir = Path(__file__).resolve().parents[1]
+    clean_env = {
+        "SYSTEMROOT": os.environ.get("SYSTEMROOT", r"C:\Windows"),
+        "PATH": os.environ.get("PATH", ""),
+        "PATHEXT": os.environ.get("PATHEXT", ".COM;.EXE;.BAT;.CMD"),
+        "PYTHONPATH": str(backend_dir),
+        "APP_ENV": "staging",
+        "SUPABASE_URL": f"https://{CANONICAL_STAGING_PROJECT_REF}.supabase.co",
+        "DATABASE_URL": (
+            f"postgresql://postgres:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5432/postgres"
+        ),
+    }
+
+    input_file = tmp_path / "confirmations.txt"
+    input_file.write_text(f"{CANONICAL_STAGING_PROJECT_REF}\ny\n", encoding="utf-8")
+
+    cmd = [
+        sys.executable,
+        "-m",
+        "app.ingestion.staging_promotion_runner",
+        "--apply",
+        "--snapshot-dir",
+        str(tmp_path),
+    ]
+    with open(input_file, encoding="utf-8") as f_in:
+        proc = subprocess.run(
+            cmd,
+            cwd=backend_dir,
+            env=clean_env,
+            stdin=f_in,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        )
+
+    assert proc.returncode == 1
+    err_json = json.loads(proc.stderr)
+    assert err_json["status"] == "error"
+    assert err_json["error_type"] == "NonInteractiveTerminalError"
+    assert "redirecionamento de arquivo" in err_json["message"]
+
+
+def test_apply_rejection_occurs_strictly_before_engine_or_connection(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Proves that NonInteractiveTerminalError is raised before create_async_engine is called."""
+    monkeypatch.setenv("APP_ENV", "staging")
+    monkeypatch.setenv("SUPABASE_URL", f"https://{CANONICAL_STAGING_PROJECT_REF}.supabase.co")
+    monkeypatch.setenv(
+        "DATABASE_URL",
+        f"postgresql://postgres:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5432/postgres",
+    )
+    monkeypatch.setattr(
+        "app.ingestion.staging_promotion_runner.check_is_interactive_terminal",
+        lambda *args, **kwargs: False,
+    )
+
+    mock_engine = MagicMock(side_effect=AssertionError("Engine creation should never occur!"))
+    monkeypatch.setattr(
+        "app.ingestion.staging_promotion_runner.create_async_engine",
+        mock_engine,
+    )
+
+    exit_code = main(["--snapshot-dir", "dummy", "--apply"])
+    assert exit_code == 1
+    mock_engine.assert_not_called()
+
+
+def test_apply_interactive_terminal_reaches_confirmation_flow(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """When interactive terminal is confirmed, normal confirmation prompt is reached."""
+    monkeypatch.setenv("APP_ENV", "staging")
+    monkeypatch.setenv("SUPABASE_URL", f"https://{CANONICAL_STAGING_PROJECT_REF}.supabase.co")
+    monkeypatch.setenv(
+        "DATABASE_URL",
+        f"postgresql://postgres:pass@db.{CANONICAL_STAGING_PROJECT_REF}.supabase.co:5432/postgres",
+    )
+    monkeypatch.setattr(
+        "app.ingestion.staging_promotion_runner.check_is_interactive_terminal",
+        lambda *args, **kwargs: True,
+    )
+
+    reached_confirmation: list[str] = []
+
+    def mock_request_confirmation(target_ref: str, prompt_input: Any = input) -> bool:
+        reached_confirmation.append(target_ref)
+        return True
+
+    monkeypatch.setattr(
+        "app.ingestion.staging_promotion_runner.request_human_double_confirmation",
+        mock_request_confirmation,
+    )
+    mock_engine = MagicMock()
+    mock_engine.dispose = AsyncMock()
+    monkeypatch.setattr(
+        "app.ingestion.staging_promotion_runner.create_async_engine",
+        MagicMock(return_value=mock_engine),
+    )
+    mock_session = AsyncMock()
+    mock_session_cm = AsyncMock()
+    mock_session_cm.__aenter__.return_value = mock_session
+    mock_session_cm.__aexit__.return_value = None
+    monkeypatch.setattr(
+        "app.ingestion.staging_promotion_runner.async_sessionmaker",
+        MagicMock(return_value=MagicMock(return_value=mock_session_cm)),
+    )
+
+    reached_execution: list[str] = []
+
+    async def mock_phase2(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        reached_execution.append("phase2_reached")
+        return {"status": "phase2_success", "mock": True}
+
+    monkeypatch.setattr(
+        "app.ingestion.staging_promotion_runner.execute_phase2_staging_promotion",
+        mock_phase2,
+    )
+
+    exit_code = main(["--snapshot-dir", "dummy", "--apply"])
+    assert exit_code == 0
+    assert reached_execution == ["phase2_reached"]
+
+
+def test_confirmation_incorrect_or_negative_aborts() -> None:
+    """Invalid ref or negative 'n' confirmation raises ConfirmationError."""
+    # 1. Wrong ref
+    with pytest.raises(ConfirmationError, match="Confirmação 1 falhou"):
+        request_human_double_confirmation(
+            CANONICAL_STAGING_PROJECT_REF,
+            prompt_input=lambda p: "wrongref12345",
+        )
+
+    # 2. Negative 'n'
+    answers = iter([CANONICAL_STAGING_PROJECT_REF, "n"])
+    with pytest.raises(ConfirmationError, match="Confirmação 2 falhou"):
+        request_human_double_confirmation(
+            CANONICAL_STAGING_PROJECT_REF,
+            prompt_input=lambda p: next(answers),
+        )
+
+    # 3. Invalid input (e.g. arbitrary text)
+    answers2 = iter([CANONICAL_STAGING_PROJECT_REF, "invalid_reply"])
+    with pytest.raises(ConfirmationError, match="Confirmação 2 falhou"):
+        request_human_double_confirmation(
+            CANONICAL_STAGING_PROJECT_REF,
+            prompt_input=lambda p: next(answers2),
+        )
+
+
+def test_request_human_double_confirmation_asserts_tty_with_default_input(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """When using default input function, request_human_double_confirmation fails if not TTY."""
+    monkeypatch.setattr(
+        "app.ingestion.staging_promotion_runner.check_is_interactive_terminal",
+        lambda *args, **kwargs: False,
+    )
+    with pytest.raises(NonInteractiveTerminalError):
+        request_human_double_confirmation(CANONICAL_STAGING_PROJECT_REF)
+
+
+def test_offline_dry_run_unaffected_by_tty_guard(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Phase 1 preflight dry-run works without TTY when --non-interactive is specified."""
+    monkeypatch.setattr(
+        "app.ingestion.staging_promotion_runner.check_is_interactive_terminal",
+        lambda *args, **kwargs: False,
+    )
+    monkeypatch.setattr(
+        "app.ingestion.staging_promotion_runner.execute_phase1_preflight",
+        lambda *args, **kwargs: {"status": "phase1_success"},
+    )
+
+    exit_code = main(["--snapshot-dir", "dummy", "--non-interactive"])
+    assert exit_code == 0
+
+
+def test_check_is_interactive_terminal_cross_platform() -> None:
+    """TTY detection uses standard isatty/fileno without platform-exclusive syscalls."""
+    import io
+
+    # Stream with isatty() returning True
+    class MockTTYStream:
+        def isatty(self) -> bool:
+            return True
+
+    assert check_is_interactive_terminal(MockTTYStream()) is True
+
+    # Stream with isatty() returning False
+    class MockNonTTYStream:
+        def isatty(self) -> bool:
+            return False
+
+    assert check_is_interactive_terminal(MockNonTTYStream()) is False
+
+    # io.StringIO has no TTY
+    string_io = io.StringIO("test")
+    assert check_is_interactive_terminal(string_io) is False
+
+    # Object raising OSError on isatty
+    class ErrorStream:
+        def isatty(self) -> bool:
+            raise OSError("Inappropriate ioctl for device")
+
+    assert check_is_interactive_terminal(ErrorStream()) is False
+
+    # Object without isatty or fileno
+    assert check_is_interactive_terminal(object()) is False
+
+
+def test_assert_interactive_terminal_raises_when_not_tty() -> None:
+    """assert_interactive_terminal raises NonInteractiveTerminalError when stream is not a TTY."""
+
+    class NonTTY:
+        def isatty(self) -> bool:
+            return False
+
+    with pytest.raises(NonInteractiveTerminalError):
+        assert_interactive_terminal(NonTTY())

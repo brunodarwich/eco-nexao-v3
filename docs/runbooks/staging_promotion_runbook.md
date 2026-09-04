@@ -81,9 +81,12 @@ Para evitar acionamentos acidentais ou automações não autorizadas, a transiç
 2. **Fator 2 (Confirmação Explícita de Ação):**
    - O operador deve responder afirmativamente à pergunta `[y/N]`.
    - Respostas vazias ou diferentes de `y`/`yes` resultam em abort imediato.
+3. **Exigência Estrita de Terminal Interativo (TTY):**
+   - A execução com `--apply` exige deterministicamente um terminal interativo real (`isatty()`).
+   - Confirmações fornecidas por pipe, redirecionamento de stdin, arquivos, automações ou subprocessos com stdin emulado são bloqueadas via `assert_interactive_terminal()` antes da criação de engine, conexão ou leitura de dados (`NonInteractiveTerminalError`).
 
 > [!IMPORTANT]
-> Nenhuma conexão com privilégio de escrita ou transação remota é aberta antes da conclusão bem-sucedida de ambos os fatores de confirmação.
+> Nenhuma conexão com privilégio de escrita ou transação remota é aberta antes da conclusão bem-sucedida de ambos os fatores de confirmação em terminal interativo real.
 
 ---
 
