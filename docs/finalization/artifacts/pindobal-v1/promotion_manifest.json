@@ -31,9 +31,9 @@
       "sha256": "589f1c4c2110a85ec30819c9da45e0ef57467b5bc59fa8a27344d490b1a9fb83"
     },
     {
-      "bytes": 21989,
+      "bytes": 21954,
       "path": "backend/app/ingestion/pindobal_repository.py",
-      "sha256": "1a941b8909e20840745a99c72685c4736a2d8c9ad9611870627e329a2cb78230"
+      "sha256": "d8680e2767baf72392487a2cef8c7fd69adf87f4b683f1dc8260899748b06348"
     },
     {
       "bytes": 7063,
@@ -46,9 +46,9 @@
       "sha256": "213cf69897fad85410ed8a72b921cc9c5751779499f85a7f14e16dd62d8fb019"
     },
     {
-      "bytes": 4192,
+      "bytes": 4187,
       "path": "backend/scripts/verify_pindobal_gate.py",
-      "sha256": "91cf01254fd168207b5df51660e56da81112831e7742ba8e7f6fdfb1c27de614"
+      "sha256": "7a98a015fd5f5ee9b0964bd7499103892374df9a14eab87bb31b69c56c7b34e0"
     },
     {
       "bytes": 9687,
@@ -171,6 +171,16 @@
       "bytes": 851,
       "path": "supabase/migrations/20260826074500_routing_monthly_usage.sql",
       "sha256": "61f4237c59ef75f92ce2018b5117c81cb0d120e2463bf9667aada286ab0abbfb"
+    },
+    {
+      "bytes": 20015,
+      "path": "supabase/migrations/20260827195436_territorial_catalog_schema_adr0014_adr0015.sql",
+      "sha256": "4ca76e8fe8e7e64d31bb4d39c58ad47f13e2ae30a7bdf5ec115420905bf4eb74"
+    },
+    {
+      "bytes": 2906,
+      "path": "supabase/migrations/20260827221358_eco_2510_remove_legacy_google_photo_persistence.sql",
+      "sha256": "40e7b2669d9e3d5fb78b4cc7e636fa33e3344843ac8840c415552617baa0db7b"
     }
   ],
   "package": {
