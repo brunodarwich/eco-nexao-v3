@@ -4,7 +4,9 @@ Continue o desenvolvimento do ECOnexão a partir do estado real do repositório,
 
 ## Contexto já conhecido
 
-- A fonte ativa de planejamento é `docs/finalization/`; o backlog `ECO-0001–ECO-1205` e seu progresso são históricos arquivados.
+- A fonte ativa local de planejamento e backlog é `docs/project_status.md`.
+  `docs/finalization/` é referência histórica para aceites, dependências e evidências;
+  o backlog `ECO-0001–ECO-1205` e seu progresso também são históricos arquivados.
 - O estado global documentado é: **não pronto para staging nem production**.
 - O código já contém FastAPI, migrations Supabase, OpenAPI, cliente Expo tipado, TanStack Query, Auth anônima, telas públicas e testes locais.
 - O baseline auditado registra frontend com 15 suítes/74 testes, backend com 170/170 testes, cobertura de 90,10%, Ruff e mypy sem erros; reproduza o que for seguro e trate esses números como alegações até confirmar no ambiente atual.
@@ -14,7 +16,8 @@ Continue o desenvolvimento do ECOnexão a partir do estado real do repositório,
 - ADR 0005 (Cloud Run em `southamerica-east1`) e ADR 0006 (RBAC/workflow editorial) estão aceitos.
 - ECO-1304, ECO-1305 e ECO-1306 continuam dependentes de decisão do proprietário.
 - A cópia auditada não contém `.git`. Isso bloqueia comprovação de status/diff/histórico e **bloqueia trabalho paralelo com escrita** até restaurar um worktree íntegro.
-- Próximo ponto de entrada esperado: **ECO-1301 — Restabelecer baseline verificável**. Não pule para tasks posteriores sem satisfazer dependências e gates.
+- O próximo ponto de entrada deve ser lido em `docs/project_status.md`. Não fixe um
+  ID a partir deste registro histórico nem pule dependências e gates.
 
 ## Leitura obrigatória, nesta ordem
 
@@ -24,7 +27,8 @@ Continue o desenvolvimento do ECOnexão a partir do estado real do repositório,
 4. `docs/finalization/README.md`.
 5. `docs/finalization/audit_report.md`.
 6. `docs/finalization/implementation_plan.md`.
-7. `docs/finalization/tasks.md`, especialmente o bloco completo de ECO-1301 e as dependências imediatas.
+7. `docs/finalization/tasks.md`, somente para consultar o bloco histórico da ação
+   selecionada pela fonte ativa e suas dependências imediatas.
 8. `docs/finalization/dependency_graph.md`.
 9. `docs/finalization/decisions_needed.md`.
 10. `docs/finalization/ai_coordination.md`.
@@ -47,10 +51,14 @@ Não deixe subagentes editarem os mesmos arquivos. Depois que o Git for restaura
 ## O que fazer agora
 
 1. Inspecione o estado atual sem modificar arquivos.
-2. Confirme se existe `.git` em algum nível válido e identifique o commit-base; se não existir, classifique ECO-1301 como bloqueada e proponha opções seguras para restaurar/obter o clone íntegro, sem apagar ou sobrescrever esta cópia.
+2. Confirme se existe `.git` em algum nível válido e identifique o commit-base; se
+   não existir, registre o bloqueio na ação selecionada e proponha opções seguras para
+   restaurar/obter o clone íntegro, sem apagar ou sobrescrever esta cópia.
 3. Verifique quais ADRs e decisões humanas estão aceitos, pendentes ou inconsistentes.
 4. Reproduza apenas verificações locais, read-only ou não destrutivas que sejam necessárias para validar o diagnóstico. Não acesse production. Não aplique migrations. Não use credenciais ou segredos em saídas.
-5. Identifique a **única próxima task ativa** segundo dependências, prioridade e regras de parada. O padrão esperado é ECO-1301; qualquer escolha diferente deve ser justificada com evidência normativa.
+5. Identifique a **única próxima ação ativa** indicada em `docs/project_status.md` e
+   confirme suas dependências, prioridade e regras de parada; não fixe um ID a partir
+   deste prompt histórico.
 6. Antes de qualquer futura edição, prepare o mini-brief exigido por `docs/ai_task_playbook.md`.
 7. Produza um plano de implementação em etapas pequenas, cada uma com: objetivo, arquivos prováveis, dependências, executor/subagente, critérios de aceite, comandos de verificação, riscos, rollback e ponto de parada.
 8. Separe claramente:

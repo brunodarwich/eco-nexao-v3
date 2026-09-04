@@ -1,10 +1,13 @@
 # ECOnexão — Programa de higiene e saúde do repositório
 
-Status: `PROPOSED`
+Status: `IN_PROGRESS` — ECO-2401 registrada e ECO-2402 em execução
 
 Owner de ativação: proprietário do produto
 
 Fonte normativa superior: `../README.md`
+
+Fonte ativa de estado e backlog: [`../project_status.md`](../project_status.md).
+`tasks.md` preserva a sequência histórica do programa de higiene.
 
 ## Objetivo
 

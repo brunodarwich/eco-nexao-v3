@@ -1,4 +1,9 @@
-# ECOnexão — Programa de finalização
+# ECOnexão — Programa de finalização (registro histórico)
+
+> A fonte ativa de estado, prioridade Web e backlog aberto é
+> [`../project_status.md`](../project_status.md). Este pacote preserva baseline,
+> critérios e evidências históricas; não deve ser usado isoladamente para escolher
+> a próxima task.
 
 Baseline auditado em: 12/08/2026  
 Escopo: finalizar, popular, homologar, publicar e operar o ECOnexão sem atualizar o Expo SDK 54.  
@@ -20,7 +25,7 @@ Aplicar a precedência normativa do `AGENTS.md`. O programa de finalização nã
 reescreve decisões aceitas; quando o escopo atual ultrapassa a spec 1.0, a task de
 ADR precede a implementação.
 
-## Documentos ativos
+## Documentos de referência
 
 | Documento | Papel |
 |---|---|
@@ -51,7 +56,9 @@ Somente os estados abaixo podem ser usados:
 staging` e `pronto para production` são afirmações diferentes. Nenhuma implica a
 seguinte automaticamente.
 
-## Baseline resumido
+## Baseline histórico resumido
+
+Os números e afirmações abaixo são um snapshot de 12/08/2026, não o estado atual.
 
 - O repositório contém FastAPI, migrations, OpenAPI, cliente Expo tipado, TanStack
   Query, Auth anônima, telas públicas e testes locais de componentes/unidade.

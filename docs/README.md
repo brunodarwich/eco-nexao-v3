@@ -1,19 +1,22 @@
 # ECOnexão — Índice da documentação
 
 Este diretório é a entrada canônica para produto, arquitetura, dados, execução e testes.
+O estado atual e o único backlog ativo estão em [`project_status.md`](project_status.md).
 
 ## Comece aqui
 
 | Documento | Finalidade |
 |---|---|
+| `project_status.md` | **Fonte única ativa:** estado por plataforma/evidência e backlog Web aberto |
+| `documentation_matrix.md` | Classificação proposta entre documentação versionável e processo local |
 | `../AGENTS.md` | Regras obrigatórias para agentes |
 | `ai/README.md` | Fluxo diário: próxima task, prompt do Antigravity e revisão do Codex |
 | `ai/DEVELOPMENT_RULES.md` | Constituição operacional completa do desenvolvimento com IA |
 | `backend_integration_spec.md` | Arquitetura e comportamento final |
-| `finalization/README.md` | Entrada do programa ativo de finalização |
+| `finalization/README.md` | Índice histórico e referências do programa de finalização |
 | `finalization/audit_report.md` | Estado real auditado e evidências |
 | `finalization/implementation_plan.md` | Marcos, caminho crítico e estratégia de entrega |
-| `finalization/tasks.md` | Backlog ativo `ECO-13xx` a `ECO-22xx` |
+| `finalization/tasks.md` | Registro histórico `ECO-13xx` a `ECO-22xx`; não define a próxima task |
 | `backend_integration_tasks.md` | Índice do backlog histórico arquivado e sucessor ativo |
 | `ai_task_playbook.md` | Como uma IA executa e entrega cada task |
 | `../DEVELOPMENT.md` | Setup e comandos locais/remotos |
@@ -37,7 +40,7 @@ Este diretório é a entrada canônica para produto, arquitetura, dados, execuç
 | `adr/0009-remocao-impacto-ecologico-pessoal.md` | Remove impacto/selos pessoais e preserva selos editoriais territoriais |
 | `adr/0013-google-routes-como-provedor-de-roteamento.md` | Google Routes API Essentials substitui OSRM no Gate H3 revisado |
 
-## Programa de finalização
+## Programa de finalização (histórico e referências)
 
 - `finalization/dependency_graph.md`: dependências, paralelismo e conflitos.
 - `finalization/release_checklist.md`: gates objetivos até produção e lojas.
@@ -92,3 +95,5 @@ ADR aceito → spec → OpenAPI → contrato de dados → critérios de aceite �
 - Mudança de origem/normalização: alterar contrato Pindobal e fixtures.
 - Mudança de interação: alterar critérios de aceite e inventário quando necessário.
 - Novo comando: atualizar `DEVELOPMENT.md` e `AGENTS.md`.
+- Mudança de estado ou ordem de trabalho: atualizar somente `project_status.md`; os
+  backlogs de iniciativa permanecem registros históricos.

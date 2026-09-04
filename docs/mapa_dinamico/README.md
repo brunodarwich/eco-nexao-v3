@@ -1,6 +1,7 @@
 # ECOnexão — Mapa por camadas e origens dinâmicas
 
-Status: planejamento proposto, ainda não autorizado para implementação integral  
+Status: registro histórico de uma iniciativa amplamente implementada; estado atual
+em [`../project_status.md`](../project_status.md).
 Owner das decisões: proprietário do produto  
 Entrada normativa superior: `../README.md`
 
@@ -50,8 +51,11 @@ confirme que a dependência está realmente concluída.
 - Contrato e schema precedem consumidores.
 - Alterações do usuário e áreas fora da task são preservadas.
 
-## Próxima ação
+## Próxima ação histórica
 
 Começar por `ECO-2301` para congelar a taxonomia visual. A decisão de camadas
 espaciais ocorre em `ECO-2305` e o ADR de origens dinâmicas em `ECO-2308`. As três
 tasks são documentais e exigem aprovação humana antes das implementações dependentes.
+
+Esta sequência registra o plano original e não deve mais orientar a próxima sessão.
+Android/iOS estão `MOBILE_LATER` e não bloqueiam o fechamento da versão Web.

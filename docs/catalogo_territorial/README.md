@@ -1,7 +1,8 @@
 # ECOnexão — Catálogo territorial SEMTUR + Google
 
-Status: planejamento proposto; nenhuma migration, chamada Google ou publicação é
-autorizada por este pacote.
+Status: registro histórico de uma iniciativa com implementação material; o estado
+conservador e o backlog ativo estão em [`../project_status.md`](../project_status.md).
+Este pacote não autoriza migration, chamada Google ou publicação.
 
 ## Objetivo
 
@@ -40,8 +41,12 @@ Referências oficiais a rever na sessão de implementação:
 - https://developers.google.com/maps/documentation/places/web-service/place-id
 - https://developers.google.com/my-business/content/faq
 
-## Entrada de execução
+## Entrada histórica de execução
 
 Comece por `ECO-2501`. Execute uma task por sessão copiando apenas o prompt
 correspondente de `prompts/`. Gates humanos impedem alteração de taxonomia, ativação
 Google, gasto, publicação e acesso a production.
+
+Essa instrução preserva o fluxo original, mas não define mais a próxima task. Em
+especial, ECO-2512 e ECO-2513 não são consideradas homologação multiplataforma pela
+fonte ativa; Android/iOS estão `MOBILE_LATER`.
