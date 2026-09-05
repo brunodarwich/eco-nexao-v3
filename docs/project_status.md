@@ -156,11 +156,11 @@ A RECONCILIAR: 2 | ADIADA: 13 | BLOQUEADA: 4 | BLOQUEADA POR DADOS: 9 | CANCELAD
 
 #### ECO-2604 — Padronizar pacote de dados e revisão de cada rota
 
-- **Estado / horizonte / alteração:** PENDENTE / Versão do evento / NOVA.
-- **Dependências ou sucessoras:** ECO-2603 (CONCLUÍDA DOCUMENTAL). Desbloqueada para execução.
-- **Conclusão / aceite:** Template preenchido com Pindobal: ficha, destino, origens, geometria/proveniência, atores, contatos, categorias, tags e mídia/licença/alt; valores ausentes explícitos; instrução utilizável pelo owner/IA.
-- **Evidência e limite:** Solicitação/decisões do owner nesta conversa; implementação nova não verificada.
-- **Referência:** [direcionamento_versao_web_evento.md](direcionamento_versao_web_evento.md). **Commit:** Não vinculado.
+- **Estado / horizonte / alteração:** CONCLUÍDA LOCAL / Versão do evento / NOVA.
+- **Dependências ou sucessoras:** ECO-2603 (CONCLUÍDA DOCUMENTAL). Desbloqueia ECO-2605.
+- **Conclusão / aceite:** Template normativo preenchido com Pindobal: ficha, destino, origens, geometria/proveniência, atores, contatos, categorias, tags e mídia/licença/alt; valores ausentes explícitos; instrução utilizável pelo owner/IA. Status da rota Pindobal demarcado como PARTIAL (draft técnico), pois dados finais dependem de carga e homologação.
+- **Evidência e limite:** Em 05/09/2026, artefatos normativos e de referência produzidos e verificados: `docs/data/route_data_package_template.md` (template normativo para novas rotas), `docs/data/pindobal_route_package.md` (especificação de referência com 3 origens e 3 geometrias vinculadas aos hashes do manifesto `teste-rota`, 318 atores no corredor, fichas reais auditadas da SEMTUR com IDs de página, URIs `cid=` e ratings Google expurgados, 31 valores ausentes estritamente explicitados sem dados inventados, rota fixada em `status: draft` e `is_verified: false`) e `docs/catalogo_territorial/instrucoes_preenchimento_rotas.md` (guia passo a passo com regras de ouro e omissão de tags incompatíveis). Script `validate_eco_2604.py`, scanner de segredos (`SECRET_SCAN=OK`) e `git diff --check` aprovados com zero erros. Não altera código de produção, schema ou chamadas remotas.
+- **Referência:** [direcionamento_versao_web_evento.md](direcionamento_versao_web_evento.md). **Commit:** commit desta task.
 
 #### ECO-2605 — Generalizar importação para múltiplas rotas e regiões
 
