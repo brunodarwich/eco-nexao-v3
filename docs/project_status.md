@@ -8,9 +8,10 @@ ainda abertas permanecem em ECO-2603 e não são aprovadas pelo commit documenta
 
 ## Como acompanhar
 
-- **Agora:** ECO-2602 concluída localmente; baseline `c49a83c` verificada e lacunas
-  registradas em [baseline_eco_2602.md](baseline_eco_2602.md). Próxima task: ECO-2603,
-  reconciliação de decisões, contratos e pré-requisitos antes de implementar o novo escopo.
+- **Agora:** ECO-2603 concluída documentalmente; decisões, contratos e pré-requisitos
+  reconciliados sem pendências bloqueadoras. Próximas tasks desbloqueadas para execução
+  sequencial local: ECO-2604 (padronização de dados), ECO-2606 (login Google) e
+  ECO-2608 (pins sem clusters).
 - **Objetivo:** Web com dez rotas, mapa fluido, pins sem clusters, catálogo por categorias
   e experiências, login Google, favoritos e histórico de viagens.
 - **Dados:** owner entrega dez rotas até sexta; data absoluta ainda a confirmar
@@ -52,7 +53,7 @@ antecipar escrita remota. Cada task concluída recebe evidência e commit, quand
 
 | Marco | Tasks em ordem | Ponto de controle/commit |
 |---|---|---|
-| 0 — Consolidar e proteger base | ECO-2601 → ECO-2602 → ECO-2603 | Consolidação revisada; identificar baseline e reconciliar contratos |
+| 0 — Consolidar e proteger base | ECO-2601 → ECO-2602 → ECO-2603 | Consolidação revisada; baseline identificada e contratos reconciliados |
 | 1 — Preparar alimentação | ECO-2604 → ECO-2605 | Template/pipeline reproduzíveis sem depender do painel |
 | 2 — Conta e viagens | ECO-2606 → ECO-2607 | Login e persistência verificados; configurar dependências cedo |
 | 3 — Experiência Web | ECO-2608 → ECO-2609 → ECO-2610 → ECO-2611 → ECO-2612 → ECO-2613 → ECO-2614 | Commits pequenos por comportamento funcional, sem aguardar todo marco |
@@ -61,32 +62,36 @@ antecipar escrita remota. Cada task concluída recebe evidência e commit, quand
 | 6 — Auditoria e release | ECO-2104 → ECO-2201 → ECO-2202 → ECO-2203 → ECO-2205 | Artefato imutável, GO separado, dados/publicação/observação |
 
 ECO-2616 (fotos nos cards) é opcional após ECO-2615; se implementada, repetir os gates
-afetados antes do go/no-go. ECO-2310/2311 (origem dinâmica) podem ficar desabilitadas
-sem retirar o acompanhamento da posição: decisão explícita em ECO-2603.
+afetados antes do go/no-go. ECO-2310/2311 (origem dinâmica) permanecem desabilitadas por default
+sem retirar o acompanhamento da posição em primeiro plano (ECO-2609).
 Pré-condições antigas de segurança/dados permanecem obrigatórias quando aplicáveis;
 lacuna descoberta em task de base deve ser corrigida antes do consumidor, sem fingir
 que RQ-01/RQ-02 concluíram todos os aceites operacionais individuais.
 
-**Gate de dependências em ECO-2602/2603:** para cada base PARCIAL citada abaixo,
-registrar se o requisito necessário já passa, se a nova task assume sua conclusão
-ou se uma correção da base deve entrar imediatamente antes na sequência. Até essa
-classificação, a task consumidora não está liberada. Não exigir que um painel adiado
-seja completado para reutilizar a API que já funciona.
+**Matriz de Reconciliação das 20 Bases Parciais (ECO-2602 → ECO-2603):**
 
-| Base anterior | Task que evolui/reutiliza | Regra para não duplicar trabalho |
+| ID Base | Classificação | Destino / Resolução Normativa |
 |---|---|---|
-| ECO-2005 | ECO-2605 | Runner do handoff ausente na árvore principal; ECO-2603 define reconciliação, ECO-2605 incorpora/verifica o subescopo necessário antes de carga |
-| ECO-1902 | ECO-2606 | OAuth Google e continuidade de conta completados na nova task; não repetir login por e-mail já verificado |
-| ECO-1904 | ECO-2607 | Ciclo de viagens evoluído na nova task; perfil/contatos continuam com aceites próprios |
-| ECO-2304/2307 | ECO-2608 | Novo comportamento sem clusters substitui a aceitação visual antiga; nativo não bloqueia Web |
-| ECO-2512 | ECO-2610 | Novo catálogo assume aceites de carrossel; homologação final permanece em ECO-2513 |
-
-Bases de segurança (ECO-1401–1404 e ECO-1704), operação editorial efetivamente usada
-pela ingestão (ECO-1601–1605) e infraestrutura (ECO-2001–2004) exigem evidência do
-subescopo necessário ao consumidor. A matriz da [ECO-2602](baseline_eco_2602.md) registra
-as lacunas por ID, inclusive publicação de região, API bulk, runbook e limite financeiro.
-ECO-2603 ajusta a sequência e os contratos antes de liberar implementação. Isso não
-autoriza trocar estado PARCIAL por CONCLUÍDA sem prova.
+| ECO-2005 | Resolvido documentalmente / absorvido | Árvore principal contém `seed_pindobal.py`, `pindobal_repository.py` e `verify_pindobal_promotion_package.py`. Runner fora da árvore não bloqueia; subescopo de promoção multi-rota é absorvido e verificado em ECO-2605 |
+| ECO-1902 | Absorvido por sucessora | E-mail/senha e linking existentes na base; OAuth Google e continuidade de conta absorvidos em ECO-2606 |
+| ECO-1904 | Absorvido por sucessora | GET/POST trips existente na base; ciclo pausar/retomar/finalizar absorvido em ECO-2607 sem dados de impacto CO₂ |
+| ECO-2304 | Absorvido por sucessora | Novo comportamento de pins sem agrupamentos numéricos (clusters) e cor/ícone canônicos absorvido em ECO-2608 |
+| ECO-2307 | Absorvido por sucessora | Câmera, densidade e destaque do item selecionado absorvidos em ECO-2608; posição no mapa em ECO-2609 |
+| ECO-2512 | Absorvido por sucessora | Carrosséis por categoria absorvidos em ECO-2610, tags de experiência em ECO-2611 e ordenação por completude em ECO-2612 |
+| ECO-1401 | Requisito verificado localmente | `check_test_isolation.py` e testes passam; confirmação de staging isolado permanece como gate antes do deploy remoto |
+| ECO-1402 | Requisito verificado localmente | Migrations e código Storage locais verificados; gate remoto antes de upload na esteira de homologação |
+| ECO-1403 | Requisito verificado localmente | `editorial_authorization.py` RBAC verificado; reutilizado no backend para scripts e ingestão sem depender de UI |
+| ECO-1404 | Resolvido documentalmente | Scanner de segredos OK; entrypoints do runbook corrigidos em ECO-2603 (`scripts.check_environment` e `app.ingestion.seed_pindobal`) |
+| ECO-1704 | Requisito verificado localmente | Políticas de Storage verificadas localmente; execução remota sob autorização prévia antes de release |
+| ECO-1601 | Requisito verificado localmente | Contratos e validação da API administrativa verificados; reutilizados pelo pipeline de ingestão |
+| ECO-1602 | Requisito verificado localmente | CRUD territorial no backend reutilizado na carga de rotas/origens/geometrias |
+| ECO-1603 | Requisito verificado localmente | CRUD de atores/categorias/vínculos no backend reutilizado na ingestão da equipe |
+| ECO-1604 | Resolvido documentalmente | Fluxo de publicação de região definido: região publica ao homologar a primeira rota completa (ECO-2605 para Altamira) |
+| ECO-1605 | Absorvido por sucessora | Pipeline de importação da equipe absorvido em ECO-2605; API bulk ampla permanece parcial pós-evento |
+| ECO-2001 | Requisito verificado localmente | Configuração Render local OK; medição em ECO-2615 e publicação em ECO-2203 |
+| ECO-2002 | Requisito verificado localmente | Workflow de CI local OK; gate pré-deploy acionado na esteira de homologação |
+| ECO-2003 | Requisito verificado localmente | Factory CORS e headers locais OK; verificação de domínio em staging antes de ECO-2101 |
+| ECO-2004 | Requisito verificado localmente | Rate limiting local OK; teto financeiro de R$ 500/mês governado por cotas GCP e guardas de processo |
 
 ## Mudanças de direcionamento e destino do trabalho anterior
 
@@ -121,7 +126,7 @@ autorizada simplesmente por estar nesta lista.
 
 Total: **205 registros**, incluindo histórico substituído; não usar como percentual de progresso.
 
-A RECONCILIAR: 2 | ADIADA: 13 | BLOQUEADA: 4 | BLOQUEADA POR DADOS: 9 | CANCELADA NO ESCOPO: 1 | CONCLUÍDA DOCUMENTAL: 13 | CONCLUÍDA LOCAL: 14 | CONCLUÍDA STAGING LIMITADA: 1 | CONDICIONAL: 1 | DECISÃO PENDENTE: 1 | PARCIAL: 47 | PENDENTE: 13 | SUBSTITUÍDA: 86
+A RECONCILIAR: 2 | ADIADA: 13 | BLOQUEADA: 4 | BLOQUEADA POR DADOS: 9 | CANCELADA NO ESCOPO: 1 | CONCLUÍDA DOCUMENTAL: 14 | CONCLUÍDA LOCAL: 14 | CONCLUÍDA STAGING LIMITADA: 1 | CONDICIONAL: 1 | DECISÃO PENDENTE: 1 | PARCIAL: 47 | PENDENTE: 12 | SUBSTITUÍDA: 86
 
 ### Novas tasks para concluir a versão e conteúdo
 
@@ -143,16 +148,16 @@ A RECONCILIAR: 2 | ADIADA: 13 | BLOQUEADA: 4 | BLOQUEADA POR DADOS: 9 | CANCELAD
 
 #### ECO-2603 — Reconciliar decisões, contratos e pré-requisitos do evento
 
-- **Estado / horizonte / alteração:** PENDENTE / Versão do evento / NOVA.
+- **Estado / horizonte / alteração:** CONCLUÍDA DOCUMENTAL / Versão do evento / NOVA.
 - **Dependências ou sucessoras:** ECO-2602.
 - **Conclusão / aceite:** Atualizar ADRs/spec/aceites afetados: sem clusters/voz, Web, painel adiado, posição versus origem dinâmica, mapa compatível, login Google e mídia. Confirmar datas, assets, callbacks e orçamento R$ 500; separar decisões abertas de autorizadas; nenhum gasto/deploy implícito. Ajustar a sequência com correções de bases indicadas em ECO-2602 e registrar aceites absorvidos pelas sucessoras antes de liberar cada consumidor. Resolver o destino do runner fora da árvore principal, o fluxo aprovado de publicação de região, o subescopo de importação da equipe e a correção do runbook antes de uso remoto.
-- **Evidência e limite:** Solicitação/decisões do owner nesta conversa; implementação nova não verificada.
-- **Referência:** [direcionamento_versao_web_evento.md](direcionamento_versao_web_evento.md). **Commit:** Não vinculado.
+- **Evidência e limite:** Em 05/09/2026, reconciliação normativa completa: `backend_integration_spec.md`, `acceptance_criteria.md`, `direcionamento_versao_web_evento.md`, `runbooks/production_promotion_runbook.md` e matriz das 20 bases em `project_status.md` atualizados. Pins sem clusters (ADR 0010/0011), acompanhamento de posição em primeiro plano sem recálculo forçado, proxy de fotos Google sob demanda com atribuição (ADR 0016), login Google/linking sem perda de favoritos (ADR 0007), fluxo de publicação de região e comandos do runbook de promoção corrigidos. Desbloqueia ECO-2604, ECO-2606 e ECO-2608. Nenhuma alteração remota ou de código de produção.
+- **Referência:** [direcionamento_versao_web_evento.md](direcionamento_versao_web_evento.md). **Commit:** commit desta task.
 
 #### ECO-2604 — Padronizar pacote de dados e revisão de cada rota
 
 - **Estado / horizonte / alteração:** PENDENTE / Versão do evento / NOVA.
-- **Dependências ou sucessoras:** ECO-2603.
+- **Dependências ou sucessoras:** ECO-2603 (CONCLUÍDA DOCUMENTAL). Desbloqueada para execução.
 - **Conclusão / aceite:** Template preenchido com Pindobal: ficha, destino, origens, geometria/proveniência, atores, contatos, categorias, tags e mídia/licença/alt; valores ausentes explícitos; instrução utilizável pelo owner/IA.
 - **Evidência e limite:** Solicitação/decisões do owner nesta conversa; implementação nova não verificada.
 - **Referência:** [direcionamento_versao_web_evento.md](direcionamento_versao_web_evento.md). **Commit:** Não vinculado.
@@ -168,7 +173,7 @@ A RECONCILIAR: 2 | ADIADA: 13 | BLOQUEADA: 4 | BLOQUEADA POR DADOS: 9 | CANCELAD
 #### ECO-2606 — Entregar login Google com favoritos preservados
 
 - **Estado / horizonte / alteração:** PENDENTE / Versão do evento / NOVA.
-- **Dependências ou sucessoras:** ECO-2603, ECO-1902.
+- **Dependências ou sucessoras:** ECO-2603 (CONCLUÍDA DOCUMENTAL), ECO-1902. Desbloqueada para execução.
 - **Conclusão / aceite:** Login/callback/logout/retorno após refresh, guest→conta e conflito com conta existente respeitam ADR; favoritos preservados no fluxo aceito e isolamento A/B testado; configuração externa homologada antes de concluir.
 - **Evidência e limite:** Solicitação/decisões do owner nesta conversa; implementação nova não verificada.
 - **Referência:** [direcionamento_versao_web_evento.md](direcionamento_versao_web_evento.md). **Commit:** Não vinculado.
@@ -184,7 +189,7 @@ A RECONCILIAR: 2 | ADIADA: 13 | BLOQUEADA: 4 | BLOQUEADA POR DADOS: 9 | CANCELAD
 #### ECO-2608 — Exibir pins sem clusters com densidade controlada
 
 - **Estado / horizonte / alteração:** PENDENTE / Versão do evento / NOVA.
-- **Dependências ou sucessoras:** ECO-2603, ECO-2304, ECO-2307.
+- **Dependências ou sucessoras:** ECO-2603 (CONCLUÍDA DOCUMENTAL), ECO-2304, ECO-2307. Desbloqueada para execução.
 - **Conclusão / aceite:** Sem bolhas numéricas; cor+ícone por categoria, colisões controladas, mais pontos com zoom/filtro e selecionado sempre visível; coordenadas não falsificadas; catálogo conserva acesso aos demais; teclado e toque verificados.
 - **Evidência e limite:** Solicitação/decisões do owner nesta conversa; implementação nova não verificada.
 - **Referência:** [direcionamento_versao_web_evento.md](direcionamento_versao_web_evento.md). **Commit:** Não vinculado.
