@@ -8,8 +8,9 @@ ainda abertas permanecem em ECO-2603 e não são aprovadas pelo commit documenta
 
 ## Como acompanhar
 
-- **Agora:** ECO-2601 concluída documentalmente. Próxima task: ECO-2602, identificação
-  da baseline, antes de assumir que a pasta é a versão entregue.
+- **Agora:** ECO-2602 concluída localmente; baseline `c49a83c` verificada e lacunas
+  registradas em [baseline_eco_2602.md](baseline_eco_2602.md). Próxima task: ECO-2603,
+  reconciliação de decisões, contratos e pré-requisitos antes de implementar o novo escopo.
 - **Objetivo:** Web com dez rotas, mapa fluido, pins sem clusters, catálogo por categorias
   e experiências, login Google, favoritos e histórico de viagens.
 - **Dados:** owner entrega dez rotas até sexta; data absoluta ainda a confirmar
@@ -27,7 +28,7 @@ ainda abertas permanecem em ECO-2603 e não são aprovadas pelo commit documenta
 | Estado | Significado |
 |---|---|
 | CONCLUÍDA DOCUMENTAL | Decisão/documento aceito anteriormente; não prova software em execução |
-| CONCLUÍDA LOCAL | Aceite local registrado em evidência anterior; não reexecutado nesta consolidação |
+| CONCLUÍDA LOCAL | Aceite local com evidência datada; consultar o registro para saber o que foi reexecutado, sem inferir homologação remota |
 | CONCLUÍDA STAGING LIMITADA | Somente o smoke/escopo remoto descrito; não equivale ao release |
 | PARCIAL | Há implementação ou evidência, mas falta parte do resultado |
 | PENDENTE | Trabalho novo ainda não comprovado; só iniciar com dependências satisfeitas |
@@ -74,7 +75,7 @@ seja completado para reutilizar a API que já funciona.
 
 | Base anterior | Task que evolui/reutiliza | Regra para não duplicar trabalho |
 |---|---|---|
-| ECO-2005 | ECO-2605 | Reusar runner/guardas; generalização é da nova task. Corrigir falha de integridade antes de qualquer carga |
+| ECO-2005 | ECO-2605 | Runner do handoff ausente na árvore principal; ECO-2603 define reconciliação, ECO-2605 incorpora/verifica o subescopo necessário antes de carga |
 | ECO-1902 | ECO-2606 | OAuth Google e continuidade de conta completados na nova task; não repetir login por e-mail já verificado |
 | ECO-1904 | ECO-2607 | Ciclo de viagens evoluído na nova task; perfil/contatos continuam com aceites próprios |
 | ECO-2304/2307 | ECO-2608 | Novo comportamento sem clusters substitui a aceitação visual antiga; nativo não bloqueia Web |
@@ -82,7 +83,8 @@ seja completado para reutilizar a API que já funciona.
 
 Bases de segurança (ECO-1401–1404 e ECO-1704), operação editorial efetivamente usada
 pela ingestão (ECO-1601–1605) e infraestrutura (ECO-2001–2004) exigem evidência do
-subescopo necessário ao consumidor. ECO-2602 deve listar lacuna concreta por ID;
+subescopo necessário ao consumidor. A matriz da [ECO-2602](baseline_eco_2602.md) registra
+as lacunas por ID, inclusive publicação de região, API bulk, runbook e limite financeiro.
 ECO-2603 ajusta a sequência e os contratos antes de liberar implementação. Isso não
 autoriza trocar estado PARCIAL por CONCLUÍDA sem prova.
 
@@ -119,7 +121,7 @@ autorizada simplesmente por estar nesta lista.
 
 Total: **205 registros**, incluindo histórico substituído; não usar como percentual de progresso.
 
-A RECONCILIAR: 2 | ADIADA: 13 | BLOQUEADA: 4 | BLOQUEADA POR DADOS: 9 | CANCELADA NO ESCOPO: 1 | CONCLUÍDA DOCUMENTAL: 13 | CONCLUÍDA LOCAL: 13 | CONCLUÍDA STAGING LIMITADA: 1 | CONDICIONAL: 1 | DECISÃO PENDENTE: 1 | PARCIAL: 47 | PENDENTE: 14 | SUBSTITUÍDA: 86
+A RECONCILIAR: 2 | ADIADA: 13 | BLOQUEADA: 4 | BLOQUEADA POR DADOS: 9 | CANCELADA NO ESCOPO: 1 | CONCLUÍDA DOCUMENTAL: 13 | CONCLUÍDA LOCAL: 14 | CONCLUÍDA STAGING LIMITADA: 1 | CONDICIONAL: 1 | DECISÃO PENDENTE: 1 | PARCIAL: 47 | PENDENTE: 13 | SUBSTITUÍDA: 86
 
 ### Novas tasks para concluir a versão e conteúdo
 
@@ -129,21 +131,21 @@ A RECONCILIAR: 2 | ADIADA: 13 | BLOQUEADA: 4 | BLOQUEADA POR DADOS: 9 | CANCELAD
 - **Dependências ou sucessoras:** Nenhuma.
 - **Conclusão / aceite:** Todos os IDs das cinco fontes e ECO-2005/RQ incluídos, sem duplicatas; decisões desta conversa rastreadas; referências antigas apontam aqui; owner recebeu a consolidação e autorizou commit após revisão.
 - **Evidência e limite:** Documento preparado: 205 registros; 170 IDs das cinco fontes cobertos, mais ECO-2005/RQ e novas tasks; sem IDs duplicados/desconhecidos, links locais existentes, grafo das novas tasks sem ciclos e diff sem erros de whitespace. Revisão documental independente realizada e achados de dependências/fonte concorrente tratados. Revisão final e commit local autorizados pelo owner; não comprova funcionalidades do produto.
-- **Referência:** [direcionamento_versao_web_evento.md](direcionamento_versao_web_evento.md). **Commit:** commit que introduz este registro (localizável por `git log --grep="docs(tasks): consolidate event release registry"`); hash informado no handoff.
+- **Referência:** [direcionamento_versao_web_evento.md](direcionamento_versao_web_evento.md). **Commit:** `c49a83ca1995d281e10593ce1866c030a9fd68f3`.
 
 #### ECO-2602 — Identificar baseline funcional e marcos de commit
 
-- **Estado / horizonte / alteração:** PENDENTE / Versão do evento / NOVA.
+- **Estado / horizonte / alteração:** CONCLUÍDA LOCAL / Versão do evento / NOVA.
 - **Dependências ou sucessoras:** ECO-2601.
 - **Conclusão / aceite:** Revisar Git/diff sem absorver alterações alheias, identificar revisão, conferir tipos/contrato/testes proporcionais; separar artefatos; registrar problemas e commits por incremento após revisão. Produzir por ID a matriz das bases PARCIAIS: requisito já verificado, absorvido por sucessora ou correção que bloqueia consumidor.
-- **Evidência e limite:** Solicitação/decisões do owner nesta conversa; implementação nova não verificada.
-- **Referência:** [direcionamento_versao_web_evento.md](direcionamento_versao_web_evento.md). **Commit:** Não vinculado.
+- **Evidência e limite:** Em 05/09/2026, baseline `c49a83c`: typecheck/contrato, 240 testes frontend, 660 backend (17 avisos), Ruff/mypy, scanner, export Web e 4 testes Chromium passaram. Matriz de 20 bases registra requisitos reutilizáveis, sucessoras e gates; 22 arquivos preexistentes preservados. Browser usa fixtures e ainda testa clusters antigos; não prova staging, GPS real, persistência remota ou o novo escopo. Nenhuma funcionalidade alterada.
+- **Referência:** [baseline_eco_2602.md](baseline_eco_2602.md). **Commit:** commit deste relatório, localizável por `git log --grep="docs(baseline): verify ECO-2602 local foundations"`; hash no handoff.
 
 #### ECO-2603 — Reconciliar decisões, contratos e pré-requisitos do evento
 
 - **Estado / horizonte / alteração:** PENDENTE / Versão do evento / NOVA.
 - **Dependências ou sucessoras:** ECO-2602.
-- **Conclusão / aceite:** Atualizar ADRs/spec/aceites afetados: sem clusters/voz, Web, painel adiado, posição versus origem dinâmica, mapa compatível, login Google e mídia. Confirmar datas, assets, callbacks e orçamento R$ 500; separar decisões abertas de autorizadas; nenhum gasto/deploy implícito. Ajustar a sequência com correções de bases indicadas em ECO-2602 e registrar aceites absorvidos pelas sucessoras antes de liberar cada consumidor.
+- **Conclusão / aceite:** Atualizar ADRs/spec/aceites afetados: sem clusters/voz, Web, painel adiado, posição versus origem dinâmica, mapa compatível, login Google e mídia. Confirmar datas, assets, callbacks e orçamento R$ 500; separar decisões abertas de autorizadas; nenhum gasto/deploy implícito. Ajustar a sequência com correções de bases indicadas em ECO-2602 e registrar aceites absorvidos pelas sucessoras antes de liberar cada consumidor. Resolver o destino do runner fora da árvore principal, o fluxo aprovado de publicação de região, o subescopo de importação da equipe e a correção do runbook antes de uso remoto.
 - **Evidência e limite:** Solicitação/decisões do owner nesta conversa; implementação nova não verificada.
 - **Referência:** [direcionamento_versao_web_evento.md](direcionamento_versao_web_evento.md). **Commit:** Não vinculado.
 
