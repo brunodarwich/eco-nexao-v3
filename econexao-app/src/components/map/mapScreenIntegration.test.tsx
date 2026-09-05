@@ -9,6 +9,7 @@ import {
   useRouteActorsQuery,
   useRouteMapQuery,
 } from '../../hooks/queries';
+import { hasValidLocationConsent } from '../../auth/locationConsent';
 
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: () => null,
@@ -23,6 +24,12 @@ jest.mock('../../hooks/queries', () => ({
   useActorCategoriesQuery: jest.fn(),
   useRouteActorsQuery: jest.fn(),
   useRouteMapQuery: jest.fn(),
+}));
+
+jest.mock('../../auth/locationConsent', () => ({
+  hasValidLocationConsent: jest.fn(),
+  saveLocationConsent: jest.fn(),
+  CURRENT_LOCATION_POLICY_VERSION: '2026-09-04',
 }));
 
 jest.mock('@tanstack/react-query', () => {
@@ -153,6 +160,7 @@ describe('MapScreen actor sheet (ECO-0905)', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (hasValidLocationConsent as jest.Mock).mockResolvedValue(true);
 
     (useRouter as jest.Mock).mockReturnValue({ push, back: jest.fn() });
     (useLocalSearchParams as jest.Mock).mockReturnValue({
@@ -694,5 +702,36 @@ describe('MapScreen actor sheet (ECO-0905)', () => {
     const boundsText = root.find((node) => node.props.accessibilityLabel === 'Bounds ativos do mapa');
     expect(boundsText).toBeDefined();
     expect(boundsText.props.children).toContain('-2.55');
+  });
+
+  it('blocks Google Routes geometry from the expanded OpenStreetMap view', async () => {
+    const { useQueryClient } = require('@tanstack/react-query');
+    (useQueryClient as jest.Mock).mockReturnValue({
+      getQueryData: jest.fn().mockReturnValue({
+        originType: 'my-location-preview',
+        previewData: {
+          distance_m: 12000,
+          duration_s: 900,
+          provider: 'google_routes',
+          geojson: { type: 'LineString', coordinates: [[-54.71, -2.45], [-54.91, -2.55]] },
+          bounds: { min_lat: -2.55, max_lat: -2.45, min_lng: -54.91, max_lng: -54.71 },
+          pins: [],
+          legend: [],
+        },
+      }),
+      setQueryData: jest.fn(),
+    });
+    (useLocalSearchParams as jest.Mock).mockReturnValue({ routeId: 'route-pindobal' });
+
+    let renderer!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      currentRenderer = renderer = TestRenderer.create(<MapScreen />);
+    });
+
+    const root = renderer.root;
+    expect(root.findByProps({
+      accessibilityLabel: 'Trajeto calculado pelo Google Maps sem exibição sobre o mapa OpenStreetMap',
+    })).toBeDefined();
+    expect(root.findAllByProps({ accessibilityLabel: 'Bounds ativos do mapa' })).toHaveLength(0);
   });
 });

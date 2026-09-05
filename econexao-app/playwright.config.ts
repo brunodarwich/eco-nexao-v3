@@ -6,7 +6,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: 0,
   workers: 1,
-  reporter: [['list'], ['html', { open: 'never' }]],
+  outputDir: './.tmp-playwright-results',
+  reporter: [['list'], ['html', { outputFolder: './.tmp-playwright-report', open: 'never' }]],
   use: {
     baseURL: 'http://127.0.0.1:8082',
     trace: 'on-first-retry',

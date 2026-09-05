@@ -4,9 +4,17 @@ import { TouchableOpacity, Text, Modal, Alert, AccessibilityInfo } from 'react-n
 import * as Linking from 'expo-linking';
 import * as Location from 'expo-location';
 import { OriginSelector, MY_LOCATION_ORIGIN_ID } from './OriginSelector';
+import * as LocationConsent from '../../auth/locationConsent';
 
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Ionicons',
+}));
+
+jest.mock('../../auth/locationConsent', () => ({
+  hasValidLocationConsent: jest.fn(),
+  saveLocationConsent: jest.fn(),
+  revokeLocationConsent: jest.fn(),
+  CURRENT_LOCATION_POLICY_VERSION: '2026-09-04',
 }));
 
 jest.mock('expo-linking', () => ({
@@ -52,6 +60,7 @@ describe('OriginSelector Component', () => {
     jest.useFakeTimers();
     jest.spyOn(Alert, 'alert');
     jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+    (LocationConsent.hasValidLocationConsent as jest.Mock).mockResolvedValue(true);
   });
 
   afterEach(() => {
@@ -261,8 +270,9 @@ describe('OriginSelector Component', () => {
       );
 
       // Confirmation modal should be visible and accessible
-      const modal = root!.root.findByType(Modal);
-      expect(modal.props.visible).toBe(true);
+      const modals = root!.root.findAllByType(Modal);
+      const confirmModal = modals.find((m) => m.props.accessibilityLabel === 'Confirmar cálculo de trajeto') || modals[0];
+      expect(confirmModal.props.visible).toBe(true);
 
       const dialogContainer = root!.root.findAllByProps({ accessibilityRole: 'alert' });
       expect(dialogContainer.length).toBeGreaterThan(0);
@@ -286,7 +296,7 @@ describe('OriginSelector Component', () => {
         accuracy: 10,
       });
       expect(onSelectOrigin).toHaveBeenCalledWith(MY_LOCATION_ORIGIN_ID);
-      expect(modal.props.visible).toBe(false);
+      expect(confirmModal.props.visible).toBe(false);
     });
 
     it('cancelling the confirmation modal closes dialog, clears pending coords, and announces cancellation', async () => {
@@ -336,8 +346,9 @@ describe('OriginSelector Component', () => {
       });
 
       expect(onSelectCurrentLocation).not.toHaveBeenCalled();
-      const modal = root!.root.findByType(Modal);
-      expect(modal.props.visible).toBe(false);
+      const modals = root!.root.findAllByType(Modal);
+      const confirmModal = modals.find((m) => m.props.accessibilityLabel === 'Confirmar cálculo de trajeto') || modals[0];
+      expect(confirmModal.props.visible).toBe(false);
       expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith(
         expect.stringContaining('cancelado')
       );
@@ -389,8 +400,79 @@ describe('OriginSelector Component', () => {
     });
   });
 
+  describe('LGPD Location Consent Gate in OriginSelector', () => {
+    it('intercepts GPS press and shows consent modal when consent is not present, without calling Location API', async () => {
+      (LocationConsent.hasValidLocationConsent as jest.Mock).mockResolvedValue(false);
+      const onSelectOrigin = jest.fn();
+      let root: renderer.ReactTestRenderer;
+
+      act(() => {
+        root = renderer.create(
+          <OriginSelector
+            origins={mockOrigins}
+            selectedOriginId="origin-porto"
+            onSelectOrigin={onSelectOrigin}
+            enableDynamicRouting={true}
+          />
+        );
+      });
+
+      const gpsButton = root!.root.findAllByType(TouchableOpacity).find(
+        (b) => b.props.accessibilityLabel === 'Usar minha localização atual como origem'
+      );
+
+      await act(async () => {
+        await gpsButton?.props.onPress();
+      });
+
+      // Crucial LGPD compliance: Location API must NOT have been called before consent!
+      expect(Location.requestForegroundPermissionsAsync).not.toHaveBeenCalled();
+      expect(Location.getCurrentPositionAsync).not.toHaveBeenCalled();
+
+      // Consent modal should be visible
+      const consentDialog = root!.root.findByProps({
+        accessibilityLabel: 'Consentimento de localização dinâmica',
+      });
+      expect(consentDialog).toBeDefined();
+    });
+
+    it('intercepts Choose on Map press and shows consent modal when consent is missing', async () => {
+      (LocationConsent.hasValidLocationConsent as jest.Mock).mockResolvedValue(false);
+      const onStartSelectOnMap = jest.fn();
+      let root: renderer.ReactTestRenderer;
+
+      act(() => {
+        root = renderer.create(
+          <OriginSelector
+            origins={mockOrigins}
+            selectedOriginId="origin-porto"
+            onSelectOrigin={jest.fn()}
+            onStartSelectOnMap={onStartSelectOnMap}
+            enableDynamicRouting={true}
+          />
+        );
+      });
+
+      const mapButton = root!.root.findAllByType(TouchableOpacity).find(
+        (b) => b.props.accessibilityLabel === 'Escolher ponto de partida no mapa'
+      );
+
+      await act(async () => {
+        await mapButton?.props.onPress();
+      });
+
+      expect(onStartSelectOnMap).not.toHaveBeenCalled();
+
+      const consentDialog = root!.root.findByProps({
+        accessibilityLabel: 'Consentimento de localização dinâmica',
+      });
+      expect(consentDialog).toBeDefined();
+    });
+  });
+
   describe('Component Preparation for ECO-2311 and Lifecycle', () => {
-    it('renders "Escolher no mapa" pill and triggers onStartSelectOnMap (ECO-2311)', () => {
+    it('renders "Escolher no mapa" pill and triggers onStartSelectOnMap (ECO-2311)', async () => {
+      (LocationConsent.hasValidLocationConsent as jest.Mock).mockResolvedValue(true);
       const onSelectOrigin = jest.fn();
       const onStartSelectOnMap = jest.fn();
       let root: renderer.ReactTestRenderer;
@@ -408,7 +490,6 @@ describe('OriginSelector Component', () => {
       });
 
       const buttons = root!.root.findAllByType(TouchableOpacity);
-      // 1 for GPS pill + 1 for map selection pill + 3 for fixed origins = 5 pills
       expect(buttons.length).toBe(5);
 
       const mapButton = buttons.find(
@@ -416,8 +497,8 @@ describe('OriginSelector Component', () => {
       );
       expect(mapButton).toBeDefined();
 
-      act(() => {
-        mapButton?.props.onPress();
+      await act(async () => {
+        await mapButton?.props.onPress();
       });
 
       expect(onStartSelectOnMap).toHaveBeenCalled();

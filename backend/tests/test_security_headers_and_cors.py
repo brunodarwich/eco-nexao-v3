@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field, ValidationError
 from app.core.config import Settings
 from app.core.logging import redact_sensitive_text
 from app.core.rate_limit import limiter
-from app.main import app
+from app.main import create_app
 
 # Security probe router dedicated to testing security edge cases
 security_probe_router = APIRouter(prefix="/__security_test__", include_in_schema=False)
@@ -34,13 +34,16 @@ async def db_exception_probe() -> None:
     )
 
 
-app.include_router(security_probe_router)
+canonical_cors_origins = list(Settings.model_fields["CORS_ORIGINS"].default)
+test_settings = Settings(_env_file=None, CORS_ORIGINS=canonical_cors_origins)  # type: ignore[call-arg]
+_security_app = create_app(test_settings)
+_security_app.include_router(security_probe_router)
 
 
 @pytest_asyncio.fixture
 async def client() -> AsyncGenerator[AsyncClient]:
     limiter.reset()
-    transport = ASGITransport(app=app, raise_app_exceptions=False)
+    transport = ASGITransport(app=_security_app, raise_app_exceptions=False)
     async with AsyncClient(
         transport=transport, base_url="http://testserver", follow_redirects=False
     ) as ac:
@@ -223,13 +226,51 @@ async def test_internal_500_error_does_not_leak_db_credentials_or_tracebacks(
 def test_cors_origins_validator_rejects_wildcard() -> None:
     """Settings validator must fail-closed if '*' wildcard is supplied."""
     with pytest.raises(ValidationError, match="Wildcard"):
-        Settings(CORS_ORIGINS=["https://valid.com", "*"])
+        Settings(_env_file=None, CORS_ORIGINS=["https://valid.com", "*"])  # type: ignore[call-arg]
 
     with pytest.raises(ValidationError, match="Wildcard"):
-        Settings(CORS_ORIGINS='["https://valid.com", "*"]')
+        Settings(_env_file=None, CORS_ORIGINS='["https://valid.com", "*"]')  # type: ignore[call-arg]
 
     with pytest.raises(ValidationError, match="Wildcard"):
-        Settings(CORS_ORIGINS="https://valid.com, *")
+        Settings(_env_file=None, CORS_ORIGINS="https://valid.com, *")  # type: ignore[call-arg]
+
+
+@pytest.mark.asyncio
+async def test_explicit_cors_settings_isolated_from_conflicting_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Regression test: conflicting env vars do not contaminate app built with explicit settings."""
+    monkeypatch.setenv("CORS_ORIGINS", '["https://conflicting-env.example.com"]')
+    isolated_origins = list(Settings.model_fields["CORS_ORIGINS"].default)
+    isolated_settings = Settings(_env_file=None, CORS_ORIGINS=isolated_origins)  # type: ignore[call-arg]
+    isolated_app = create_app(isolated_settings)
+
+    transport = ASGITransport(app=isolated_app, raise_app_exceptions=False)
+    async with AsyncClient(
+        transport=transport, base_url="http://testserver", follow_redirects=False
+    ) as isolated_client:
+        # Conflicting origin from environment must NOT be allowed
+        res_denied = await isolated_client.options(
+            "/api/v1/health",
+            headers={
+                "Origin": "https://conflicting-env.example.com",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+        assert "access-control-allow-origin" not in res_denied.headers
+
+        # Canonical approved origin must still be allowed
+        res_allowed = await isolated_client.options(
+            "/api/v1/health",
+            headers={
+                "Origin": "https://econexao.app",
+                "Access-Control-Request-Method": "GET",
+                "Access-Control-Request-Headers": "Authorization, Content-Type, X-Request-ID",
+            },
+        )
+        assert res_allowed.status_code == 200
+        assert res_allowed.headers.get("access-control-allow-origin") == "https://econexao.app"
+        assert res_allowed.headers.get("access-control-allow-credentials") == "true"
 
 
 @pytest.mark.asyncio
