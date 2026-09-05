@@ -1,6 +1,8 @@
 # ECOnexão — Programa de higiene e saúde do repositório
 
-Status: `IN_PROGRESS` — ECO-2401 registrada e ECO-2402 em execução
+Status: referência histórica. O estado individual e a prioridade das ECO-2401–2410
+estão exclusivamente em [project_status.md](../project_status.md). O antigo resumo
+de conclusão da baseline não substitui sua reconciliação atual.
 
 Owner de ativação: proprietário do produto
 

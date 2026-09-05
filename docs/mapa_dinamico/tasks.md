@@ -1,5 +1,9 @@
 # Backlog proposto — ECO-2301 a ECO-2315
 
+> **Registro histórico de aceites e evidências.** O cadastro completo, status e ordem
+> atuais estão em [project_status.md](../project_status.md). O novo desenho sem clusters
+> e a homologação Web são definidos ali. Os estados abaixo são snapshots históricos.
+
 Status do backlog: `PROPOSED`  
 Regra: uma task só fica ativa quando suas dependências e gates estiverem registrados.
 

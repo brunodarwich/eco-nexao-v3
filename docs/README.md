@@ -1,13 +1,16 @@
 # ECOnexão — Índice da documentação
 
 Este diretório é a entrada canônica para produto, arquitetura, dados, execução e testes.
-O estado atual e o único backlog ativo estão em [`project_status.md`](project_status.md).
+Todas as tarefas — concluídas, parciais, pendentes, novas, adiadas e substituídas —
+estão em [`project_status.md`](project_status.md). A consolidação de 05/09 foi revisada
+e seu commit local autorizado; decisões abertas e gates de execução continuam explícitos.
 
 ## Comece aqui
 
 | Documento | Finalidade |
 |---|---|
-| `project_status.md` | **Fonte única ativa:** estado por plataforma/evidência e backlog Web aberto |
+| `project_status.md` | **Documento único de tasks:** histórico completo, estado/evidência, dependências, aceites, commits e sequência Web |
+| `direcionamento_versao_web_evento.md` | Briefing complementar de produto e decisões; não é outro backlog |
 | `documentation_matrix.md` | Classificação proposta entre documentação versionável e processo local |
 | `../AGENTS.md` | Regras obrigatórias para agentes |
 | `ai/README.md` | Fluxo diário: próxima task, prompt do Antigravity e revisão do Codex |
@@ -33,7 +36,7 @@ O estado atual e o único backlog ativo estão em [`project_status.md`](project_
 | `adr/0002-supabase-platform.md` | Supabase gerenciado sem Docker obrigatório |
 | `adr/0003-map-platforms.md` | Abstração de mapa nativo + web |
 | `adr/0004-product-decisions.md` | Auth anônima, plataformas e infraestrutura em nível ainda genérico |
-| `adr/0005-provedor-fastapi.md` | Provedor FastAPI no Google Cloud Run (southamerica-east1) |
+| `adr/0005-provedor-fastapi.md` | Provedor FastAPI no Render Native Python (sem Docker) |
 | `adr/0006-operacao-editorial-rbac.md` | Operação editorial, RBAC, state machine, Publish Guard e audit trail |
 | `adr/0007-identidade-sessao-linking.md` | Identidade, sessão guest, account linking, expurgo 90d e localStorage Web |
 | `adr/0008-politica-de-midia-e-privacidade.md` | Buckets híbridos Storage, EXIF strip, WebP, proxy Google Photos e alt text |
@@ -54,7 +57,7 @@ O estado atual e o único backlog ativo estão em [`project_status.md`](project_
   camadas territoriais e origens dinâmicas.
 - `mapa_dinamico/plano_implementacao.md`: sequência proposta ECO-2301 a
   ECO-2315, dependências, gates humanos e critérios de encerramento.
-- `mapa_dinamico/tasks.md`: registro das tasks propostas e condição de ativação.
+- `mapa_dinamico/tasks.md`: referência histórica de aceites/evidências; tasks atuais no documento único.
 - `mapa_dinamico/prompts/`: um prompt executável por sessão, sempre uma task por
   vez e com orquestração obrigatória de subagentes.
 
@@ -63,7 +66,7 @@ O estado atual e o único backlog ativo estão em [`project_status.md`](project_
 - `catalogo_territorial/README.md`: objetivo, limites e entrada da iniciativa.
 - `catalogo_territorial/plano_implementacao.md`: fases, arquitetura, gates e ordem
   ECO-2501 a ECO-2513.
-- `catalogo_territorial/tasks.md`: backlog e condição de ativação de cada sessão.
+- `catalogo_territorial/tasks.md`: referência histórica de aceites/evidências; tasks atuais no documento único.
 - `catalogo_territorial/protocolo_sessoes.md`: uso de `/goal`, subagentes, browser,
   skills, evidências e paradas obrigatórias.
 - `catalogo_territorial/prompts/`: um prompt autocontido por task.
@@ -71,8 +74,8 @@ O estado atual e o único backlog ativo estão em [`project_status.md`](project_
 ## Higiene e saúde do repositório
 
 - `repository_health/README.md`: entrada do programa proposto ECO-2401–ECO-2410.
-- `repository_health/tasks.md`: backlog ordenado de baseline, documentação, legado,
-  deploy, assets, automação e auditoria.
+- `repository_health/tasks.md`: referência histórica de manutenção; prioridade e estado
+  de cada task no documento único.
 - `repository_health/prompts/`: um prompt Codex autocontido por task, com `/goal`,
   subagentes e verificação independente obrigatória.
 

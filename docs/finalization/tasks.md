@@ -9,6 +9,11 @@ tasks exigem `git status`, mini-brief, preservação de alterações alheias, ne
 segredo em output e handoff de `ai_coordination.md`. Comandos Supabase devem ser
 descobertos com `supabase --help`; production nunca é usada sem aprovação.
 
+> **Referência histórica, sem fila ativa.** Todas as tarefas, inclusive concluídas,
+> alteradas e adiadas, são acompanhadas em [project_status.md](../project_status.md).
+> Os aceites abaixo ajudam a execução, mas seus estados/dependências antigos não
+> substituem o documento único nem as decisões atuais da versão Web.
+
 ## Marco 13 — Baseline e decisões
 
 ### ECO-1301 — Restabelecer baseline verificável
