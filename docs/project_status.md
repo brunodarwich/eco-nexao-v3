@@ -164,11 +164,11 @@ A RECONCILIAR: 2 | ADIADA: 13 | BLOQUEADA: 4 | BLOQUEADA POR DADOS: 9 | CANCELAD
 
 #### ECO-2605 — Generalizar importação para múltiplas rotas e regiões
 
-- **Estado / horizonte / alteração:** PENDENTE / Versão do evento / NOVA.
-- **Dependências ou sucessoras:** ECO-2604, ECO-2005.
-- **Conclusão / aceite:** Reusar pipeline existente; dry-run e erros/rejeições claros; segunda carga sem duplicação, preservação de origem, transação/rollback/isolamento testados; sem CSV em runtime e sem IDs Google inventados; carga remota separadamente autorizada.
-- **Evidência e limite:** Solicitação/decisões do owner nesta conversa; implementação nova não verificada.
-- **Referência:** [direcionamento_versao_web_evento.md](direcionamento_versao_web_evento.md). **Commit:** Não vinculado.
+- **Estado / horizonte / alteração:** CONCLUÍDA LOCAL / Versão do evento / NOVA.
+- **Dependências ou sucessoras:** ECO-2604 (CONCLUÍDA LOCAL). Desbloqueia tarefas de catálogo territorial e evolução de dados; gate de persistência real concluído e verificado no projeto Supabase de teste.
+- **Conclusão / aceite:** Pipeline de importação generalizado com validação estrita de geometrias (provedores restritos, CRS 4326, bounds ordenados, SHA-256 de 64 hex), proveniência contratual obrigatória para `google_place_id` (Place ID arbitrário rejeitado), rejeição imediata se região não possuir origens verificadas (sem fallbacks mágicos), dry-run honesto com `is_estimate: true`, idempotência e rollback via transação atômica. Suite de 16 testes dedicada aprovada (incluindo negativos e rollback por mock). **Gate de persistência real contra projeto Supabase de teste (`xlejwfmpeaubsdctguyx`) concluído com sucesso:** todas as 26 migrations aplicadas e verificadas via `supabase migration list`, advisors executados sem pendências (`exit 0`), teste de rollback transacional atômico aprovado (`PINDOBAL_TRANSACTION=OK`, zero linhas persistidas em falha induzida), carga real da rota Pindobal (`read: 5, created: 5, origins_created: 3, geometries_created: 3, route_actors_created: 5, reconciled: true`), segunda execução estritamente idempotente (`created: 0, unchanged: 5, origins_unchanged: 3, geometries_unchanged: 3, route_actors_unchanged: 5`), rota preservada em `draft` e `unverified`.
+- **Evidência e limite:** Em 06/09/2026: isolamento verificado (`TEST_ISOLATION=OK`), 26 migrations aplicadas no schema `app_private` com PostGIS 3.3.7, `supabase db advisors` exit 0, transação atômica com rollback comprovado via `verify_pindobal_transaction.py`, carga real e idempotência testadas com script oficial `app.ingestion.seed_route_package`, suite de testes unitários `pytest tests/test_route_package_importer.py` 16 passed (exit 0), `ruff check .` exit 0, `mypy app/` exit 0 (99 arquivos), `python scripts/scan_secrets.py` OK, `git diff --check` exit 0. Nenhuma alteração em staging ou production. Não executa push/PR ou deploy.
+- **Referência:** [eco_2605_generalizacao_importacao_rotas.md](catalogo_territorial/eco_2605_generalizacao_importacao_rotas.md). **Commit:** commit desta task.
 
 #### ECO-2606 — Entregar login Google com favoritos preservados
 
