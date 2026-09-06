@@ -291,6 +291,38 @@ describe('Marco 11 — Integration Tests', () => {
     expect(tree.toJSON()).toBeTruthy();
   });
 
+  it('exibe nome e avatar da conta Google via user_metadata e oculta o banner guest quando autenticado', async () => {
+    (useAuth as jest.Mock).mockReturnValue({
+      user: {
+        id: 'google-user-123',
+        email: 'turista.google@exemplo.com',
+        is_anonymous: false,
+        user_metadata: {
+          full_name: 'Turista da Amazônia',
+          avatar_url: 'https://lh3.googleusercontent.com/a/foto-perfil-google.jpg',
+        },
+      },
+      signOut: jest.fn(),
+    });
+    // Perfil remoto ainda sem nome e sem avatar no backend
+    (useMyProfileQuery as jest.Mock).mockReturnValue({ data: null, isPending: false });
+
+    let tree!: renderer.ReactTestRenderer;
+    await act(async () => {
+      tree = renderer.create(renderProfile());
+    });
+
+    const rendered = JSON.stringify(tree.toJSON());
+    // Nome do Google é exibido no cabeçalho
+    expect(rendered).toContain('Turista da Amazônia');
+    // Avatar da conta Google é renderizado
+    expect(rendered).toContain('https://lh3.googleusercontent.com/a/foto-perfil-google.jpg');
+    // E-mail da conta autenticada é exibido no papel
+    expect(rendered).toContain('turista.google@exemplo.com');
+    // Banner de visitante é ocultado para usuário autenticado
+    expect(rendered).not.toContain('Salvar Conta e Favoritos');
+  });
+
   it('SupportScreen renders contacts and FAQ from query', async () => {
     (useSupportContentQuery as jest.Mock).mockReturnValue({
       data: {

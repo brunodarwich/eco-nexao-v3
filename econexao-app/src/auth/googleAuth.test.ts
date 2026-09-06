@@ -333,5 +333,62 @@ describe('ECO-2606 — Login Google com Favoritos Preservados e Isolamento A/B',
         })
       ).rejects.toThrow('Cancelado pelo usuario');
     });
+
+    it('restaura sessao no boot (initialize) a partir de tokens no fragmento hash (#access_token)', async () => {
+      const fake = mockClient();
+      const manager = new AuthSessionManager(fake.client);
+
+      const originalLocation = window.location;
+      const originalHistory = window.history;
+      try {
+        delete (window as any).location;
+        window.location = new URL('https://econexao-app-staging.vercel.app/#access_token=token-from-hash&refresh_token=refresh-from-hash') as any;
+        (window as any).history = { replaceState: jest.fn() };
+
+        fake.auth.setSession.mockResolvedValueOnce({
+          data: { session: mockSession('user-google-hash', false) },
+          error: null,
+        });
+
+        await manager.initialize();
+
+        expect(fake.auth.setSession).toHaveBeenCalledWith({
+          access_token: 'token-from-hash',
+          refresh_token: 'refresh-from-hash',
+        });
+        expect(manager.getAccessToken()).toBe('token-user-google-hash');
+        expect(manager.getSession()?.user?.id).toBe('user-google-hash');
+      } finally {
+        (window as any).location = originalLocation;
+        (window as any).history = originalHistory;
+      }
+    });
+
+    it('restaura sessao no boot (initialize) a partir de PKCE code na query (?code=)', async () => {
+      const fake = mockClient();
+      const manager = new AuthSessionManager(fake.client);
+
+      const originalLocation = window.location;
+      const originalHistory = window.history;
+      try {
+        delete (window as any).location;
+        window.location = new URL('https://econexao-app-staging.vercel.app/?code=pkce-boot-code') as any;
+        (window as any).history = { replaceState: jest.fn() };
+
+        fake.auth.exchangeCodeForSession.mockResolvedValueOnce({
+          data: { session: mockSession('user-pkce-boot', false) },
+          error: null,
+        });
+
+        await manager.initialize();
+
+        expect(fake.auth.exchangeCodeForSession).toHaveBeenCalledWith('pkce-boot-code');
+        expect(manager.getAccessToken()).toBe('token-user-pkce-boot');
+        expect(manager.getSession()?.user?.id).toBe('user-pkce-boot');
+      } finally {
+        (window as any).location = originalLocation;
+        (window as any).history = originalHistory;
+      }
+    });
   });
 });

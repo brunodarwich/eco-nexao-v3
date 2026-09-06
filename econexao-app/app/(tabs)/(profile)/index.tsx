@@ -30,8 +30,15 @@ export default function ProfileScreen() {
   const avatarBusyRef = useRef(false);
 
 
-  const isAnonymous = user?.is_anonymous ?? true;
-  const userName = profile?.name || (isAnonymous ? 'Visitante' : 'Usuário ECOnexão');
+  const isAnonymous = user ? (user.is_anonymous === true && !user.email) : true;
+  const googleName = (user?.user_metadata?.full_name || user?.user_metadata?.name || '').trim();
+  const userName =
+    profile?.name ||
+    googleName ||
+    (isAnonymous ? 'Visitante' : user?.email?.split('@')[0] || 'Usuário ECOnexão');
+
+  const googleAvatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
+  const avatarUri = profile?.avatar?.url || googleAvatarUrl;
 
   const handleAvatarPress = async () => {
     if (avatarBusyRef.current) return;
@@ -119,9 +126,9 @@ export default function ProfileScreen() {
                   color={theme.colors.brandForest}
                   accessibilityLabel="Upload da foto em andamento"
                 />
-              ) : profile?.avatar?.url ? (
+              ) : avatarUri ? (
                 <Image
-                  source={{ uri: profile.avatar.url }}
+                  source={{ uri: avatarUri }}
                   style={styles.avatarImage}
                   accessible={false}
                 />
