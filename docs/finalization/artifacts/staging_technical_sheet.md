@@ -111,9 +111,9 @@ Conforme as migrations `20260812120000_storage_buckets_and_policies.sql` e `2026
 
 ---
 
-## 4. Status das Migrations do Banco de Dados (25 Migrations Oficiais no Repositório Local)
+## 4. Status das Migrations do Banco de Dados (26 Migrations Oficiais no Repositório Local)
 
-Todas as 25 migrations oficiais estão registradas no repositório, ordenadas por timestamp e validadas deterministicamente no âmbito local contra o manifesto de baseline (origin/staging). A verificação remota ao vivo (migration list, ausência de drift e Supabase advisors) no banco de staging permanece formalmente diferida para o preflight read-only da Fase 2:
+Todas as 26 migrations oficiais estão registradas no repositório, ordenadas por timestamp e validadas deterministicamente no âmbito local contra o manifesto de baseline (origin/staging). A verificação remota ao vivo (migration list, ausência de drift e Supabase advisors) no banco de staging permanece formalmente diferida para o preflight read-only da Fase 2:
 
 | # | Versão / Timestamp | Arquivo de Migration | Descrição / Escopo |
 | :-: | :--- | :--- | :--- |
@@ -142,6 +142,7 @@ Todas as 25 migrations oficiais estão registradas no repositório, ordenadas po
 | 23 | `20260826074500` | `20260826074500_routing_monthly_usage.sql` | Controle e rate limiting de cotas de roteamento Google |
 | 24 | `20260827195436` | `20260827195436_territorial_catalog_schema_adr0014_adr0015.sql` | Taxonomia territorial SEMTUR/Google, catálogos e governança (ADR 0014/0015) |
 | 25 | `20260827221358` | `20260827221358_eco_2510_remove_legacy_google_photo_persistence.sql` | Remoção de persistência binária direta de fotos legadas do Google (ECO-2510) |
+| 26 | `20260906125246` | `20260906125246_eco_2605_widen_route_metadata_columns.sql` | Ampliação de contextual fields (best_season, connectivity, road_access) para TEXT (ECO-2605) |
 
 ---
 

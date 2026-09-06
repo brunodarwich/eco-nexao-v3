@@ -1,9 +1,18 @@
-# Backlog ativo de finalização
+# Registro histórico de tasks de finalização
+
+Status: `SUPERSEDED` como backlog ativo. A fonte ativa local de estado e trabalho
+aberto é [`../project_status.md`](../project_status.md). Este arquivo preserva os
+aceites, dependências e evidências históricas para reconciliação.
 
 Convenções: `P0/P1/P2`; tamanho `S/M/L`; estados conforme `README.md`. Todas as
 tasks exigem `git status`, mini-brief, preservação de alterações alheias, nenhum
 segredo em output e handoff de `ai_coordination.md`. Comandos Supabase devem ser
 descobertos com `supabase --help`; production nunca é usada sem aprovação.
+
+> **Referência histórica, sem fila ativa.** Todas as tarefas, inclusive concluídas,
+> alteradas e adiadas, são acompanhadas em [project_status.md](../project_status.md).
+> Os aceites abaixo ajudam a execução, mas seus estados/dependências antigos não
+> substituem o documento único nem as decisões atuais da versão Web.
 
 ## Marco 13 — Baseline e decisões
 

@@ -4,16 +4,34 @@
 
 Implementar a integração definida em `docs/backend_integration_spec.md`, uma tarefa `ECO-XXXX` por vez, preservando o aplicativo funcional. O alvo é Expo + FastAPI + Supabase PostgreSQL/PostGIS/Auth/Storage.
 
+## Fluxo diário Codex × Google Antigravity
+
+`docs/ai/README.md` é o ponto de entrada do desenvolvimento diário e `docs/ai/DEVELOPMENT_RULES.md` é a constituição operacional completa.
+
+Quando o owner perguntar **“qual é a próxima tarefa?”** ou pedir um prompt para o Antigravity, o Codex deve:
+
+1. Fazer uma auditoria read-only do estado real, documentação ativa, dependências, decisões abertas, Git e handoffs.
+2. Escolher uma única task desbloqueada; se nenhuma estiver livre, indicar o bloqueio mais próximo do caminho crítico.
+3. Não implementar nessa resposta, salvo pedido explícito separado do owner.
+4. Entregar um prompt autocontido, pronto para copiar no Antigravity, com task, `/goal` ou `/grill-me` quando aplicável, worktree/base, leituras, escopo, skills, subagentes, CLI/MCP/browser, testes, gates, abort/rollback e handoff.
+5. Informar ao owner somente a decisão/configuração necessária e uma próxima ação concreta.
+
+Quando o owner trouxer uma entrega do Antigravity, o Codex deve reproduzir a evidência de forma independente e decidir `APPROVE`, `CHANGES_REQUIRED`, `BLOCKED` ou `NOT_VERIFIABLE`. Se houver correção, deve fornecer o próximo prompt curto para o Antigravity e repetir os gates afetados até a entrega ficar aprovada. Aprovação local não autoriza push/PR, merge, deploy, migration, escrita remota ou production.
+
+`/goal` declara a meta executável da sessão; **GO** é autorização humana para uma ação sensível. Um nunca substitui o outro.
+
 ## Leia antes de alterar código
 
 Na ordem:
 
 1. Este arquivo.
 2. `docs/README.md` para localizar a fonte normativa.
-3. `docs/backend_integration_spec.md` para comportamento final.
-4. A tarefa em `docs/backend_integration_tasks.md`.
-5. `docs/ai_task_playbook.md` para o protocolo de execução.
-6. Referências específicas indicadas pela tarefa: ADR, contrato Pindobal, aceites e testes.
+3. `docs/ai/README.md` para o fluxo Codex × Antigravity.
+4. As `CORE RULES` de `docs/ai/DEVELOPMENT_RULES.md`; ler o documento completo em sessão nova, risco médio/alto ou trabalho com banco, segurança, dados remotos, deploy, integrações ou production.
+5. `docs/backend_integration_spec.md` para comportamento final.
+6. A tarefa no backlog ativo indicado por `docs/README.md`; não presumir que o backlog histórico ainda está vigente.
+7. `docs/ai_task_playbook.md` para o protocolo de execução.
+8. Referências específicas indicadas pela tarefa: protocolo da iniciativa, ADR, contrato, aceites e testes.
 
 Não implemente uma decisão marcada como aberta. Pare e solicite uma decisão ou conclua primeiro a task de ADR correspondente.
 

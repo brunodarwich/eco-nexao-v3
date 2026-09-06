@@ -288,11 +288,13 @@ Referência: https://developers.google.com/my-business/content/overview
 
 ### 8.4 Mapas no aplicativo
 
-Manter `MapAdapter` como abstração. No nativo, usar um mapa compatível com a versão Expo escolhida e provedor configurado; no web, usar adaptador Leaflet/MapLibre. O domínio não dependerá do SDK visual. A chave pública de renderização, se necessária, terá restrições por bundle/package, assinatura e API.
+Manter `MapAdapter` como abstração. No nativo, usar um mapa compatível com a versão Expo escolhida e provedor configurado; no web, usar adaptador Leaflet/MapLibre. O domínio não dependerá do SDK visual. A cartografia exibe marcadores (pins) sem agrupamentos numéricos (clusters), utilizando cor e ícone por categoria canônica (ADR 0010 / ADR 0011 / `ECO-2608`), controle de densidade visual por zoom/filtros e destaque permanente do estabelecimento selecionado. A chave pública de renderização, se necessária, terá restrições por bundle/package, assinatura e API.
 
-### 8.5 Supabase Storage
+### 8.5 Supabase Storage e Mídia
 
-Avatares e mídia editorial irão para Supabase Storage. O banco guardará metadados e chaves, não binários. Uploads terão MIME allowlist, limite de tamanho, remoção de EXIF, redimensionamento, antivírus quando aplicável e URLs com política adequada. Policies de Storage serão versionadas; upsert só será usado quando as permissões `INSERT`, `SELECT` e `UPDATE` estiverem explicitamente testadas.
+Avatares e mídia editorial institucional irão para Supabase Storage (ADR 0008). O banco guardará metadados e chaves, não binários. Uploads terão MIME allowlist, limite de tamanho, remoção de EXIF, redimensionamento, derivados WebP (`thumb`, `card`, `hero`) e URLs com política adequada. Policies de Storage serão versionadas; upsert só será usado quando as permissões `INSERT`, `SELECT` e `UPDATE` estiverem explicitamente testadas.
+
+Fotos do Google Places não são armazenadas no Supabase Storage nem mantidas em cache persistente de disco/banco (ADR 0008 e ADR 0016). O backend FastAPI fornece um proxy efêmero em memória com grant de uso único (`/api/v1/places/photos/{grant}`), repassando a imagem sob demanda com `Cache-Control: no-store`, atribuição nominal obrigatória de autoria (`authorAttributions`) e link direto ao Google Maps (`googleMapsUri`).
 
 ### 8.6 Limites de exposição do Supabase
 
@@ -400,12 +402,12 @@ experiência futura mediante atualização desta matriz e dos critérios de acei
 
 | Elemento | Comportamento final | Backend |
 |---|---|---|
-| Zoom +/− | Controla câmera real respeitando limites | Não |
-| Pins | Selecionam ator e abrem bottom sheet | Dados do map payload |
-| Chips | Filtram pins; categorias completas com rolagem | Payload/categoria; nova consulta se necessário |
+| Zoom +/− | Controla câmera real respeitando limites e ajusta densidade visual | Não |
+| Pins sem clusters | Cor e ícone por categoria canônica; selecionam ator e abrem bottom sheet; item selecionado sempre destacado | Dados do map payload |
+| Chips | Filtram pins; categorias completas com rolagem e semântica acessível | Payload/categoria; nova consulta se necessário |
 | Fechar sheet/backdrop | Fecha sem propagar toque | Não |
 | Ver no catálogo | Abre catálogo com `actorId` focado | Actors |
-| Abrir externamente | Abre navegação/mapa externo quando oferecido | URL validada |
+| Abrir externamente | Abre navegação/mapa externo quando oferecido (`googleMapsUri`) | URL validada |
 
 ### 11.7 Catálogo e ator
 

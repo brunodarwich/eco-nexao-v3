@@ -18,6 +18,9 @@ import { filterPinsByModeAndCategory, formatCoordinateDisplay, getBoundsCoordina
 import { apiClient } from '../../../src/api/client';
 import { queryKeys } from '../../../src/api/queryKeys';
 import { CHOOSE_ON_MAP_ORIGIN_ID } from '../../../src/components/routes/OriginSelector';
+import { DynamicLocationConsentModal } from '../../../src/components/routes/DynamicLocationConsentModal';
+import { GoogleRoutesMapNotice } from '../../../src/components/routes/GoogleRoutesMapNotice';
+import { hasValidLocationConsent } from '../../../src/auth/locationConsent';
 import { useAppContext } from '../../../src/state/useAppContext';
 import type { MapPin, MapLegendItem } from '../../../src/api/types';
 import type { MapCoordinate, MapViewMode } from '../../../src/components/map/MapAdapter.types';
@@ -104,6 +107,7 @@ export default function MapScreen() {
   const [isSelectionMode, setIsSelectionMode] = useState<boolean>(isSelectionModeInitial);
   const [selectedCoordinate, setSelectedCoordinate] = useState<MapCoordinate | null>(null);
   const [isConfirmingSelection, setIsConfirmingSelection] = useState<boolean>(false);
+  const [showConsentModal, setShowConsentModal] = useState<boolean>(false);
 
   const [viewMode, setViewMode] = useState<MapViewMode>(initialViewMode === 'city' ? 'city' : 'route');
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory?.trim() || '');
@@ -176,13 +180,12 @@ export default function MapScreen() {
     }
   };
 
-  const handleConfirmSelection = async () => {
-    if (!isDynamicRoutingEnabled || !selectedCoordinate || isConfirmingSelection) return;
+  const executeRoutePreview = async (coord: MapCoordinate) => {
     setIsConfirmingSelection(true);
     try {
       const response = await apiClient.previewRoute(routeId, {
-        latitude: selectedCoordinate.latitude,
-        longitude: selectedCoordinate.longitude,
+        latitude: coord.latitude,
+        longitude: coord.longitude,
         travel_mode: 'DRIVE',
       });
       // Transfer ephemeral preview data via memory cache without exposing coordinates in URL
@@ -202,6 +205,28 @@ export default function MapScreen() {
     } finally {
       setIsConfirmingSelection(false);
     }
+  };
+
+  const handleConfirmSelection = async () => {
+    if (!isDynamicRoutingEnabled || !selectedCoordinate || isConfirmingSelection) return;
+    const hasConsent = await hasValidLocationConsent();
+    if (!hasConsent) {
+      setShowConsentModal(true);
+      return;
+    }
+    await executeRoutePreview(selectedCoordinate);
+  };
+
+  const handleConsentSuccess = async () => {
+    setShowConsentModal(false);
+    if (selectedCoordinate) {
+      await executeRoutePreview(selectedCoordinate);
+    }
+  };
+
+  const handleConsentCancel = () => {
+    setShowConsentModal(false);
+    handleCancelSelection();
   };
 
   const [isProlongedLoading, setIsProlongedLoading] = useState<boolean>(false);
@@ -271,6 +296,7 @@ export default function MapScreen() {
     );
   }
 
+  const isGoogleRoutesPreview = ephemeralData?.previewData.provider === 'google_routes';
   const mapPayload: import('../../../src/api/types').RouteMapPayload = ephemeralData?.previewData
     ? {
         route_id: routeId,
@@ -322,7 +348,7 @@ export default function MapScreen() {
     );
   }
 
-  if (allPins.length === 0 && legend.every((item) => item.count === 0)) {
+  if (!isGoogleRoutesPreview && allPins.length === 0 && legend.every((item) => item.count === 0)) {
     return (
       <View style={styles.container}>
         <AppHeader showBack onBackPress={() => router.back()} title="Mapa da Rota" />
@@ -457,22 +483,29 @@ export default function MapScreen() {
         accessibilityRole="summary"
         accessibilityLabel={isSelectionMode ? 'Mapa interativo de seleção de origem' : 'Mapa interativo da rota'}
       >
-        <MapAdapter
-          pins={filteredPins}
-          geometry={mapPayload.geometry}
-          bounds={activeBounds}
-          selectedActorId={selectedActorId}
-          onSelectActor={(id) => {
-            if (!isSelectionMode) {
-              setSelectedActorId(id);
-            }
-          }}
-          selectionMode={isSelectionMode}
-          selectedCoordinate={selectedCoordinate}
-          onSelectCoordinate={handleSelectMapCoordinate}
-          selectionPinLabel="Ponto de partida escolhido"
-          height="100%"
-        />
+        {isGoogleRoutesPreview && ephemeralData?.previewData ? (
+          <GoogleRoutesMapNotice
+            distanceMeters={ephemeralData.previewData.distance_m}
+            durationSeconds={ephemeralData.previewData.duration_s}
+          />
+        ) : (
+          <MapAdapter
+            pins={filteredPins}
+            geometry={mapPayload.geometry}
+            bounds={activeBounds}
+            selectedActorId={selectedActorId}
+            onSelectActor={(id) => {
+              if (!isSelectionMode) {
+                setSelectedActorId(id);
+              }
+            }}
+            selectionMode={isSelectionMode}
+            selectedCoordinate={selectedCoordinate}
+            onSelectCoordinate={handleSelectMapCoordinate}
+            selectionPinLabel="Ponto de partida escolhido"
+            height="100%"
+          />
+        )}
 
         {!isSelectionMode && filteredPins.length === 0 && (
           <View style={styles.filteredEmpty} accessibilityLiveRegion="polite">
@@ -686,6 +719,15 @@ export default function MapScreen() {
           </View>
         </View>
       </AccessibleModal>
+
+      {/* LGPD Dynamic Location Consent Gate Modal */}
+      {showConsentModal && (
+        <DynamicLocationConsentModal
+          visible
+          onConsentSuccess={handleConsentSuccess}
+          onCancelFixedOrigin={handleConsentCancel}
+        />
+      )}
     </View>
   );
 }

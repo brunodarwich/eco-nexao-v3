@@ -1,4 +1,9 @@
-# ECOnexão — Programa de finalização
+# ECOnexão — Programa de finalização (registro histórico)
+
+> A fonte ativa de estado, prioridade Web e backlog aberto é
+> [`../project_status.md`](../project_status.md). Este pacote preserva baseline,
+> critérios e evidências históricas; não deve ser usado isoladamente para escolher
+> a próxima task.
 
 Baseline auditado em: 12/08/2026  
 Escopo: finalizar, popular, homologar, publicar e operar o ECOnexão sem atualizar o Expo SDK 54.  
@@ -20,7 +25,7 @@ Aplicar a precedência normativa do `AGENTS.md`. O programa de finalização nã
 reescreve decisões aceitas; quando o escopo atual ultrapassa a spec 1.0, a task de
 ADR precede a implementação.
 
-## Documentos ativos
+## Documentos de referência
 
 | Documento | Papel |
 |---|---|
@@ -30,6 +35,8 @@ ADR precede a implementação.
 | `dependency_graph.md` | Dependências, paralelismo, arquivos em conflito e revisão cruzada |
 | `release_checklist.md` | Gates 1–8 e evidência de go/no-go |
 | `ai_coordination.md` | Protocolo operacional entre agentes sem memória compartilhada |
+| `ANTIGRAVITY_SUPERVISION.md` | Protocolo geral para supervisionar entregas do Antigravity |
+| `ANTIGRAVITY_ECO2005_SUPERVISION.md` | Estudo de caso e checklist específico de ECO-2005 |
 | `decisions_needed.md` | Decisões humanas e ADRs que bloqueiam implementação |
 
 ## Vocabulário de estado
@@ -49,7 +56,9 @@ Somente os estados abaixo podem ser usados:
 staging` e `pronto para production` são afirmações diferentes. Nenhuma implica a
 seguinte automaticamente.
 
-## Baseline resumido
+## Baseline histórico resumido
+
+Os números e afirmações abaixo são um snapshot de 12/08/2026, não o estado atual.
 
 - O repositório contém FastAPI, migrations, OpenAPI, cliente Expo tipado, TanStack
   Query, Auth anônima, telas públicas e testes locais de componentes/unidade.

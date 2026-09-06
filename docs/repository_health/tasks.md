@@ -1,5 +1,9 @@
 # Backlog proposto — ECO-2401 a ECO-2410
 
+> **Referência histórica de manutenção.** Estado, dependências atuais e prioridade
+> de todas as tarefas estão em [project_status.md](../project_status.md).
+> Este arquivo preserva os aceites originais; não mantém uma fila concorrente.
+
 | Task | Resultado | Depende de | Gate de conclusão |
 |---|---|---|---|
 | ECO-2401 | Baseline protegida e inventário rastreável | autorização do owner | H24.1 verificado; nenhuma alteração perdida |
@@ -14,4 +18,3 @@
 | ECO-2410 | Auditoria final e handoff de manutenção | ECO-2401–ECO-2409 | verificação independente e backlog residual explícito |
 
 Nenhuma task altera produção. Remoção material exige a matriz aprovada na ECO-2402.
-

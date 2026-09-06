@@ -15,7 +15,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.v1 import api_v1_router
-from app.core.config import settings
+from app.core.config import Settings, settings
 from app.core.logging import request_id_ctx_var, setup_logging
 from app.db.session import engine
 
@@ -32,133 +32,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     yield
     # Graceful shutdown: close database engine connection pool
     await engine.dispose()
-
-
-app = FastAPI(
-    title=settings.APP_NAME,
-    description=(
-        "API de domínio do aplicativo ECOnexão para turismo sustentável e rotas ecológicas."
-    ),
-    version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
-    lifespan=lifespan,
-)
-
-# Configure CORS Middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=[
-        "Authorization",
-        "Content-Type",
-        "Idempotency-Key",
-        "If-Match",
-        "If-None-Match",
-        "X-Request-ID",
-    ],
-)
-
-
-@app.middleware("http")
-async def security_headers_middleware(request: Request, call_next: Any) -> Any:
-    """Middleware to enforce strict HTTP security headers."""
-    response = await call_next(request)
-    if getattr(settings, "SECURITY_HEADERS_ENABLED", True):
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
-        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["Permissions-Policy"] = "geolocation=(self), camera=(), microphone=()"
-
-        # Enforce HSTS on staging and production or HTTPS requests
-        if settings.APP_ENV in ("staging", "production") or request.url.scheme == "https":
-            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-
-        # Prevent caching on dynamic API routes if not explicitly configured
-        if request.url.path.startswith("/api/v1") and "Cache-Control" not in response.headers:
-            response.headers["Cache-Control"] = "no-store, max-age=0"
-
-        response.headers["X-App-Version"] = settings.APP_VERSION
-        commit_sha = settings.GIT_COMMIT_SHA or settings.RENDER_GIT_COMMIT
-        if commit_sha:
-            response.headers["X-Commit-SHA"] = commit_sha
-    return response
-
-
-@app.middleware("http")
-async def app_rate_limit_middleware(request: Request, call_next: Any) -> Any:
-    """Middleware wrapper for rate limiting."""
-    from app.core.rate_limit import rate_limit_middleware
-
-    return await rate_limit_middleware(request, call_next)
-
-
-@app.middleware("http")
-async def request_id_middleware(request: Request, call_next: Any) -> Any:
-    """Middleware to extract or generate X-Request-ID and propagate it."""
-    incoming_id = request.headers.get("X-Request-ID")
-    request_id = incoming_id if incoming_id and incoming_id.strip() else f"req_{uuid.uuid4().hex}"
-
-    token = request_id_ctx_var.set(request_id)
-    request.state.request_id = request_id
-
-    try:
-        response = await call_next(request)
-        response.headers["X-Request-ID"] = request_id
-        return response
-    finally:
-        request_id_ctx_var.reset(token)
-
-
-@app.api_route("/", methods=["GET", "HEAD"], tags=["Root"], include_in_schema=False)
-async def root_ping() -> dict[str, Any]:
-    """Root ping endpoint for platform health checkers."""
-    commit_sha = settings.GIT_COMMIT_SHA or settings.RENDER_GIT_COMMIT
-    return {
-        "status": "ok",
-        "app": settings.APP_NAME,
-        "docs": "/docs",
-        "api": "/api/v1",
-        "version": settings.APP_VERSION,
-        "commit_sha": commit_sha,
-    }
-
-
-@app.get("/.well-known/assetlinks.json", tags=["Well-Known"], include_in_schema=False)
-async def get_android_assetlinks() -> list[dict[str, Any]]:
-    """Digital Asset Links for Android App Links verification."""
-    fingerprints = settings.DEEP_LINK_ANDROID_SHA256_FINGERPRINTS or [
-        "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00"
-    ]
-    return [
-        {
-            "relation": ["delegate_permission/common.handle_all_urls"],
-            "target": {
-                "namespace": "android_app",
-                "package_name": settings.DEEP_LINK_ANDROID_PACKAGE_NAME,
-                "sha256_cert_fingerprints": fingerprints,
-            },
-        }
-    ]
-
-
-@app.get("/.well-known/apple-app-site-association", tags=["Well-Known"], include_in_schema=False)
-async def get_apple_app_site_association() -> dict[str, Any]:
-    """Apple App Site Association for Universal Links verification."""
-    return {
-        "applinks": {
-            "apps": [],
-            "details": [
-                {
-                    "appID": settings.DEEP_LINK_IOS_APP_ID,
-                    "paths": ["/route/*", "/actor/*", "/region/*", "/profile/*"],
-                }
-            ],
-        }
-    }
 
 
 HTTP_STATUS_CODE_MAP: dict[int, str] = {
@@ -185,91 +58,229 @@ def _get_request_id(request: Request) -> str:
     return f"req_{uuid.uuid4().hex}"
 
 
-def _get_cors_headers(request: Request) -> dict[str, str]:
-    """Ensure explicit CORS headers are returned for allowed origins on exception responses."""
-    origin = request.headers.get("origin")
-    if origin and origin in settings.CORS_ORIGINS:
+def create_app(app_settings: Settings | None = None) -> FastAPI:
+    """Application factory configured with default or explicit settings."""
+    cfg = app_settings or settings
+    application = FastAPI(
+        title=cfg.APP_NAME,
+        description=(
+            "API de domínio do aplicativo ECOnexão para turismo sustentável e rotas ecológicas."
+        ),
+        version="1.0.0",
+        docs_url="/docs",
+        redoc_url="/redoc",
+        openapi_url="/openapi.json",
+        lifespan=lifespan,
+    )
+    application.state.settings = cfg
+
+    # Configure CORS Middleware
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=cfg.CORS_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=[
+            "Authorization",
+            "Content-Type",
+            "Idempotency-Key",
+            "If-Match",
+            "If-None-Match",
+            "X-Request-ID",
+        ],
+    )
+
+    @application.middleware("http")
+    async def security_headers_middleware(request: Request, call_next: Any) -> Any:
+        """Middleware to enforce strict HTTP security headers."""
+        response = await call_next(request)
+        current_settings: Settings = getattr(request.app.state, "settings", cfg)
+        if getattr(current_settings, "SECURITY_HEADERS_ENABLED", True):
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            response.headers["X-Frame-Options"] = "DENY"
+            response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+            response.headers["Permissions-Policy"] = "geolocation=(self), camera=(), microphone=()"
+
+            # Enforce HSTS on staging and production or HTTPS requests
+            if (
+                current_settings.APP_ENV in ("staging", "production")
+                or request.url.scheme == "https"
+            ):
+                response.headers["Strict-Transport-Security"] = (
+                    "max-age=31536000; includeSubDomains"
+                )
+
+            # Prevent caching on dynamic API routes if not explicitly configured
+            if request.url.path.startswith("/api/v1") and "Cache-Control" not in response.headers:
+                response.headers["Cache-Control"] = "no-store, max-age=0"
+
+            response.headers["X-App-Version"] = current_settings.APP_VERSION
+            commit_sha = current_settings.GIT_COMMIT_SHA or current_settings.RENDER_GIT_COMMIT
+            if commit_sha:
+                response.headers["X-Commit-SHA"] = commit_sha
+        return response
+
+    @application.middleware("http")
+    async def app_rate_limit_middleware(request: Request, call_next: Any) -> Any:
+        """Middleware wrapper for rate limiting."""
+        from app.core.rate_limit import rate_limit_middleware
+
+        return await rate_limit_middleware(request, call_next)
+
+    @application.middleware("http")
+    async def request_id_middleware(request: Request, call_next: Any) -> Any:
+        """Middleware to extract or generate X-Request-ID and propagate it."""
+        incoming_id = request.headers.get("X-Request-ID")
+        request_id = (
+            incoming_id if incoming_id and incoming_id.strip() else f"req_{uuid.uuid4().hex}"
+        )
+
+        token = request_id_ctx_var.set(request_id)
+        request.state.request_id = request_id
+
+        try:
+            response = await call_next(request)
+            response.headers["X-Request-ID"] = request_id
+            return response
+        finally:
+            request_id_ctx_var.reset(token)
+
+    @application.api_route("/", methods=["GET", "HEAD"], tags=["Root"], include_in_schema=False)
+    async def root_ping() -> dict[str, Any]:
+        """Root ping endpoint for platform health checkers."""
+        commit_sha = cfg.GIT_COMMIT_SHA or cfg.RENDER_GIT_COMMIT
         return {
-            "Access-Control-Allow-Origin": origin,
-            "Access-Control-Allow-Credentials": "true",
+            "status": "ok",
+            "app": cfg.APP_NAME,
+            "docs": "/docs",
+            "api": "/api/v1",
+            "version": cfg.APP_VERSION,
+            "commit_sha": commit_sha,
         }
-    return {}
 
-
-@app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
-    """Custom exception handler for Starlette/FastAPI HTTPExceptions."""
-    req_id = _get_request_id(request)
-    code = HTTP_STATUS_CODE_MAP.get(exc.status_code, f"HTTP_{exc.status_code}")
-    details = getattr(exc, "details", None)
-    message = str(exc.detail)
-    if isinstance(exc.detail, dict):
-        code = str(exc.detail.get("code", code))
-        message = str(exc.detail.get("message", "Falha ao processar a solicitação."))
-        details = exc.detail.get("details")
-
-    content = {
-        "error": {
-            "code": code,
-            "message": message,
-            "details": details,
-        },
-        "request_id": req_id,
-    }
-    cors_headers = _get_cors_headers(request)
-    return JSONResponse(
-        status_code=exc.status_code,
-        content=content,
-        headers={**(exc.headers or {}), "X-Request-ID": req_id, **cors_headers},
+    @application.get(
+        "/.well-known/assetlinks.json", tags=["Well-Known"], include_in_schema=False
     )
+    async def get_android_assetlinks() -> list[dict[str, Any]]:
+        """Digital Asset Links for Android App Links verification."""
+        fingerprints = cfg.DEEP_LINK_ANDROID_SHA256_FINGERPRINTS or [
+            "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00"
+        ]
+        return [
+            {
+                "relation": ["delegate_permission/common.handle_all_urls"],
+                "target": {
+                    "namespace": "android_app",
+                    "package_name": cfg.DEEP_LINK_ANDROID_PACKAGE_NAME,
+                    "sha256_cert_fingerprints": fingerprints,
+                },
+            }
+        ]
 
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(
-    request: Request, exc: RequestValidationError
-) -> JSONResponse:
-    """Custom exception handler for 422 RequestValidationError adhering to ErrorResponse schema."""
-    req_id = _get_request_id(request)
-    safe_errors = []
-    for error in exc.errors():
-        safe_error = {key: value for key, value in error.items() if key != "input"}
-        safe_errors.append(safe_error)
-    content = {
-        "error": {
-            "code": "VALIDATION_ERROR",
-            "message": "Dados de requisição inválidos",
-            "details": safe_errors,
-        },
-        "request_id": req_id,
-    }
-    cors_headers = _get_cors_headers(request)
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-        content=content,
-        headers={"X-Request-ID": req_id, **cors_headers},
+    @application.get(
+        "/.well-known/apple-app-site-association", tags=["Well-Known"], include_in_schema=False
     )
+    async def get_apple_app_site_association() -> dict[str, Any]:
+        """Apple App Site Association for Universal Links verification."""
+        return {
+            "applinks": {
+                "apps": [],
+                "details": [
+                    {
+                        "appID": cfg.DEEP_LINK_IOS_APP_ID,
+                        "paths": ["/route/*", "/actor/*", "/region/*", "/profile/*"],
+                    }
+                ],
+            }
+        }
+
+    def _get_cors_headers(request: Request) -> dict[str, str]:
+        """Ensure explicit CORS headers are returned for allowed origins on exception responses."""
+        origin = request.headers.get("origin")
+        current_settings: Settings = getattr(request.app.state, "settings", cfg)
+        if origin and origin in current_settings.CORS_ORIGINS:
+            return {
+                "Access-Control-Allow-Origin": origin,
+                "Access-Control-Allow-Credentials": "true",
+            }
+        return {}
+
+    @application.exception_handler(StarletteHTTPException)
+    async def http_exception_handler(
+        request: Request, exc: StarletteHTTPException
+    ) -> JSONResponse:
+        """Custom exception handler for Starlette/FastAPI HTTPExceptions."""
+        req_id = _get_request_id(request)
+        code = HTTP_STATUS_CODE_MAP.get(exc.status_code, f"HTTP_{exc.status_code}")
+        details = getattr(exc, "details", None)
+        message = str(exc.detail)
+        if isinstance(exc.detail, dict):
+            code = str(exc.detail.get("code", code))
+            message = str(exc.detail.get("message", "Falha ao processar a solicitação."))
+            details = exc.detail.get("details")
+
+        content = {
+            "error": {
+                "code": code,
+                "message": message,
+                "details": details,
+            },
+            "request_id": req_id,
+        }
+        cors_headers = _get_cors_headers(request)
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=content,
+            headers={**(exc.headers or {}), "X-Request-ID": req_id, **cors_headers},
+        )
+
+    @application.exception_handler(RequestValidationError)
+    async def validation_exception_handler(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
+        """Custom exception handler for 422 validation errors adhering to schema."""
+        req_id = _get_request_id(request)
+        safe_errors = []
+        for error in exc.errors():
+            safe_error = {key: value for key, value in error.items() if key != "input"}
+            safe_errors.append(safe_error)
+        content = {
+            "error": {
+                "code": "VALIDATION_ERROR",
+                "message": "Dados de requisição inválidos",
+                "details": safe_errors,
+            },
+            "request_id": req_id,
+        }
+        cors_headers = _get_cors_headers(request)
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            content=content,
+            headers={"X-Request-ID": req_id, **cors_headers},
+        )
+
+    @application.exception_handler(Exception)
+    async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+        """Custom exception handler for unhandled errors to avoid leaking internal details."""
+        req_id = _get_request_id(request)
+        logger.exception("Unhandled server error processing request %s: %s", req_id, exc)
+        content = {
+            "error": {
+                "code": "INTERNAL_SERVER_ERROR",
+                "message": "Ocorreu um erro interno no servidor.",
+                "details": None,
+            },
+            "request_id": req_id,
+        }
+        cors_headers = _get_cors_headers(request)
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content=content,
+            headers={"X-Request-ID": req_id, **cors_headers},
+        )
+
+    application.include_router(api_v1_router, prefix="/api/v1")
+    return application
 
 
-@app.exception_handler(Exception)
-async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Custom exception handler for unhandled errors to avoid leaking internal details."""
-    req_id = _get_request_id(request)
-    logger.exception("Unhandled server error processing request %s: %s", req_id, exc)
-    content = {
-        "error": {
-            "code": "INTERNAL_SERVER_ERROR",
-            "message": "Ocorreu um erro interno no servidor.",
-            "details": None,
-        },
-        "request_id": req_id,
-    }
-    cors_headers = _get_cors_headers(request)
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=content,
-        headers={"X-Request-ID": req_id, **cors_headers},
-    )
-
-
-# Include API v1 router
-app.include_router(api_v1_router, prefix="/api/v1")
+app = create_app()

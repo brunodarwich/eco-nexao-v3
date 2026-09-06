@@ -10,6 +10,7 @@ import { EmptyStateView, ErrorStateView, LoadingView } from '../../../src/compon
 import { LocalCatalogPreview } from '../../../src/components/routes/LocalCatalogPreview';
 import { OriginSelector, MY_LOCATION_ORIGIN_ID, CHOOSE_ON_MAP_ORIGIN_ID } from '../../../src/components/routes/OriginSelector';
 import { RouteMapPreview } from '../../../src/components/routes/RouteMapPreview';
+import { GoogleRoutesMapNotice } from '../../../src/components/routes/GoogleRoutesMapNotice';
 import { getPindobalCoverImage } from '../../../src/components/routes/routeCoverImage';
 import { useRouteAlertsQuery, useRouteDetailQuery } from '../../../src/hooks/queries';
 import { theme, useAppTheme } from '../../../src/theme/theme';
@@ -207,8 +208,9 @@ export default function RouteDetailScreen() {
 
   const route = detail.data;
   const pindobalHeroImage = getPindobalCoverImage(route);
+  const isGoogleRoutesPreview = previewData?.provider === 'google_routes';
 
-  const customGeometry: RouteGeometry | null = previewData
+  const customGeometry: RouteGeometry | null = previewData && !isGoogleRoutesPreview
     ? {
         id: originId || MY_LOCATION_ORIGIN_ID,
         route_origin_id: originId || MY_LOCATION_ORIGIN_ID,
@@ -300,25 +302,32 @@ export default function RouteDetailScreen() {
           </View>
         )}
 
-        <RouteMapPreview
-          routeId={routeId}
-          originId={isCustomLocation ? undefined : effectiveOrigin}
-          customGeometry={customGeometry}
-          customBounds={customBounds}
-          customPins={isCustomLocation ? previewData?.pins : undefined}
-          customLegend={isCustomLocation ? previewData?.legend : undefined}
-          customCityBounds={isCustomLocation ? previewData?.city_bounds : undefined}
-          isCustomLocation={isCustomLocation}
-          onExpand={(selectedActorId) => {
-            if (isCustomLocation && previewData && queryClient) {
-              queryClient.setQueryData(queryKeys.routes.ephemeralPreview(routeId), {
-                previewData,
-                originType: originId || MY_LOCATION_ORIGIN_ID,
-              });
-            }
-            router.push(routePath(routeId, 'map', isCustomLocation ? undefined : effectiveOrigin, selectedActorId ?? actorId));
-          }}
-        />
+        {isGoogleRoutesPreview && previewData ? (
+          <GoogleRoutesMapNotice
+            distanceMeters={previewData.distance_m}
+            durationSeconds={previewData.duration_s}
+          />
+        ) : (
+          <RouteMapPreview
+            routeId={routeId}
+            originId={isCustomLocation ? undefined : effectiveOrigin}
+            customGeometry={customGeometry}
+            customBounds={customBounds}
+            customPins={isCustomLocation ? previewData?.pins : undefined}
+            customLegend={isCustomLocation ? previewData?.legend : undefined}
+            customCityBounds={isCustomLocation ? previewData?.city_bounds : undefined}
+            isCustomLocation={isCustomLocation}
+            onExpand={(selectedActorId) => {
+              if (isCustomLocation && previewData && queryClient) {
+                queryClient.setQueryData(queryKeys.routes.ephemeralPreview(routeId), {
+                  previewData,
+                  originType: originId || MY_LOCATION_ORIGIN_ID,
+                });
+              }
+              router.push(routePath(routeId, 'map', isCustomLocation ? undefined : effectiveOrigin, selectedActorId ?? actorId));
+            }}
+          />
+        )}
 
         <LocalCatalogPreview
           routeId={routeId}

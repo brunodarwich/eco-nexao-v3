@@ -12,6 +12,7 @@ import {
 } from '../../hooks/queries';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ApiClientError } from '../../api/client';
+import { hasValidLocationConsent } from '../../auth/locationConsent';
 
 const textValue = (value: unknown): string => {
   if (typeof value === 'string' || typeof value === 'number') return String(value);
@@ -72,6 +73,12 @@ jest.mock('../../hooks/queries', () => ({
   useRouteActorsQuery: jest.fn(),
   useRouteMapQuery: jest.fn(),
   useActorCategoriesQuery: jest.fn(),
+}));
+
+jest.mock('../../auth/locationConsent', () => ({
+  hasValidLocationConsent: jest.fn(),
+  saveLocationConsent: jest.fn(),
+  CURRENT_LOCATION_POLICY_VERSION: '2026-09-04',
 }));
 
 jest.mock('../../state/useAppContext', () => {
@@ -187,6 +194,7 @@ describe('RouteDetailScreen Integration (ECO-0901..0907)', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (hasValidLocationConsent as jest.Mock).mockResolvedValue(true);
 
     const { useQueryClient } = require('@tanstack/react-query');
     (useQueryClient as jest.Mock).mockReturnValue({
@@ -676,6 +684,43 @@ describe('RouteDetailScreen Integration (ECO-0901..0907)', () => {
     expect(mockPush).toHaveBeenCalledWith(
       '/route/route-pindobal/map?originId=origin-porto&mode=select-origin'
     );
+  });
+
+  it('does not render Google Routes geometry over the OpenStreetMap preview', async () => {
+    const { useQueryClient } = require('@tanstack/react-query');
+    const { useAppContext } = require('../../state/useAppContext');
+    const { initialAppState } = require('../../state/appReducer');
+    (useAppContext as jest.Mock).mockReturnValue({
+      state: {
+        ...initialAppState,
+        featureFlags: { ...initialAppState.featureFlags, dynamicRouting: true },
+      },
+      dispatch: jest.fn(),
+    });
+    (useQueryClient as jest.Mock).mockReturnValue({
+      getQueryData: jest.fn().mockReturnValue({
+        originType: 'map-selection-preview',
+        previewData: {
+          distance_m: 15400,
+          duration_s: 1200,
+          provider: 'google_routes',
+          geojson: { type: 'LineString', coordinates: [[-54.7083, -2.4431], [-54.9, -2.5]] },
+          bounds: { min_lat: -2.5, max_lat: -2.4, min_lng: -54.9, max_lng: -54.7 },
+        },
+      }),
+      removeQueries: jest.fn(),
+    });
+
+    let tree!: renderer.ReactTestRenderer;
+    await act(async () => {
+      tree = renderer.create(<RouteDetailScreen />);
+    });
+
+    const textContents = tree.root.findAllByType(Text).map((node) => textValue(node.props.children));
+    expect(textContents).toContain('Trajeto calculado pelo Google Maps');
+    expect(textContents).toContain('Distância estimada: 15.4 km • Tempo: ~20 min');
+    expect(textContents).toContain('Google Maps');
+    expect(tree.root.findAllByProps({ accessibilityLabel: 'Bounds ativos do mapa' })).toHaveLength(0);
   });
 
   it('provides and consumes dynamic pins, legend and city_bounds on RouteMapPreview and transfers state on expand (ECO-2312)', async () => {

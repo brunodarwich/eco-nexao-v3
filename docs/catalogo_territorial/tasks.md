@@ -1,5 +1,9 @@
 # Backlog proposto — ECO-2501 a ECO-2513
 
+> **Registro histórico de aceites e evidências.** Todas as tasks e o trabalho aberto
+> estão em [project_status.md](../project_status.md). Alegações abaixo de GO ou
+> homologação não substituem o nível de evidência consolidado nem autorizam promoção.
+
 Status: `PROPOSED`. Uma task só fica ativa quando todas as dependências e decisões
 indicadas estiverem registradas.
 
@@ -177,7 +181,6 @@ Estados permitidos: `PROPOSED`, `BLOCKED`, `IN_PROGRESS`, `PARTIAL`,
 - **Submissão do Gate H25.4:**
   - Veredito Técnico: **`GO` para Promoção**.
   - O Dossiê Consolidado está submetido para a decisão executiva final do Owner (Bruno Darwich).
-
 
 
 

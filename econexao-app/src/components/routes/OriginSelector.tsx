@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
 import { makeAccessibleButton, setAccessibilityFocusSafely } from '../../utils/accessibility';
 import { AccessibleModal } from '../common/AccessibleModal';
+import { DynamicLocationConsentModal } from './DynamicLocationConsentModal';
+import { hasValidLocationConsent } from '../../auth/locationConsent';
 import type { RouteOrigin } from '../../api/types';
 import { useCurrentLocation, LocationCoordinates } from '../../hooks/useCurrentLocation';
 import { useAppContext } from '../../state/useAppContext';
@@ -51,8 +53,11 @@ export const OriginSelector: React.FC<OriginSelectorProps> = ({
   const { status, requestLocation, resetLocation } = useCurrentLocation();
   const [pendingCoords, setPendingCoords] = useState<LocationCoordinates | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showConsentModal, setShowConsentModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'my-location' | 'choose-on-map' | null>(null);
 
   const myLocationButtonRef = useRef<any>(null);
+  const chooseOnMapButtonRef = useRef<any>(null);
   const modalTitleRef = useRef<any>(null);
   const focusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -102,8 +107,7 @@ export const OriginSelector: React.FC<OriginSelectorProps> = ({
       }
     : origins.find((o) => o.id === activeOriginId) || fallbackOrigin;
 
-  const handlePressMyLocation = async () => {
-    if (!isDynamicRoutingEnabled) return;
+  const startGpsFlow = async () => {
     try {
       AccessibilityInfo.announceForAccessibility('Obtendo sua localização atual via GPS...');
       const result = await requestLocation();
@@ -143,6 +147,50 @@ export const OriginSelector: React.FC<OriginSelectorProps> = ({
       AccessibilityInfo.announceForAccessibility('Ocorreu um erro ao acessar a localização.');
       Alert.alert('Erro', 'Ocorreu um erro ao acessar a localização.');
     }
+  };
+
+  const handlePressMyLocation = async () => {
+    if (!isDynamicRoutingEnabled) return;
+    const hasConsent = await hasValidLocationConsent();
+    if (!hasConsent) {
+      setPendingAction('my-location');
+      setShowConsentModal(true);
+      return;
+    }
+    await startGpsFlow();
+  };
+
+  const handlePressChooseOnMap = async () => {
+    if (!isDynamicRoutingEnabled || !onStartSelectOnMap) return;
+    const hasConsent = await hasValidLocationConsent();
+    if (!hasConsent) {
+      setPendingAction('choose-on-map');
+      setShowConsentModal(true);
+      return;
+    }
+    onStartSelectOnMap();
+  };
+
+  const handleConsentSuccess = () => {
+    setShowConsentModal(false);
+    const action = pendingAction;
+    setPendingAction(null);
+    if (action === 'my-location') {
+      void startGpsFlow();
+    } else if (action === 'choose-on-map') {
+      if (onStartSelectOnMap) {
+        onStartSelectOnMap();
+      }
+    }
+  };
+
+  const handleConsentCancel = () => {
+    setShowConsentModal(false);
+    setPendingAction(null);
+    if (selectedOriginId === MY_LOCATION_ORIGIN_ID || selectedOriginId === CHOOSE_ON_MAP_ORIGIN_ID) {
+      onSelectOrigin(fallbackOrigin.id);
+    }
+    restoreFocus();
   };
 
   const handleConfirmLocation = () => {
@@ -226,17 +274,14 @@ export const OriginSelector: React.FC<OriginSelectorProps> = ({
         {/* Escolher no Mapa Pill */}
         {isDynamicRoutingEnabled && onStartSelectOnMap && (
           <TouchableOpacity
+            ref={chooseOnMapButtonRef}
             key="choose-on-map"
             style={[
               styles.pillButton,
               isChooseOnMapSelected ? styles.pillSelected : styles.pillUnselected,
               isLocating && styles.pillDisabled,
             ]}
-            onPress={() => {
-              if (isDynamicRoutingEnabled && onStartSelectOnMap) {
-                onStartSelectOnMap();
-              }
-            }}
+            onPress={handlePressChooseOnMap}
             disabled={isLocating}
             {...makeAccessibleButton(
               'Escolher ponto de partida no mapa',
@@ -374,6 +419,16 @@ export const OriginSelector: React.FC<OriginSelectorProps> = ({
           </View>
         </View>
       </AccessibleModal>
+
+      {/* LGPD Dynamic Location Consent Gate Modal */}
+      {showConsentModal && (
+        <DynamicLocationConsentModal
+          visible
+          onConsentSuccess={handleConsentSuccess}
+          onCancelFixedOrigin={handleConsentCancel}
+          returnFocusRef={pendingAction === 'choose-on-map' ? chooseOnMapButtonRef : myLocationButtonRef}
+        />
+      )}
     </View>
   );
 };

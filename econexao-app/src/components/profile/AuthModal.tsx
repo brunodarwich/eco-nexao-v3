@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import {
+  AccessibilityInfo,
   ActivityIndicator,
   StyleSheet,
   Text,
@@ -23,7 +24,17 @@ interface AuthModalProps {
 type AuthMode = 'link' | 'signin' | 'signup' | 'recovery';
 
 export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, returnFocusRef }) => {
-  const { user, linkAccount, signInWithPassword, signUp, resetPassword } = useAuth();
+  const {
+    user,
+    linkAccount,
+    signInWithPassword,
+    signUp,
+    resetPassword,
+    signInWithGoogle,
+    linkGoogleAccount,
+    isIdentityConflictError,
+    clearGuestFavoritesSnapshot,
+  } = useAuth();
   const isAnonymous = user?.is_anonymous ?? true;
   const closeButtonRef = useRef<React.ElementRef<typeof TouchableOpacity>>(null);
 
@@ -31,6 +42,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, returnFo
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isConflictDetected, setIsConflictDetected] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -39,12 +52,74 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, returnFo
     setPassword('');
     setErrorMessage(null);
     setSuccessMessage(null);
+    setIsConflictDetected(false);
     setIsLoading(false);
+    setIsGoogleLoading(false);
   };
 
   const handleClose = () => {
     resetState();
     onClose();
+  };
+
+  const handleGoogleAuth = async () => {
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    setIsConflictDetected(false);
+    setIsGoogleLoading(true);
+
+    try {
+      AccessibilityInfo.announceForAccessibility(
+        mode === 'link' ? 'Iniciando vinculação com o Google...' : 'Iniciando login com o Google...'
+      );
+
+      if (mode === 'link') {
+        await linkGoogleAccount();
+        setSuccessMessage('Conta vinculada com o Google! Seus favoritos foram preservados.');
+        AccessibilityInfo.announceForAccessibility('Conta vinculada com sucesso.');
+        setTimeout(() => handleClose(), 1500);
+      } else {
+        await signInWithGoogle();
+        setSuccessMessage('Redirecionando para login com o Google...');
+        AccessibilityInfo.announceForAccessibility('Redirecionando para login com o Google.');
+      }
+    } catch (err: any) {
+      if (isIdentityConflictError(err)) {
+        setIsConflictDetected(true);
+        setErrorMessage(
+          'Esta conta Google já possui cadastro no ECOnexão. Conforme a política de privacidade, os dados desta sessão de visitante não serão vinculados à conta antiga.'
+        );
+        AccessibilityInfo.announceForAccessibility('Conta existente detectada.');
+      } else if (err?.message?.includes('cancel') || err?.message?.includes('denied')) {
+        setErrorMessage('Autenticação com o Google cancelada.');
+        AccessibilityInfo.announceForAccessibility('Autenticação com o Google cancelada.');
+      } else {
+        const msg = err?.message || 'Falha na autenticação com o Google. Tente novamente.';
+        setErrorMessage(msg);
+        AccessibilityInfo.announceForAccessibility(msg);
+      }
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
+  const handleSwitchToExistingAccount = async () => {
+    await clearGuestFavoritesSnapshot();
+    setIsConflictDetected(false);
+    setErrorMessage(null);
+    setIsGoogleLoading(true);
+
+    try {
+      AccessibilityInfo.announceForAccessibility('Entrando na conta existente com o Google...');
+      await signInWithGoogle();
+      setSuccessMessage('Entrando na sua conta Google existente...');
+    } catch (err: any) {
+      const msg = err?.message || 'Falha ao entrar na conta existente com o Google.';
+      setErrorMessage(msg);
+      AccessibilityInfo.announceForAccessibility(msg);
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -190,17 +265,78 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, returnFo
           )}
 
           {errorMessage && (
-            <View style={styles.errorContainer}>
+            <View style={styles.errorContainer} accessibilityRole="alert">
               <Ionicons name="alert-circle" size={18} color="#991B1B" />
               <Text style={styles.errorText}>{errorMessage}</Text>
             </View>
           )}
 
+          {isConflictDetected && (
+            <TouchableOpacity
+              style={styles.conflictActionButton}
+              onPress={handleSwitchToExistingAccount}
+              disabled={isGoogleLoading}
+              {...makeAccessibleButton(
+                'Fazer login na conta existente',
+                'Descarta os dados temporários de visitante e entra na conta Google existente'
+              )}
+              accessibilityState={{ busy: isGoogleLoading, disabled: isGoogleLoading }}
+            >
+              <Text style={styles.conflictActionText}>Fazer Login na Conta Existente</Text>
+            </TouchableOpacity>
+          )}
+
           {successMessage && (
-            <View style={styles.successContainer}>
+            <View style={styles.successContainer} accessibilityRole="alert">
               <Ionicons name="checkmark-circle" size={18} color="#065F46" />
               <Text style={styles.successText}>{successMessage}</Text>
             </View>
+          )}
+
+          {mode !== 'recovery' && (
+            <>
+              <TouchableOpacity
+                style={[
+                  styles.googleButton,
+                  (isGoogleLoading || isLoading) && styles.googleButtonDisabled,
+                ]}
+                onPress={handleGoogleAuth}
+                disabled={isGoogleLoading || isLoading}
+                {...makeAccessibleButton(
+                  mode === 'link'
+                    ? 'Salvar conta com o Google'
+                    : mode === 'signup'
+                    ? 'Cadastrar com o Google'
+                    : 'Entrar com o Google',
+                  'Inicia fluxo seguro de autenticação com sua conta Google'
+                )}
+                accessibilityState={{
+                  busy: isGoogleLoading,
+                  disabled: isGoogleLoading || isLoading,
+                }}
+              >
+                {isGoogleLoading ? (
+                  <ActivityIndicator size="small" color={theme.colors.brandForest} />
+                ) : (
+                  <View style={styles.googleButtonContent}>
+                    <Ionicons name="logo-google" size={18} color="#EA4335" />
+                    <Text style={styles.googleButtonText}>
+                      {mode === 'link'
+                        ? 'Salvar com o Google'
+                        : mode === 'signup'
+                        ? 'Cadastrar com o Google'
+                        : 'Entrar com o Google'}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>ou continue com e-mail</Text>
+                <View style={styles.dividerLine} />
+              </View>
+            </>
           )}
 
           <View style={styles.form}>
@@ -385,6 +521,60 @@ const styles = StyleSheet.create({
     color: '#065F46',
     fontSize: 13,
     flex: 1,
+  },
+  conflictActionButton: {
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: theme.radii.md,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  conflictActionText: {
+    color: '#92400E',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  googleButton: {
+    backgroundColor: theme.colors.surfaceWhite,
+    borderWidth: 1.5,
+    borderColor: 'rgba(117, 155, 113, 0.35)',
+    borderRadius: theme.radii.md,
+    paddingVertical: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+    ...theme.shadows.card,
+  },
+  googleButtonDisabled: {
+    opacity: 0.6,
+  },
+  googleButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  googleButtonText: {
+    color: theme.colors.brandDeep,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 10,
+    gap: 10,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(117, 155, 113, 0.2)',
+  },
+  dividerText: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
   },
   form: {
     gap: 12,

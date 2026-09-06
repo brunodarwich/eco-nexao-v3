@@ -1,12 +1,5 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import * as fs from 'fs';
-import * as path from 'path';
-
-const SCREENSHOT_DIR = path.resolve(__dirname, '../screenshots');
-if (!fs.existsSync(SCREENSHOT_DIR)) {
-  fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
-}
 
 // 8 Categorias Canônicas (ADR 0010)
 const CANONICAL_CATEGORIES = [
@@ -355,7 +348,9 @@ test.describe('Validação em Navegador Real & Acessibilidade WCAG 2.1 AA (ECO-2
     await expect(header).toBeVisible({ timeout: 10000 });
 
     // Salvar Screenshot 01: Home (falha imediatamente se o screenshot falhar)
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, `${testInfo.project.name}_01_app_home.png`) });
+    const screenshot01Path = testInfo.outputPath(`${testInfo.project.name}_01_app_home.png`);
+    await page.screenshot({ path: screenshot01Path });
+    await testInfo.attach('01_app_home', { path: screenshot01Path, contentType: 'image/png' });
 
     // 2. Localizar o botão de disparo da Região
     const regionTrigger = page.locator('[aria-label*="Região atual"]').first();
@@ -377,7 +372,9 @@ test.describe('Validação em Navegador Real & Acessibilidade WCAG 2.1 AA (ECO-2
     expect(rootAriaHidden).toBe('true');
 
     // Salvar Screenshot 02: Modal Aberto
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, `${testInfo.project.name}_02_modal_open.png`) });
+    const screenshot02Path = testInfo.outputPath(`${testInfo.project.name}_02_modal_open.png`);
+    await page.screenshot({ path: screenshot02Path });
+    await testInfo.attach('02_modal_open', { path: screenshot02Path, contentType: 'image/png' });
 
     // 5. Testar Focus Trap Completo com Tab, Shift+Tab e Contenção Estrita
     const isInitiallyInside = await modalDialog.evaluate((d) => d.contains(document.activeElement));
@@ -430,7 +427,9 @@ test.describe('Validação em Navegador Real & Acessibilidade WCAG 2.1 AA (ECO-2
     expect(isTriggerFocused).toBe(true);
 
     // Salvar Screenshot 03: Foco Restaurado
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, `${testInfo.project.name}_03_after_modal.png`) });
+    const screenshot03Path = testInfo.outputPath(`${testInfo.project.name}_03_after_modal.png`);
+    await page.screenshot({ path: screenshot03Path });
+    await testInfo.attach('03_after_modal', { path: screenshot03Path, contentType: 'image/png' });
 
     // 9. Auditoria Axe-core no estado da Home
     const axeResults = await new AxeBuilder({ page })
@@ -471,7 +470,9 @@ test.describe('Validação em Navegador Real & Acessibilidade WCAG 2.1 AA (ECO-2
     await expect(mapContainer).toBeVisible({ timeout: 10000 });
 
     // Salvar Screenshot 04: Mapa Inicial com Clusters
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, `${testInfo.project.name}_04_map_initial.png`) });
+    const screenshot04Path = testInfo.outputPath(`${testInfo.project.name}_04_map_initial.png`);
+    await page.screenshot({ path: screenshot04Path });
+    await testInfo.attach('04_map_initial', { path: screenshot04Path, contentType: 'image/png' });
 
     // 2. Verificar que 175 pins da fixture foram agrupados em clusters não sobrepostos
     const clusterMarkers = page.locator('.leaflet-marker-icon.econexao-cluster-icon-wrapper');
@@ -519,7 +520,9 @@ test.describe('Validação em Navegador Real & Acessibilidade WCAG 2.1 AA (ECO-2
     await page.waitForTimeout(600); // Esperar transição de zoom do Leaflet
 
     // Salvar Screenshot 05: Cluster Expandido
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, `${testInfo.project.name}_05_cluster_expanded.png`) });
+    const screenshot05Path = testInfo.outputPath(`${testInfo.project.name}_05_cluster_expanded.png`);
+    await page.screenshot({ path: screenshot05Path });
+    await testInfo.attach('05_cluster_expanded', { path: screenshot05Path, contentType: 'image/png' });
 
     // 4. Testar Filtro de Categoria Temática
     await page.goto('/route/rota-santarem-pindobal/map');
@@ -530,7 +533,9 @@ test.describe('Validação em Navegador Real & Acessibilidade WCAG 2.1 AA (ECO-2
     await page.waitForTimeout(400);
 
     // Salvar Screenshot 06: Mapa Filtrado por Categoria
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, `${testInfo.project.name}_06_category_filtered.png`) });
+    const screenshot06Path = testInfo.outputPath(`${testInfo.project.name}_06_category_filtered.png`);
+    await page.screenshot({ path: screenshot06Path });
+    await testInfo.attach('06_category_filtered', { path: screenshot06Path, contentType: 'image/png' });
 
     // 5. Testar as Três Origens Reais do Contrato (Porto, Aeroporto, Rodoviária) com Asserções Estritas
     for (const origin of MOCK_ORIGINS) {
@@ -564,7 +569,9 @@ test.describe('Validação em Navegador Real & Acessibilidade WCAG 2.1 AA (ECO-2
     await expect(catalogButton).toBeVisible({ timeout: 5000 });
 
     // Salvar Screenshot 07: Ator Selecionado e Sheet Acessível
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, `${testInfo.project.name}_07_actor_sheet_opened.png`) });
+    const screenshot07Path = testInfo.outputPath(`${testInfo.project.name}_07_actor_sheet_opened.png`);
+    await page.screenshot({ path: screenshot07Path });
+    await testInfo.attach('07_actor_sheet_opened', { path: screenshot07Path, contentType: 'image/png' });
 
     // Click the catalog button and wait for navigation to the catalog page
     await catalogButton.click();

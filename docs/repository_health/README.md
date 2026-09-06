@@ -1,10 +1,15 @@
 # ECOnexão — Programa de higiene e saúde do repositório
 
-Status: `PROPOSED`
+Status: referência histórica. O estado individual e a prioridade das ECO-2401–2410
+estão exclusivamente em [project_status.md](../project_status.md). O antigo resumo
+de conclusão da baseline não substitui sua reconciliação atual.
 
 Owner de ativação: proprietário do produto
 
 Fonte normativa superior: `../README.md`
+
+Fonte ativa de estado e backlog: [`../project_status.md`](../project_status.md).
+`tasks.md` preserva a sequência histórica do programa de higiene.
 
 ## Objetivo
 
