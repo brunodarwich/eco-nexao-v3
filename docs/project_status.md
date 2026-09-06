@@ -172,11 +172,11 @@ A RECONCILIAR: 2 | ADIADA: 13 | BLOQUEADA: 4 | BLOQUEADA POR DADOS: 9 | CANCELAD
 
 #### ECO-2606 — Entregar login Google com favoritos preservados
 
-- **Estado / horizonte / alteração:** PENDENTE / Versão do evento / NOVA.
-- **Dependências ou sucessoras:** ECO-2603 (CONCLUÍDA DOCUMENTAL), ECO-1902. Desbloqueada para execução.
-- **Conclusão / aceite:** Login/callback/logout/retorno após refresh, guest→conta e conflito com conta existente respeitam ADR; favoritos preservados no fluxo aceito e isolamento A/B testado; configuração externa homologada antes de concluir.
-- **Evidência e limite:** Solicitação/decisões do owner nesta conversa; implementação nova não verificada.
-- **Referência:** [direcionamento_versao_web_evento.md](direcionamento_versao_web_evento.md). **Commit:** Não vinculado.
+- **Estado / horizonte / alteração:** CONCLUÍDA LOCAL / Versão do evento / NOVA.
+- **Dependências ou sucessoras:** ECO-2603, ECO-2605 (CONCLUÍDAS LOCAL). Desbloqueia ECO-2607.
+- **Conclusão / aceite:** Fluxo completo de login Google (`signInWithOAuth`), vinculação de guest para conta identificada (`linkIdentity`), parsing de callback OAuth / PKCE code, cancelamento gracioso (`access_denied`), persistência e refresh Web via `localStorage` (ADR 0007), preservação de favoritos via snapshot e reconciliação idempotente em `/me/favorite-routes` e `/me/favorite-actors`, resolução de conflito de conta Google existente segundo ADR 0007 Opção 1 (descarte do snapshot guest apenas após confirmação do usuário) e isolamento A/B garantido via `queryClient.clear()` e invalidação de sessão no logout.
+- **Evidência e limite:** Em 06/09/2026: 44 testes em 5 suítes dedicadas de autenticação e perfil aprovados (`npm test src/auth/ src/components/profile/authIntegration.test.tsx` com 44 passed, 0 failures), suíte e2e web aprovada (`npm run e2e:web` com 3 passed), acessibilidade semântica aprovada (`npm run a11y:web` com 4 passed), suíte completa do frontend aprovada (38 test suites, 246 passed, 0 failures), `npm run typecheck` (`tsc --noEmit`) aprovado com zero erros, scanner de segredos `python backend/scripts/scan_secrets.py` aprovado (`SECRET_SCAN=OK`), `git diff --check` aprovado. Nenhuma migration, push, PR ou escrita remota realizada sem GO separado.
+- **Referência:** [direcionamento_versao_web_evento.md](direcionamento_versao_web_evento.md). **Commit:** commit desta task.
 
 #### ECO-2607 — Completar ciclo e histórico de viagens
 

@@ -65,11 +65,43 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      queryClient.clear();
+      await signOut();
+      AccessibilityInfo.announceForAccessibility('Sessão encerrada com sucesso.');
+    } catch {
+      Alert.alert('Erro ao sair', 'Não foi possível encerrar a sessão. Tente novamente.');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <AppHeader title="Meu Perfil" />
 
       <ScrollView contentContainerStyle={styles.content}>
+        {/* Banner de Convidado / Salvar Conta com Google (ADR 0007 / ECO-2606) */}
+        {isAnonymous && (
+          <View style={styles.guestBanner}>
+            <View style={styles.guestBannerTextCol}>
+              <View style={styles.guestBannerHeader}>
+                <Ionicons name="sparkles" size={16} color="#059669" />
+                <Text style={styles.guestBannerTitle}>Salvar Conta e Favoritos</Text>
+              </View>
+              <Text style={styles.guestBannerBody}>
+                Vincule sua conta com o Google para salvar suas rotas e estabelecimentos favoritos permanentemente.
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.guestBannerButton}
+              onPress={() => setIsAuthModalVisible(true)}
+              {...makeAccessibleButton('Salvar conta', 'Abrir opções de login e vinculação')}
+            >
+              <Text style={styles.guestBannerButtonText}>Salvar Conta</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Profile Info Header (ECO-1101) */}
         <View style={styles.profileHeaderCard}>
           <View style={styles.avatarRow}>
@@ -205,7 +237,7 @@ export default function ProfileScreen() {
         <View style={styles.footerActionsCard}>
           <TouchableOpacity
             style={styles.signOutButton}
-            onPress={() => void signOut()}
+            onPress={handleSignOut}
             {...makeAccessibleButton('Encerrar sessão', 'Fazer logout da conta atual')}
           >
             <Ionicons name="log-out-outline" size={18} color={theme.colors.brandDeep} />

@@ -20,6 +20,12 @@ export interface AuthContextValue {
   signInWithPassword: (email: string, password: string) => Promise<Session>;
   signUp: (email: string, password: string) => Promise<Session | null>;
   resetPassword: (email: string) => Promise<void>;
+  signInWithGoogle: (redirectTo?: string) => Promise<{ url?: string }>;
+  linkGoogleAccount: (redirectTo?: string) => Promise<{ url?: string }>;
+  isIdentityConflictError: (error: unknown) => boolean;
+  saveGuestFavoritesSnapshot: (routeIds: string[], actorIds: string[]) => Promise<void>;
+  reconcileGuestFavorites: () => Promise<{ routesPreserved: number; actorsPreserved: number }>;
+  clearGuestFavoritesSnapshot: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -41,8 +47,15 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
     () =>
       manager.subscribe((nextSession) => {
         setSession(nextSession);
-        if (nextSession) setStatus('authenticated');
-        else setStatus((current) => (current === 'initializing' ? current : 'signed_out'));
+        if (nextSession) {
+          setStatus('authenticated');
+          // Se o usuario se tornou autenticado (nao-anonimo), reconcilia eventuais favoritos guest preservados
+          if (!nextSession.user?.is_anonymous) {
+            void manager.reconcileGuestFavorites(apiClient);
+          }
+        } else {
+          setStatus((current) => (current === 'initializing' ? current : 'signed_out'));
+        }
       }),
     []
   );
@@ -55,7 +68,7 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
       () => active && setStatus('authenticated'),
       (reason: unknown) => {
         if (!active) return;
-        setError(reason instanceof Error ? reason : new Error('Falha ao iniciar sessão.'));
+        setError(reason instanceof Error ? reason : new Error('Falha ao iniciar sessao.'));
         setStatus('error');
       }
     );
@@ -95,9 +108,23 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
       signInWithPassword: (email, password) => manager.signInWithPassword(email, password),
       signUp: (email, password) => manager.signUp(email, password),
       resetPassword: (email) => manager.resetPassword(email),
+      signInWithGoogle: (redirectTo) => manager.signInWithGoogle(redirectTo),
+      linkGoogleAccount: (redirectTo) => manager.linkGoogleAccount(redirectTo),
+      isIdentityConflictError: (err) => manager.isIdentityConflictError(err),
+      saveGuestFavoritesSnapshot: async (routeIds, actorIds) => {
+        const currentUserId = manager.getSession()?.user?.id;
+        if (!currentUserId) return;
+        await manager.saveGuestFavoritesSnapshot({
+          guestUserId: currentUserId,
+          favoriteRouteIds: routeIds,
+          favoriteActorIds: actorIds,
+          createdAt: Date.now(),
+        });
+      },
+      reconcileGuestFavorites: () => manager.reconcileGuestFavorites(apiClient),
+      clearGuestFavoritesSnapshot: () => manager.clearGuestFavoritesSnapshot(),
     }),
     [error, retry, session, status]
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-

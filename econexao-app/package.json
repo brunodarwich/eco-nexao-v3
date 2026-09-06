@@ -68,7 +68,7 @@
     ],
     "testPathIgnorePatterns": [
       "/node_modules/",
-      "<rootDir>/e2e/"
+      "<rootDir>[/\\\\]e2e[/\\\\]"
     ]
   },
   "private": true
