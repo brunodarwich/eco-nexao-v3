@@ -35,7 +35,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, returnFo
     isIdentityConflictError,
     clearGuestFavoritesSnapshot,
   } = useAuth();
-  const isAnonymous = user?.is_anonymous ?? true;
+  const isAnonymous = user ? (user.is_anonymous === true && !user.email) : true;
   const closeButtonRef = useRef<React.ElementRef<typeof TouchableOpacity>>(null);
 
   const [mode, setMode] = useState<AuthMode>(isAnonymous ? 'link' : 'signin');
@@ -75,9 +75,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, returnFo
 
       if (mode === 'link') {
         await linkGoogleAccount();
-        setSuccessMessage('Conta vinculada com o Google! Seus favoritos foram preservados.');
-        AccessibilityInfo.announceForAccessibility('Conta vinculada com sucesso.');
-        setTimeout(() => handleClose(), 1500);
+        setSuccessMessage('Redirecionando para vincular com o Google...');
+        AccessibilityInfo.announceForAccessibility('Redirecionando para vincular com o Google.');
       } else {
         await signInWithGoogle();
         setSuccessMessage('Redirecionando para login com o Google...');

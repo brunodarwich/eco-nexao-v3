@@ -50,7 +50,8 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
         if (nextSession) {
           setStatus('authenticated');
           // Se o usuario se tornou autenticado (nao-anonimo), reconcilia eventuais favoritos guest preservados
-          if (!nextSession.user?.is_anonymous) {
+          const isAnon = nextSession.user ? (nextSession.user.is_anonymous === true && !nextSession.user.email) : true;
+          if (!isAnon) {
             void manager.reconcileGuestFavorites(apiClient);
           }
         } else {

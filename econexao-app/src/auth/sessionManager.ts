@@ -64,7 +64,7 @@ export class AuthSessionManager {
   }
 
   private async restoreOrCreate(generation: number): Promise<Session> {
-    // 1. Processa possivel retorno OAuth pendente na URL (Web callback / PKCE)
+    // 1. Processa possivel retorno OAuth pendente na URL (Web callback / PKCE ou Hash Tokens)
     const webCallback = getWebLocationOAuthCallback();
     if (webCallback.type === 'success' && webCallback.code) {
       try {
@@ -72,11 +72,28 @@ export class AuthSessionManager {
         if (!error && data?.session) {
           cleanWebOAuthUrl();
           if (generation !== this.generation) throw new Error('Inicializacao de sessao cancelada.');
+          this.explicitlySignedOut = false;
           this.setSession(data.session);
           return data.session;
         }
       } catch {
         // Se a troca falhar, cai para o restore padrao
+      }
+    } else if (webCallback.type === 'success' && webCallback.accessToken) {
+      try {
+        const { data, error } = await this.client.auth.setSession({
+          access_token: webCallback.accessToken,
+          refresh_token: webCallback.refreshToken || '',
+        });
+        if (!error && data?.session) {
+          cleanWebOAuthUrl();
+          if (generation !== this.generation) throw new Error('Inicializacao de sessao cancelada.');
+          this.explicitlySignedOut = false;
+          this.setSession(data.session);
+          return data.session;
+        }
+      } catch {
+        // Se a definicao de sessao falhar, cai para o restore padrao
       }
     } else if (webCallback.type === 'cancel' || webCallback.type === 'error') {
       cleanWebOAuthUrl();
