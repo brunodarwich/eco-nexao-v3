@@ -278,40 +278,63 @@ export class AuthSessionManager {
 
   /**
    * Reconcilia os favoritos do snapshot guest na conta identificada ativa.
-   * Utiliza chamadas idempotentes para cada rota e ator favoritado.
+   * Mantém no snapshot apenas os IDs que falharem para permitir retry seguro e idempotente.
+   * O snapshot é apagado apenas quando todos os favoritos forem confirmados com sucesso.
    */
   async reconcileGuestFavorites(apiClient: {
     addFavoriteRoute: (id: string) => Promise<any>;
     addFavoriteActor: (id: string) => Promise<any>;
-  }): Promise<{ routesPreserved: number; actorsPreserved: number }> {
+  }): Promise<{
+    routesPreserved: number;
+    actorsPreserved: number;
+    pendingRoutes: string[];
+    pendingActors: string[];
+  }> {
     const snapshot = await this.getGuestFavoritesSnapshot();
     if (!snapshot) {
-      return { routesPreserved: 0, actorsPreserved: 0 };
+      return { routesPreserved: 0, actorsPreserved: 0, pendingRoutes: [], pendingActors: [] };
     }
 
-    let routesPreserved = 0;
-    let actorsPreserved = 0;
+    const successfulRouteIds = new Set<string>();
+    const failedRouteIds: string[] = [];
 
     for (const routeId of snapshot.favoriteRouteIds) {
       try {
         await apiClient.addFavoriteRoute(routeId);
-        routesPreserved += 1;
+        successfulRouteIds.add(routeId);
       } catch {
-        // Idempotente / continua para proximos
+        failedRouteIds.push(routeId);
       }
     }
+
+    const successfulActorIds = new Set<string>();
+    const failedActorIds: string[] = [];
 
     for (const actorId of snapshot.favoriteActorIds) {
       try {
         await apiClient.addFavoriteActor(actorId);
-        actorsPreserved += 1;
+        successfulActorIds.add(actorId);
       } catch {
-        // Idempotente / continua para proximos
+        failedActorIds.push(actorId);
       }
     }
 
-    await this.clearGuestFavoritesSnapshot();
-    return { routesPreserved, actorsPreserved };
+    if (failedRouteIds.length === 0 && failedActorIds.length === 0) {
+      await this.clearGuestFavoritesSnapshot();
+    } else {
+      await this.saveGuestFavoritesSnapshot({
+        ...snapshot,
+        favoriteRouteIds: failedRouteIds,
+        favoriteActorIds: failedActorIds,
+      });
+    }
+
+    return {
+      routesPreserved: successfulRouteIds.size,
+      actorsPreserved: successfulActorIds.size,
+      pendingRoutes: failedRouteIds,
+      pendingActors: failedActorIds,
+    };
   }
 
   async signOut(): Promise<void> {

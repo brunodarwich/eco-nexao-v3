@@ -114,12 +114,112 @@ describe('ECO-2606 — Login Google com Favoritos Preservados e Isolamento A/B',
 
       expect(result.routesPreserved).toBe(1);
       expect(result.actorsPreserved).toBe(2);
+      expect(result.pendingRoutes).toHaveLength(0);
+      expect(result.pendingActors).toHaveLength(0);
       expect(mockApiClient.addFavoriteRoute).toHaveBeenCalledWith('route-pindobal');
       expect(mockApiClient.addFavoriteActor).toHaveBeenCalledWith('actor-artesanato-1');
       expect(mockApiClient.addFavoriteActor).toHaveBeenCalledWith('actor-artesanato-2');
 
       const remaining = await manager.getGuestFavoritesSnapshot();
       expect(remaining).toBeNull();
+    });
+
+    it('1. falha em uma rota preserva esse ID para retry', async () => {
+      const fake = mockClient();
+      const manager = new AuthSessionManager(fake.client);
+
+      await manager.saveGuestFavoritesSnapshot({
+        guestUserId: 'guest-123',
+        favoriteRouteIds: ['route-ok', 'route-falha'],
+        favoriteActorIds: [],
+        createdAt: Date.now(),
+      });
+
+      const mockApiClient = {
+        addFavoriteRoute: jest.fn((id: string) => {
+          if (id === 'route-falha') return Promise.reject(new Error('timeout'));
+          return Promise.resolve({ success: true });
+        }),
+        addFavoriteActor: jest.fn().mockResolvedValue({ success: true }),
+      };
+
+      const result = await manager.reconcileGuestFavorites(mockApiClient);
+
+      expect(result.routesPreserved).toBe(1);
+      expect(result.pendingRoutes).toEqual(['route-falha']);
+
+      const remaining = await manager.getGuestFavoritesSnapshot();
+      expect(remaining).not.toBeNull();
+      expect(remaining?.favoriteRouteIds).toEqual(['route-falha']);
+    });
+
+    it('2. sucesso parcial remove apenas os IDs confirmados e não trata falha como sucesso', async () => {
+      const fake = mockClient();
+      const manager = new AuthSessionManager(fake.client);
+
+      await manager.saveGuestFavoritesSnapshot({
+        guestUserId: 'guest-123',
+        favoriteRouteIds: ['route-ok-1', 'route-falha'],
+        favoriteActorIds: ['actor-ok-1', 'actor-falha'],
+        createdAt: Date.now(),
+      });
+
+      const mockApiClient = {
+        addFavoriteRoute: jest.fn((id: string) => {
+          if (id === 'route-falha') return Promise.reject(new Error('503 Service Unavailable'));
+          return Promise.resolve({ success: true });
+        }),
+        addFavoriteActor: jest.fn((id: string) => {
+          if (id === 'actor-falha') return Promise.reject(new Error('Network Error'));
+          return Promise.resolve({ success: true });
+        }),
+      };
+
+      const result = await manager.reconcileGuestFavorites(mockApiClient);
+
+      expect(result.routesPreserved).toBe(1);
+      expect(result.actorsPreserved).toBe(1);
+      expect(result.pendingRoutes).toEqual(['route-falha']);
+      expect(result.pendingActors).toEqual(['actor-falha']);
+
+      const remaining = await manager.getGuestFavoritesSnapshot();
+      expect(remaining).not.toBeNull();
+      // Os IDs confirmados foram expurgados do snapshot
+      expect(remaining?.favoriteRouteIds).toEqual(['route-falha']);
+      expect(remaining?.favoriteActorIds).toEqual(['actor-falha']);
+    });
+
+    it('3 e 4. segunda execução reconcilia o restante e snapshot é removido somente após sucesso total', async () => {
+      const fake = mockClient();
+      const manager = new AuthSessionManager(fake.client);
+
+      // Snapshot inicial com IDs pendentes após primeira tentativa parcial
+      await manager.saveGuestFavoritesSnapshot({
+        guestUserId: 'guest-123',
+        favoriteRouteIds: ['route-restante'],
+        favoriteActorIds: ['actor-restante'],
+        createdAt: Date.now(),
+      });
+
+      // Segunda tentativa: backend volta a responder normalmente
+      const mockApiClientRetry = {
+        addFavoriteRoute: jest.fn().mockResolvedValue({ success: true }),
+        addFavoriteActor: jest.fn().mockResolvedValue({ success: true }),
+      };
+
+      const retryResult = await manager.reconcileGuestFavorites(mockApiClientRetry);
+
+      expect(retryResult.routesPreserved).toBe(1);
+      expect(retryResult.actorsPreserved).toBe(1);
+      expect(retryResult.pendingRoutes).toHaveLength(0);
+      expect(retryResult.pendingActors).toHaveLength(0);
+
+      expect(mockApiClientRetry.addFavoriteRoute).toHaveBeenCalledWith('route-restante');
+      expect(mockApiClientRetry.addFavoriteActor).toHaveBeenCalledWith('actor-restante');
+
+      // Agora que todos os itens foram confirmados, o snapshot foi completamente removido
+      const remainingAfterRetry = await manager.getGuestFavoritesSnapshot();
+      expect(remainingAfterRetry).toBeNull();
     });
   });
 
