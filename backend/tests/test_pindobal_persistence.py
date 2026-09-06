@@ -3,6 +3,7 @@
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -74,6 +75,67 @@ async def test_persist_adds_complete_slice_inside_one_transaction() -> None:
     assert sum(isinstance(item, RouteGeometry) for item in added) == 3
     assert sum(isinstance(item, IngestionRun) for item in added) == 1
     assert stats["territorial"]["regions_created"] == 1
+    transaction.__aenter__.assert_awaited_once()
+    transaction.__aexit__.assert_awaited_once_with(None, None, None)
+
+
+@pytest.mark.asyncio
+async def test_idempotency_preserves_domain_entities_while_audit_ledger_is_append_only() -> None:
+    """Domain entities untouched on rerun; IngestionRun added as append-only audit trail."""
+    session, transaction = fake_session()
+    repository = PindobalPersistenceRepository(session)
+    now = datetime.now(UTC)
+
+    existing_region = Region(id=uuid.uuid4(), slug="santarem-belterra", name="Santarém e Belterra")
+    existing_route = Route(id=uuid.uuid4(), slug="rota-pindobal", title="Pindobal")
+    existing_origin = RouteOrigin(id=uuid.uuid4(), route_id=existing_route.id, code="porto")
+    existing_geometry = RouteGeometry(id=uuid.uuid4(), route_origin_id=existing_origin.id)
+
+    async def _mock_one(model: Any, **filters: Any) -> Any | None:
+        if model is Region:
+            return existing_region
+        if model is Route:
+            return existing_route
+        if model is RouteOrigin:
+            return existing_origin
+        if model is RouteGeometry:
+            return existing_geometry
+        return None
+
+    repository._one = AsyncMock(side_effect=_mock_one)  # type: ignore[method-assign]
+
+    run_id, stats = await repository.persist(
+        report={
+            "manifest": {
+                "valid_files": 9,
+                "files": [
+                    {"name": f"rota_{code}_OSRM_01.csv", "sha256": "a" * 64}
+                    for code in ("porto", "aeroporto", "rodoviaria")
+                ],
+            }
+        },
+        osrm_results={code: osrm_result(code) for code in ("porto", "aeroporto", "rodoviaria")},
+        started_at=now,
+        finished_at=now,
+    )
+
+    assert isinstance(run_id, uuid.UUID)
+    added = [call.args[0] for call in session.add.call_args_list]
+
+    # Domain entities must NOT be created when already present
+    assert sum(isinstance(item, Region) for item in added) == 0
+    assert sum(isinstance(item, Route) for item in added) == 0
+    assert sum(isinstance(item, RouteOrigin) for item in added) == 0
+    assert sum(isinstance(item, RouteGeometry) for item in added) == 0
+
+    # Territorial stats reflect idempotency (0 created, 1 unchanged)
+    assert stats["territorial"]["regions_created"] == 0
+    assert stats["territorial"]["regions_unchanged"] == 1
+    assert stats["territorial"]["routes_created"] == 0
+    assert stats["territorial"]["routes_unchanged"] == 1
+
+    # IngestionRun is ALWAYS recorded per execution (append-only audit ledger)
+    assert sum(isinstance(item, IngestionRun) for item in added) == 1
     transaction.__aenter__.assert_awaited_once()
     transaction.__aexit__.assert_awaited_once_with(None, None, None)
 
