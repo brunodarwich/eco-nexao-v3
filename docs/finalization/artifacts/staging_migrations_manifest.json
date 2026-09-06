@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "baseline_ref": "origin/staging",
-  "total_migrations": 25,
+  "total_migrations": 26,
   "migrations": [
     {
       "version": "20260811000000",
@@ -177,6 +177,13 @@
       "path": "supabase/migrations/20260827221358_eco_2510_remove_legacy_google_photo_persistence.sql",
       "bytes": 2906,
       "sha256": "40e7b2669d9e3d5fb78b4cc7e636fa33e3344843ac8840c415552617baa0db7b"
+    },
+    {
+      "version": "20260906125246",
+      "filename": "20260906125246_eco_2605_widen_route_metadata_columns.sql",
+      "path": "supabase/migrations/20260906125246_eco_2605_widen_route_metadata_columns.sql",
+      "bytes": 455,
+      "sha256": "380efaa6c487ce04cf37bafa7096d347ad76fd362febc920c439fc8df252be2e"
     }
   ]
 }
